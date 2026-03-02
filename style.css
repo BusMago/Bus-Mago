@@ -1,0 +1,107 @@
+html, body, #map { height: 100%; margin: 0; background: #222222; color: #eeeeee; }
+
+.repo-link { background: rgba(30,30,30,0.8); border: 1px solid #444; }
+.repo-link a { color: #eee; }
+
+:root[data-theme="light"] body { background: #f3f3f3; color: #111; }
+:root[data-theme="light"] .info { background: rgba(255,255,255,0.92); color: #111; box-shadow: 0 2px 8px rgba(0,0,0,0.15); }
+:root[data-theme="light"] .legend { background: rgba(255,255,255,0.95); color: #111; box-shadow: 0 2px 8px rgba(0,0,0,0.2); }
+:root[data-theme="light"] .menu-toggle { background: #fff; color: #111; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
+.theme-toggle-btn { background: rgba(30,30,30,0.9); color: #eee; }
+:root[data-theme="light"] .theme-toggle-btn { background: rgba(255,255,255,0.92); color: #111; box-shadow: 0 1px 5px rgba(0,0,0,0.35); }
+#recenter-btn { background: rgba(30,30,30,0.9); }
+:root[data-theme="light"] #recenter-btn { background: rgba(255,255,255,0.92); }
+:root[data-theme="light"] .repo-link { background: rgba(255,255,255,0.92); border: 1px solid rgba(0,0,0,0.2); }
+:root[data-theme="light"] .repo-link a { color: #111; }
+:root[data-theme="light"] .leaflet-control-zoom a { background: rgba(255,255,255,0.92); color: #111; border: 1px solid rgba(0,0,0,0.2); }
+:root[data-theme="light"] .dark-mode-tiles { filter: none; }
+
+.info { position: absolute; top: 10px; left: 10px; background: rgba(30,30,30,0.9); padding: 8px 10px; border-radius: 4px; font-family: sans-serif; font-size: 13px; z-index: 1000; box-shadow: 0 2px 8px rgba(255,255,255,0.15); display: none; color: #eee; }
+
+.legend-line.active-line { font-weight: 700; }
+/* Base styles for bus icons */
+.bus-icon-wrapper { }
+.bus-icon { background: #0077ff; border-radius: 50% 50% 50% 0; transform-origin: 50% 50%; box-shadow: 0 0 4px rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; color: #ffffff; font-weight: bold; }
+
+/* Large icons (default, < 10 lines) */
+.bus-icon-wrapper.large { width: 40px; height: 40px; }
+.bus-icon.large { width: 36px; height: 36px; font-size: 12px; }
+
+/* Small icons (>= 10 lines) */
+.bus-icon-wrapper.small { width: 28px; height: 28px; }
+.bus-icon.small { width: 25px; height: 25px; font-size: 9px; }
+.legend { position: absolute; top: 60px; right: 10px; background: rgba(30,30,30,0.95); padding: 10px 15px; border-radius: 4px; font-family: sans-serif; font-size: 14px; z-index: 2000; box-shadow: 0 2px 8px rgba(255,255,255,0.2); max-width: 250px; max-height: calc(100% - 80px); overflow-y: auto; color: #eee; }
+.menu-toggle { position: absolute; top: 10px; right: 10px; z-index: 2100; background: #333; color: #fff; border: none; border-radius: 4px; padding: 10px; font-size: 24px; cursor: pointer; box-shadow: 0 2px 4px rgba(255,255,255,0.2); line-height: 1; }
+
+.leaflet-control-zoom a { background: rgba(30,30,30,0.9); color: #eee; border: 1px solid #444; }
+
+/* Dark mode tiles filter */
+.dark-mode-tiles {
+  filter: invert(100%) hue-rotate(180deg) brightness(85%) contrast(90%);
+}
+
+/* Mobile Optimizations */
+@media (max-width: 600px) {
+  .info {
+    max-width: calc(100% - 40px); /* Avoid blocking full width */
+    font-size: 14px; /* Larger text */
+    padding: 10px 12px;
+  }
+  .legend {
+    font-size: 14px;
+    padding: 12px;
+    right: 10px;
+    left: auto;
+    bottom: auto;
+  }
+  .legend label {
+    padding: 8px 0; /* Larger touch target area */
+    display: block;
+  }
+  .legend input[type="checkbox"] {
+    transform: scale(1.3); /* Larger checkbox */
+    margin-right: 10px;
+  }
+}
+
+/* Toast Notification */
+.toast-notification {
+  position: fixed;
+  bottom: 80px; /* Above bottom controls */
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: rgba(50, 50, 50, 0.9);
+  color: #fff;
+  padding: 12px 24px;
+  border-radius: 4px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  z-index: 3000;
+  font-family: sans-serif;
+  font-size: 14px;
+  opacity: 0;
+  transition: opacity 0.3s ease-in-out;
+  pointer-events: none;
+  text-align: center;
+}
+
+.toast-notification.show {
+  opacity: 1;
+}
+
+.toast-notification.error {
+  background-color: rgba(220, 53, 69, 0.9);
+}
+
+.toast-notification.success {
+  background-color: rgba(40, 167, 69, 0.9);
+}
+
+/* Smooth Marker Transition */
+.leaflet-marker-icon.bus-icon-wrapper {
+  transition: transform 0.8s linear; /* Smooth movement */
+}
+
+/* Smooth Bateo Icon Transition */
+.leaflet-marker-icon.bateo-icon {
+    transition: transform 2s linear; /* Matches the 2s update interval */
+}
