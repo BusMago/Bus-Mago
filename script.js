@@ -221,7 +221,7 @@ class BusMagoApp {
     const inFlight = this.state.stopCache.inFlight[stopCode];
     if (inFlight) return inFlight;
 
-    const p = fetch(`https://realtime.tplfvg.it/API/v1.0/polemonitor/mrcruns?StopCode=${stopCode}&IsUrban=true`)
+    const p = fetch(`https://realtime.tplfvg.it/API/v1.0/polemonitor/mrcruns?StopCode=${stopCode}&IsUrban=true&_=${now}`)
       .then(r => r.json())
       .then(data => {
         const normalized = Array.isArray(data) ? data : [];
@@ -896,7 +896,7 @@ class BusMagoApp {
                     this.state.trackRefreshCounters[trackKey] = 0;
 
                     const lineCodeForTrack = bestRun.Line || ("T" + (lineConf.code.length === 1 ? "0" + lineConf.code : lineConf.code));
-                    const url = `https://realtime.tplfvg.it/API/v1.0/polemonitor/LineGeoTrack?Line=${encodeURIComponent(lineCodeForTrack)}&Race=${encodeURIComponent(race)}`;
+                    const url = `https://realtime.tplfvg.it/API/v1.0/polemonitor/LineGeoTrack?Line=${encodeURIComponent(lineCodeForTrack)}&Race=${encodeURIComponent(race)}&_=${Date.now()}`;
 
                     fetch(url)
                         .then(r => r.json())
