@@ -25,7 +25,10 @@ L'app ufficiale esiste, è fatta da professionisti seri (probabilmente con crava
 Noi siamo qui per la passione, per la gloria, e perché ci piace vedere le cose muoversi su una mappa in stile *CyberPunk 2077*.
 
 ### 4. Contatti
-Gli svilupaptori omertosi possono essere trovati nella sezione contributors della repo.
+Per reclami e informazioni siete pregati di contattare gli svilupaptori omertosi che possono essere trovati nella sezione contributors della repo.
+*   No scam
+*   No perditempo
+*   No Ciosoti
 
 ### In conclusione...
 Usate **Bus Mago** a vostro rischio e pericolo. Divertitevi, esplorate, ma ricordate sempre la regola d'oro del pendolare:
