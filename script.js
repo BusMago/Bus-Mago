@@ -1353,6 +1353,13 @@ class BusMagoApp {
     const textEl = this.globalStatusDiv.querySelector('.status-text');
     if (!textEl) return;
 
+    // Se stiamo caricando dati (inFlight), mostriamo sempre "In attesa dati..."
+    if (this.state.refreshControl.inFlight) {
+        this.globalStatusDiv.className = `global-status`;
+        textEl.textContent = 'In attesa dati...';
+        return;
+    }
+
     const now = Date.now();
     const lastSuccessAt = this.state.updateStatus.lastSuccessAt || 0;
     const lastErrorAt = this.state.updateStatus.lastErrorAt || 0;
