@@ -1,6 +1,29 @@
 // Initial configuration
 const linesConfig = window.linesConfig || [];
 
+// Configuration constants
+const CONFIG = {
+  REFRESH: {
+    FOLLOWING_MS: 2000,
+    NORMAL_MS: 3000,
+    MANY_LINES_MS: 5000,
+    MANY_LINES_THRESHOLD: 10,
+    TRACK_REFRESH_INTERVAL: 6
+  },
+  CACHE: {
+    STOP_RUNS_TTL_MS: 5000
+  },
+  UI: {
+    TOAST_DURATION_MS: 3000,
+    SMALL_ICON_THRESHOLD: 10,
+  },
+  MAP: {
+    DEFAULT_CENTER: [45.653, 13.776],
+    DEFAULT_ZOOM: 14,
+    FOLLOW_ZOOM: 15
+  }
+};
+
 // Static track coordinates for Easter Egg line 777
 const easterEggTrack777 = [
   [45.651935, 13.773043], // Canal Grande Trieste
@@ -34,7 +57,7 @@ class BusMagoApp {
   constructor() {
     this.state = {
       busMarkers: {}, // key -> L.marker
-      vehicleState: {}, // key -> { lat, lon, heading }
+      vehicleState: {}, // key -> { lat, lon, heading, lastEnrichedBus }
       selectedVehicleKey: null,
       directionVisibility: {},
       lastEnrichedBuses: [],
@@ -52,7 +75,6 @@ class BusMagoApp {
         index: 0
       },
       stopCache: {
-        ttlMs: 5000,
         entries: {},
         inFlight: {}
       },
@@ -92,6 +114,7 @@ class BusMagoApp {
     // DOM Elements
     this.infoDiv = document.querySelector('.info');
     this.legendDiv = document.getElementById('legend');
+    this.globalStatusDiv = document.getElementById('global-status');
     this.toastDiv = null;
 
     // Bindings
@@ -113,13 +136,13 @@ class BusMagoApp {
     this.scheduleNextRefresh(0);
 
     this.state.uiTimers.infoAgeInterval = setInterval(() => {
-      if (!this.state.selectedVehicleKey) return;
-      this.updateInfoAgeBadge();
+      if (this.state.selectedVehicleKey) this.updateInfoAgeBadge();
+      this.updateGlobalStatus();
     }, 1000);
   }
 
   initMap() {
-    this.state.map = L.map('map', { zoomControl: false }).setView([45.653, 13.776], 14);
+    this.state.map = L.map('map', { zoomControl: false }).setView(CONFIG.MAP.DEFAULT_CENTER, CONFIG.MAP.DEFAULT_ZOOM);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { 
       maxZoom: 19, 
       attribution: '&copy; OpenStreetMap contributors',
@@ -225,7 +248,7 @@ class BusMagoApp {
       .then(r => r.json())
       .then(data => {
         const normalized = Array.isArray(data) ? data : [];
-        this.state.stopCache.entries[stopCode] = { data: normalized, expiresAt: now + this.state.stopCache.ttlMs };
+        this.state.stopCache.entries[stopCode] = { data: normalized, expiresAt: now + CONFIG.CACHE.STOP_RUNS_TTL_MS };
         return normalized;
       })
       .catch(() => {
@@ -251,10 +274,10 @@ class BusMagoApp {
     if (!this.toastDiv) return;
     this.toastDiv.textContent = message;
     this.toastDiv.className = `toast-notification show ${type}`;
-    // Hide after 3 seconds
+    // Hide after timeout
     setTimeout(() => {
         if (this.toastDiv) this.toastDiv.classList.remove('show');
-    }, 3000);
+    }, CONFIG.UI.TOAST_DURATION_MS);
   }
 
   initVisibility() {
@@ -339,15 +362,15 @@ class BusMagoApp {
           userMarker = L.marker([lat, lon], {
             icon: L.divIcon({
               className: 'user-location-marker',
-              html: '<div style="background-color: #ffffff; width: 15px; height: 15px; border-radius: 50%; border: 2px solid #000; box-shadow: 0 0 5px rgba(255,255,255,0.8);"></div>',
+              html: '<div style="background-color: #0077ff; width: 14px; height: 14px; border-radius: 50%; border: 3px solid #fff; box-shadow: 0 0 10px rgba(0,119,255,0.6);"></div>',
               iconSize: [20, 20],
               iconAnchor: [10, 10]
             })
           }).addTo(this.state.map).bindPopup("Areo qua! 📍");
           
           userAccuracyCircle = L.circle([lat, lon], {
-            color: '#ffffff',
-            fillColor: '#ffffff',
+            color: '#0077ff',
+            fillColor: '#0077ff',
             fillOpacity: 0.15,
             radius: accuracy,
             weight: 1
@@ -388,49 +411,47 @@ class BusMagoApp {
     let html = "";
     
     const filterValue = (this.state.legend.filterText || '').trim();
-    html += `<div style="margin: 8px 0 10px 0;">
-              <input id="legend-search" type="text" placeholder="Cerca linea..." value="${filterValue.replace(/"/g, '&quot;')}" style="width: 100%; box-sizing: border-box; padding: 6px 8px; border-radius: 4px; border: 1px solid #666; background: rgba(0,0,0,0.15); color: inherit;">
+    html += `<div style="margin-bottom: 12px;">
+              <input id="legend-search" type="text" placeholder="Cerca linea..." value="${filterValue.replace(/"/g, '&quot;')}" class="legend-search">
             </div>`;
 
-    html += `<label style="display:block; margin-bottom:8px; border-bottom:1px solid #666; padding-bottom:4px; cursor:pointer;">
-              <input type="checkbox" id="favorites-toggle" style="margin-right:5px;">
-              <strong>Preferiti</strong>
+    html += `<label class="legend-favorites-toggle">
+              <input type="checkbox" id="favorites-toggle">
+              <strong>Solo Preferiti</strong>
             </label>`;
 
     // Presets
-    html += `<label style="display:block; margin-bottom:4px; cursor:pointer;">
-              <input type="checkbox" id="preset-universita" style="margin-right:5px;">
+    html += `<label>
+              <input type="checkbox" id="preset-universita">
               <strong>Università</strong>
             </label>`;
-    html += `<label style="display:block; margin-bottom:4px; cursor:pointer;">
-              <input type="checkbox" id="preset-stazione" style="margin-right:5px;">
+    html += `<label>
+              <input type="checkbox" id="preset-stazione">
               <strong>Stazione</strong>
             </label>`;
-    html += `<label style="display:block; margin-bottom:8px; border-bottom:1px solid #666; padding-bottom:4px; cursor:pointer;">
-              <input type="checkbox" id="preset-notturne" style="margin-right:5px;">
+    html += `<label style="margin-bottom:8px;">
+              <input type="checkbox" id="preset-notturne">
               <strong>Notturne (A-D)</strong>
             </label>`;
   
     const favoritesOnly = this.legendDiv.dataset.favoritesOnly === '1';
     const filterText = (this.state.legend.filterText || '').trim().toLowerCase();
 
-    // Clear All Button (moved to top)
-    html += `<button id="clear-all-lines" style="width:100%; margin-bottom:10px; padding:8px; background-color:#e0e0e0; color:#333; border:none; border-radius:4px; cursor:pointer; font-weight:bold;">
-              CLEAR ALL
-            </button>`;
+    // Clear All Button
+    html += `<button id="clear-all-lines">CLEAR ALL</button>`;
 
     // Lines
     let separatorAdded = false;
     linesConfig.forEach(l => {
       // Add separator before night lines
       if (!separatorAdded && ["A", "B", "C", "D"].includes(l.code)) {
-        html += '<hr style="margin: 8px 0; border: 0; border-top: 1px solid #666;">';
+        html += '<hr>';
         separatorAdded = true;
       }
       
       // Add separator before 777
       if (l.code === "777") {
-          html += '<hr style="margin: 8px 0; border: 0; border-top: 1px solid #666;">';
+          html += '<hr>';
       }
 
       l.directions.forEach(d => {
@@ -454,9 +475,9 @@ class BusMagoApp {
           const colorBox = `<span style="display:inline-block;width:10px;height:10px;background-color:${l.color};margin-right:5px;border-radius:50%;"></span>`;
           const activeClass = this.state.directionVisibility[key] ? 'active-line' : '';
           const favSymbol = isFavorite ? '★' : '☆';
-          html += `<label class="legend-line ${activeClass}" style="display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:4px; cursor:pointer;">
+          html += `<label class="legend-line ${activeClass}" style="display:flex; align-items:center; justify-content:space-between; gap:8px;">
                     <span style="display:flex; align-items:center; gap:6px;">
-                      <input type="checkbox" data-key="${safeKey}" ${checked} style="margin-right:5px;">
+                      <input type="checkbox" data-key="${safeKey}" ${checked}>
                       ${colorBox}${key}
                     </span>
                     <button type="button" class="fav-btn" data-fav="${safeKey}" style="background:transparent; border:0; color:inherit; cursor:pointer; font-size:14px; padding:2px 6px;">${favSymbol}</button>
@@ -465,13 +486,13 @@ class BusMagoApp {
       });
     });
   
-    // "Select All" (Moved to bottom)
+    // "Select All"
     const allSelected = Object.keys(this.state.directionVisibility)
         .filter(k => !k.includes("777 Bateo Gambling"))
         .every(k => this.state.directionVisibility[k]);
 
-    html += `<label style="display:block; margin-top:8px; border-top:1px solid #666; padding-top:4px; cursor:pointer;">
-              <input type="checkbox" id="select-all-lines" ${allSelected ? 'checked' : ''} style="margin-right:5px;">
+    html += `<label style="margin-top:8px; border-top:1px solid rgba(255,255,255,0.1); padding-top:8px;">
+              <input type="checkbox" id="select-all-lines" ${allSelected ? 'checked' : ''}>
               <strong>Seleziona tutto</strong>
             </label>`;
 
@@ -600,7 +621,7 @@ class BusMagoApp {
 
     // Stazione Preset
     handlePreset('preset-stazione', [
-        "17/ - STAZIONE FERROVIARIA", "17 - VIA DI CAMPO MARZIO", "4 - PIAZZA OBERDAN",
+        "17/ - STAZIONE FERROVIARIA", "17 - VIA DI CAMPO MARZIO", "4 - PIAZZA OBERDAN", "4 - PIAZZA TOMMASEO",
         "51 - STAZIONE FERROVIARIA", "51 - VILLA CARSIA", "51/ - STAZIONE FERROVIARIA"
     ]);
 
@@ -636,7 +657,7 @@ class BusMagoApp {
 
   getRefreshIntervalMs() {
     const isFollowingSelected = !!(this.state.selectedVehicleKey && !this.state.selectedVehicleKey.startsWith('TRACK_') && this.state.isFollowing);
-    if (isFollowingSelected) return 2000;
+    if (isFollowingSelected) return CONFIG.REFRESH.FOLLOWING_MS;
 
     let activeDirectionCount = 0;
     linesConfig.forEach(l => {
@@ -646,8 +667,8 @@ class BusMagoApp {
       });
     });
 
-    if (!this.state.selectedVehicleKey || activeDirectionCount > 10) return 5000;
-    return 3000;
+    if (!this.state.selectedVehicleKey || activeDirectionCount > CONFIG.REFRESH.MANY_LINES_THRESHOLD) return CONFIG.REFRESH.MANY_LINES_MS;
+    return CONFIG.REFRESH.NORMAL_MS;
   }
 
   scheduleNextRefresh(delayMs) {
@@ -689,7 +710,7 @@ class BusMagoApp {
         // > 10 directions: Terminals only (approx 2 stops total per line)
         
         let stopsLimitPerLine = Infinity;
-        if (activeDirectionCount > 10) {
+        if (activeDirectionCount > CONFIG.REFRESH.MANY_LINES_THRESHOLD) {
             stopsLimitPerLine = 2; // Usually just terminals
         } else if (activeDirectionCount > 5) {
             stopsLimitPerLine = 3; // Terminals + 1 intermediate
@@ -787,10 +808,11 @@ class BusMagoApp {
             const k = b.vehicle || `NO_VEHICLE_${b.coords[0]}_${b.coords[1]}`;
             byVehicle[k] = b;
         });
+
         const uniqueBuses = Object.values(byVehicle);
 
         const enriched = uniqueBuses.map(b => {
-            const key = b.vehicle || `NO_VEHICLE_${b.coords[0]}_${b.coords[1]}`;
+            const key = b.key || b.vehicle || `NO_VEHICLE_${b.coords[0]}_${b.coords[1]}`;
             const prev = this.state.vehicleState[key];
             let heading = (prev && typeof prev.heading === 'number') ? prev.heading : 0;
             const moved = !prev || prev.lat !== b.coords[0] || prev.lon !== b.coords[1];
@@ -799,7 +821,13 @@ class BusMagoApp {
                 heading = this.computeBearing(prev.lat, prev.lon, b.coords[0], b.coords[1]);
             }
             
-            this.state.vehicleState[key] = { lat: b.coords[0], lon: b.coords[1], heading: heading, moved: moved };
+            this.state.vehicleState[key] = { 
+              lat: b.coords[0], 
+              lon: b.coords[1], 
+              heading: heading, 
+              moved: moved,
+              lastEnrichedBus: b 
+            };
             b.heading = heading;
             b.key = key;
             b.moved = moved;
@@ -821,6 +849,7 @@ class BusMagoApp {
         }
         this.state.updateStatus.lastSuccessAt = Date.now();
         this.state.updateStatus.lastErrorMessage = '';
+        this.updateGlobalStatus();
 
         if (selected && selected.key && this.state.selectedVehicleKey === selected.key && selectedPrevLatLng) {
           const moved = selectedPrevLatLng.lat !== selected.coords[0] || selectedPrevLatLng.lng !== selected.coords[1];
@@ -832,6 +861,7 @@ class BusMagoApp {
     } catch (err) {
         this.state.updateStatus.lastErrorAt = Date.now();
         this.state.updateStatus.lastErrorMessage = (err && err.message) ? String(err.message) : 'Errore di connessione';
+        this.updateGlobalStatus();
         console.error("Errore aggiornamento dati", err);
         this.showToast("Errore di connessione. Riprovo...", "error");
         this.updateInfoFromBus(this.state.selectedVehicleKey ? { key: this.state.selectedVehicleKey } : null);
@@ -891,7 +921,7 @@ class BusMagoApp {
                 if (!this.state.trackRefreshCounters[trackKey]) this.state.trackRefreshCounters[trackKey] = 0;
                 if (!this.state.lastRaces[trackKey]) this.state.lastRaces[trackKey] = "";
 
-                if (race && (race !== this.state.lastRaces[trackKey] || this.state.trackRefreshCounters[trackKey] >= 6)) {
+                if (race && (race !== this.state.lastRaces[trackKey] || this.state.trackRefreshCounters[trackKey] >= CONFIG.REFRESH.TRACK_REFRESH_INTERVAL)) {
                     this.state.lastRaces[trackKey] = race;
                     this.state.trackRefreshCounters[trackKey] = 0;
 
@@ -1013,7 +1043,7 @@ class BusMagoApp {
         const isActive = l.directions.some(d => this.state.directionVisibility[`${l.label} - ${d}`]);
         if (isActive) activeLineCount++;
     });
-    const useSmallIcons = activeLineCount >= 10;
+    const useSmallIcons = activeLineCount >= CONFIG.UI.SMALL_ICON_THRESHOLD;
     const iconSize = useSmallIcons ? [28, 28] : [40, 40];
     const iconAnchor = useSmallIcons ? [14, 14] : [20, 20];
     const sizeClass = useSmallIcons ? 'small' : 'large';
@@ -1064,7 +1094,7 @@ class BusMagoApp {
                         // Update styles directly
                         iconDiv.style.backgroundColor = b.lineColor;
                         iconDiv.style.transform = `rotate(${heading + 135}deg)`;
-                        iconDiv.style.opacity = (this.state.selectedVehicleKey && !isSelected) ? 0.35 : 1.0;
+                        iconDiv.style.opacity = opacity;
                         iconDiv.style.border = isSelected ? '3px solid #FFF' : '';
                         
                         // Update text content (only if changed)
@@ -1248,6 +1278,25 @@ class BusMagoApp {
   updateInfoFromBus(bus) {
     if (!bus) {
       if (this.state.lastInfoSignature !== null) {
+        // If we had a selected vehicle and now it's gone, it might have finished its trip
+        if (this.state.selectedVehicleKey && !this.state.selectedVehicleKey.startsWith('TRACK_')) {
+          this.infoDiv.innerHTML = `
+            <div class="info-header" style="border-bottom-color: rgba(220, 53, 69, 0.3)">
+              <div class="info-line-badge" style="background-color: #666">?</div>
+              <div class="info-destination" style="color: #ff6b6b">Corsa terminata</div>
+            </div>
+            <div class="info-body">
+              <div style="grid-column: 1 / -1; color: #aaa; font-size: 12px; margin-top: 4px;">
+                Il veicolo non è più rilevato dal sistema. È probabile che abbia raggiunto il capolinea.
+              </div>
+            </div>
+          `;
+          this.infoDiv.style.display = 'block';
+          // We keep the selected key so the message stays until user deselects or selects another
+          this.state.lastInfoSignature = "FINISHED_TRIP"; 
+          return;
+        }
+        
         this.infoDiv.style.display = 'none';
         this.infoDiv.innerHTML = "";
         this.state.lastInfoSignature = null;
@@ -1267,39 +1316,73 @@ class BusMagoApp {
     if (signature === this.state.lastInfoSignature) return;
     this.state.lastInfoSignature = signature;
 
-    const parts = [];
-    const add = (label, val) => {
-      if (val !== null && val !== undefined && val !== "") parts.push(`${label}: ${val}`);
-    };
-    add("Linea", bus.lineLabel);
-    add("Destinazione", bus.destination);
-    add("Partenza", bus.departure);
-
-    const badge = isOffline
-      ? `<span id="info-update-badge" style="display:inline-block; padding:2px 6px; border-radius:10px; background: rgba(180, 60, 60, 0.25); border: 1px solid rgba(180, 60, 60, 0.55);">offline/errore</span>`
-      : `<span id="info-update-badge" style="display:inline-block; padding:2px 6px; border-radius:10px; background: rgba(60, 180, 120, 0.18); border: 1px solid rgba(60, 180, 120, 0.45);">Aggiornato ${(lastSelectedMoveAt ? Math.max(0, Math.floor((now - lastSelectedMoveAt) / 1000)) : Math.max(0, Math.floor((now - lastSuccessAt) / 1000)))}s fa</span>`;
-
-    parts.push(badge);
-
-    add("Race", bus.race);
-    add("Vehicle", bus.vehicle);
-
     const baseTs = lastSelectedMoveAt || lastSuccessAt;
+    let timeStr = "--:--:--";
     if (baseTs) {
       const dt = new Date(baseTs);
-      const hh = String(dt.getHours()).padStart(2, '0');
-      const mm = String(dt.getMinutes()).padStart(2, '0');
-      const ss = String(dt.getSeconds()).padStart(2, '0');
-      add("Ultimo aggiornamento", `${hh}:${mm}:${ss}`);
+      timeStr = `${String(dt.getHours()).padStart(2, '0')}:${String(dt.getMinutes()).padStart(2, '0')}:${String(dt.getSeconds()).padStart(2, '0')}`;
     }
 
-    this.infoDiv.innerHTML = parts.join("<br/>");
+    const badgeClass = isOffline ? "offline" : "online";
+    const ageText = isOffline ? "offline" : `${(lastSelectedMoveAt ? Math.max(0, Math.floor((now - lastSelectedMoveAt) / 1000)) : Math.max(0, Math.floor((now - lastSuccessAt) / 1000)))}s fa`;
+
+    this.infoDiv.innerHTML = `
+      <div class="info-header">
+        <div class="info-line-badge" style="background-color: ${bus.lineColor}">${bus.lineLabel}</div>
+        <div class="info-destination">${bus.destination}</div>
+      </div>
+      <div class="info-body">
+        <div class="info-label">Partenza</div><div class="info-value">${bus.departure || '-'}</div>
+        <div class="info-label">Corsa</div><div class="info-value">${bus.race || '-'}</div>
+        <div class="info-label">Vettura</div><div class="info-value">${bus.vehicle || '-'}</div>
+      </div>
+      <div class="info-footer">
+        <div style="display: flex; justify-content: space-between; align-items: center; font-size: 11px;">
+          <span id="info-update-badge" class="${badgeClass}" style="padding: 2px 8px; border-radius: 10px; background: ${isOffline ? 'rgba(180,60,60,0.2)' : 'rgba(60,180,120,0.15)'}; border: 1px solid ${isOffline ? 'rgba(180,60,60,0.4)' : 'rgba(60,180,120,0.4)'}">
+            Aggiornato ${ageText}
+          </span>
+          <span style="color: #888;">${timeStr}</span>
+        </div>
+      </div>
+    `;
     this.infoDiv.style.display = 'block';
+  }
+
+  updateGlobalStatus() {
+    if (!this.globalStatusDiv) return;
+    const textEl = this.globalStatusDiv.querySelector('.status-text');
+    if (!textEl) return;
+
+    const now = Date.now();
+    const lastSuccessAt = this.state.updateStatus.lastSuccessAt || 0;
+    const lastErrorAt = this.state.updateStatus.lastErrorAt || 0;
+    const isOffline = lastErrorAt > lastSuccessAt;
+    const ageSec = lastSuccessAt ? Math.floor((now - lastSuccessAt) / 1000) : null;
+
+    let statusClass = 'live';
+    let statusText = 'Live';
+
+    if (isOffline) {
+      statusClass = 'offline';
+      statusText = 'Offline';
+    } else if (ageSec !== null) {
+      if (ageSec > 30) {
+        statusClass = 'delay';
+        statusText = 'Ritardo API';
+      }
+      statusText = `${statusText} (${ageSec}s)`;
+    } else {
+      statusText = 'In attesa dati...';
+    }
+
+    this.globalStatusDiv.className = `global-status ${statusClass}`;
+    textEl.textContent = statusText;
   }
 
   updateInfoAgeBadge() {
     if (!this.infoDiv || this.infoDiv.style.display === 'none') return;
     const badge = this.infoDiv.querySelector('#info-update-badge');
+    const timeSpan = this.infoDiv.querySelector('.info-footer span:last-child');
     if (!badge) return;
 
     const now = Date.now();
@@ -1309,17 +1392,22 @@ class BusMagoApp {
     const isOffline = lastErrorAt > lastSuccessAt;
 
     if (isOffline) {
-      badge.textContent = 'offline/errore';
-      badge.style.background = 'rgba(180, 60, 60, 0.25)';
-      badge.style.border = '1px solid rgba(180, 60, 60, 0.55)';
+      badge.textContent = 'Aggiornato offline';
+      badge.style.background = 'rgba(180, 60, 60, 0.2)';
+      badge.style.border = '1px solid rgba(180, 60, 60, 0.4)';
       return;
     }
 
     const base = lastSelectedMoveAt || lastSuccessAt;
     const ageSec = base ? Math.max(0, Math.floor((now - base) / 1000)) : null;
     badge.textContent = `Aggiornato ${ageSec === null ? '?' : ageSec}s fa`;
-    badge.style.background = 'rgba(60, 180, 120, 0.18)';
-    badge.style.border = '1px solid rgba(60, 180, 120, 0.45)';
+    badge.style.background = 'rgba(60, 180, 120, 0.15)';
+    badge.style.border = '1px solid rgba(60, 180, 120, 0.4)';
+
+    if (timeSpan && base) {
+      const dt = new Date(base);
+      timeSpan.textContent = `${String(dt.getHours()).padStart(2, '0')}:${String(dt.getMinutes()).padStart(2, '0')}:${String(dt.getSeconds()).padStart(2, '0')}`;
+    }
   }
 
   updateInfoFromTrack(lineConf, direction) {
@@ -1328,13 +1416,15 @@ class BusMagoApp {
         this.infoDiv.innerHTML = "";
         return;
     }
-    const parts = [];
-    const add = (label, val) => {
-      if (val !== null && val !== undefined && val !== "") parts.push(`${label}: ${val}`);
-    };
-    add("Linea", lineConf.label);
-    add("Direzione", direction);
-    this.infoDiv.innerHTML = parts.join("<br/>");
+    this.infoDiv.innerHTML = `
+      <div class="info-header">
+        <div class="info-line-badge" style="background-color: ${lineConf.color}">${lineConf.label}</div>
+        <div class="info-destination">${direction}</div>
+      </div>
+      <div class="info-body">
+        <div class="info-label">Stato</div><div class="info-value">Percorso linea</div>
+      </div>
+    `;
     this.infoDiv.style.display = 'block';
   }
 

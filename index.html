@@ -21,14 +21,23 @@
 <div class="info"></div>
 <div id="map"></div>
 <div id="legend" class="legend" style="display: none;"></div>
-<button id="recenter-btn" style="position: absolute; bottom: 28px; right: 50px; z-index: 1000; width: 40px; height: 40px; border: none; border-radius: 4px; box-shadow: 0 1px 5px rgba(0,0,0,0.65); cursor: pointer; display: none; align-items: center; justify-content: center; padding: 2px;" title="Centra su posizione">
-  <img src="icona_centre_map.webp" alt="Centra" style="width: 90%; height: 90%; object-fit: contain;">
-</button>
-<button id="theme-toggle-btn" class="theme-toggle-btn" style="position: absolute; bottom: 28px; right: 95px; z-index: 1000; width: 40px; height: 40px; border: none; border-radius: 4px; box-shadow: 0 1px 5px rgba(0,0,0,0.65); cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 2px;" title="Tema"></button>
-<div class="repo-link" style="position: absolute; bottom: 20px; left: 10px; z-index: 1000; padding: 5px 10px; border-radius: 4px;">
-  <a href="https://github.com/BusMago/Bus-Mago" target="_blank" style="text-decoration: none; font-family: sans-serif; font-size: 12px; font-weight: bold; display: flex; align-items: center;">
-    <span style="margin-right: 5px;">GitHub Repo & Disclaimer</span>
-    <span style="font-size: 14px;">↗</span>
+
+<div class="map-controls-bottom-right">
+  <button id="theme-toggle-btn" class="map-btn theme-toggle-btn" title="Cambia tema"></button>
+  <button id="recenter-btn" class="map-btn recenter-btn" title="Centra su posizione">
+    <img src="icona_centre_map.webp" alt="Centra">
+  </button>
+</div>
+
+<div id="global-status" class="global-status">
+  <span class="status-dot"></span>
+  <span class="status-text">Inizializzazione...</span>
+</div>
+
+<div class="repo-link">
+  <a href="https://github.com/BusMago/Bus-Mago" target="_blank">
+    <span>GitHub Repo & Disclaimer</span>
+    <span class="external-icon">↗</span>
   </a>
 </div>
 </body>
