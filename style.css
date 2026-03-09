@@ -157,7 +157,7 @@ html, body, #map {
   border: none !important;
   box-shadow: none !important; /* Box shadow moved to buttons */
   margin-right: 15px !important;
-  margin-bottom: 140px !important; 
+  margin-bottom: 137px !important; 
 }
 
 .leaflet-control-zoom a {
@@ -172,12 +172,16 @@ html, body, #map {
   font-weight: 600 !important;
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
-  margin-bottom: 8px !important;
+  margin-bottom: 2px !important;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3) !important;
   display: flex !important;
   align-items: center;
   justify-content: center;
   transition: all 0.2s ease;
+}
+
+.leaflet-control-zoom a:last-child {
+  margin-bottom: 0 !important;
 }
 
 .leaflet-control-zoom a:hover {

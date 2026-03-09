@@ -1370,7 +1370,6 @@ class BusMagoApp {
         statusClass = 'delay';
         statusText = 'Ritardo API';
       }
-      statusText = `${statusText} (${ageSec}s)`;
     } else {
       statusText = 'In attesa dati...';
     }
@@ -1417,12 +1416,9 @@ class BusMagoApp {
         return;
     }
     this.infoDiv.innerHTML = `
-      <div class="info-header">
+      <div class="info-header" style="border-bottom: none; margin-bottom: 0; padding-bottom: 0;">
         <div class="info-line-badge" style="background-color: ${lineConf.color}">${lineConf.label}</div>
         <div class="info-destination">${direction}</div>
-      </div>
-      <div class="info-body">
-        <div class="info-label">Stato</div><div class="info-value">Percorso linea</div>
       </div>
     `;
     this.infoDiv.style.display = 'block';
