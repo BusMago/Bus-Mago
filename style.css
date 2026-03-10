@@ -546,8 +546,9 @@ html, body, #map {
 
 @media (max-width: 600px) {
   .global-status {
+    position: fixed;
     bottom: auto;
-    top: 70px;
+    top: 15px;
     right: auto;
     left: 15px;
     padding: 6px 10px;
