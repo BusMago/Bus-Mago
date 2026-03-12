@@ -53,18 +53,57 @@ const easterEggTrack777 = [
   [45.442325, 12.329644] // Casinò Venezia
 ];
 
+const normalizeKey = (value) => String(value || '').trim().toUpperCase();
+
+const BUS_PALETTE = [
+  "#b80000",
+  "#0086b3",
+  "#b8002e",
+  "#008f8f",
+  "#b30059",
+  "#008f00",
+  "#7800f0",
+  "#478f00",
+  "#9500c7",
+  "#8f8f00",
+  "#0059b3",
+  "#8f4700",
+  "#008f6b",
+  "#a300a3",
+  "#008f47",
+  "#8f6b00"
+];
+
+const LEGEND_GROUPS = {
+  UNI: {
+    '17': ['SAN CILINO'],
+    '17/': ['SAN CILINO'],
+    '4': ['VILLA CARSIA'],
+    '3': ['CONCONELLO'],
+    '51': ['VILLA CARSIA', 'STAZIONE FERROVIARIA']
+  },
+  FS: {
+    '17/': ['STAZIONE FERROVIARIA'],
+    '17': ['VIA DI CAMPO MARZIO'],
+    '4': ['PIAZZA OBERDAN', 'PIAZZA TOMMASEO'],
+    '51': ['STAZIONE FERROVIARIA'],
+    '3': ['STAZIONE FERROVIARIA']
+  }
+};
+
 class BusMagoApp {
   constructor() {
     this.state = {
       busMarkers: {}, // key -> L.marker
       vehicleState: {}, // key -> { lat, lon, heading, lastEnrichedBus }
       selectedVehicleKey: null,
-      directionVisibility: {},
+      lineVisibility: {},
       lastEnrichedBuses: [],
       routeLayers: {}, // key -> L.polyline
       routeEndpointMarkers: {}, // key -> array of markers
       lastRaces: {},
       trackRefreshCounters: {},
+      visibleTrackKeys: new Set(),
       userHasInteracted: false,
       isFollowing: false,
       map: null,
@@ -80,7 +119,7 @@ class BusMagoApp {
       },
       lastInfoSignature: null,
       favorites: {
-        key: 'busmago:favorites:v1',
+        key: 'busmago:favorites:v2',
         set: new Set(),
         snapshot: null
       },
@@ -89,10 +128,16 @@ class BusMagoApp {
         mode: 'dark'
       },
       legend: {
-        filterText: ''
+        filterText: '',
+        viewMode: 'grid',
+        viewKey: 'busmago:legendView:v1',
+        groupKey: null,
+        groupSnapshot: null,
+        groupKeyStorageKey: 'busmago:legendGroupKey:v1'
       },
+      legendPaletteIndexByCode: {},
       persisted: {
-        activeLinesKey: 'busmago:activeLines:v1'
+        activeLinesKey: 'busmago:activeLines:v2'
       },
       updateStatus: {
         lastSuccessAt: 0,
@@ -114,11 +159,174 @@ class BusMagoApp {
     // DOM Elements
     this.infoDiv = document.querySelector('.info');
     this.legendDiv = document.getElementById('legend');
-    this.globalStatusDiv = document.getElementById('global-status');
     this.toastDiv = null;
 
     // Bindings
     this.refreshData = this.refreshData.bind(this);
+  }
+
+  escapeHtmlAttribute(value) {
+    return String(value ?? '')
+      .replace(/&/g, '&amp;')
+      .replace(/"/g, '&quot;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;');
+  }
+
+  getContrastingTextColor(color) {
+    const c = String(color || '').trim();
+    let r = 0;
+    let g = 0;
+    let b = 0;
+
+    if (c.startsWith('#')) {
+      const hex = c.slice(1);
+      if (hex.length === 3) {
+        r = parseInt(hex[0] + hex[0], 16);
+        g = parseInt(hex[1] + hex[1], 16);
+        b = parseInt(hex[2] + hex[2], 16);
+      } else if (hex.length === 6) {
+        r = parseInt(hex.slice(0, 2), 16);
+        g = parseInt(hex.slice(2, 4), 16);
+        b = parseInt(hex.slice(4, 6), 16);
+      } else {
+        return '#fff';
+      }
+    } else if (c.startsWith('rgb')) {
+      const m = c.match(/rgba?\((\d+)[,\s]+(\d+)[,\s]+(\d+)/i);
+      if (!m) return '#fff';
+      r = parseInt(m[1], 10);
+      g = parseInt(m[2], 10);
+      b = parseInt(m[3], 10);
+    } else {
+      return '#fff';
+    }
+
+    const luminance = (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255;
+    return luminance > 0.62 ? '#111' : '#fff';
+  }
+
+  hslToHex(h, s, l) {
+    const hh = (((h % 360) + 360) % 360) / 360;
+    const ss = Math.max(0, Math.min(1, s / 100));
+    const ll = Math.max(0, Math.min(1, l / 100));
+
+    const hue2rgb = (p, q, t) => {
+      let tt = t;
+      if (tt < 0) tt += 1;
+      if (tt > 1) tt -= 1;
+      if (tt < 1 / 6) return p + (q - p) * 6 * tt;
+      if (tt < 1 / 2) return q;
+      if (tt < 2 / 3) return p + (q - p) * (2 / 3 - tt) * 6;
+      return p;
+    };
+
+    let r;
+    let g;
+    let b;
+
+    if (ss === 0) {
+      r = ll;
+      g = ll;
+      b = ll;
+    } else {
+      const q = ll < 0.5 ? ll * (1 + ss) : ll + ss - ll * ss;
+      const p = 2 * ll - q;
+      r = hue2rgb(p, q, hh + 1 / 3);
+      g = hue2rgb(p, q, hh);
+      b = hue2rgb(p, q, hh - 1 / 3);
+    }
+
+    const toHex = (x) => Math.round(x * 255).toString(16).padStart(2, '0');
+    return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
+  }
+
+  getLegendLineColor(code) {
+    const rawCode = String(code ?? '');
+    const colorRotation = { '51': '56', '56': '58', '58': '51', '4': '9', '9': '4' };
+    const sourceCode = colorRotation[rawCode] ?? rawCode;
+    const idx = this.state.legendPaletteIndexByCode[sourceCode] ?? 0;
+    const palette = BUS_PALETTE;
+    if (!Array.isArray(palette) || palette.length === 0) return '#0077ff';
+    return palette[((idx % palette.length) + palette.length) % palette.length];
+  }
+
+  getLegendGroupFilters() {
+    const key = this.state.legend.groupKey;
+    if (key !== 'UNI' && key !== 'FS') return null;
+    const group = LEGEND_GROUPS[key];
+    if (!group || typeof group !== 'object') return null;
+
+    const out = {};
+    Object.keys(group).forEach(lineCode => {
+      const dests = group[lineCode];
+      if (!Array.isArray(dests) || dests.length === 0) return;
+      out[String(lineCode)] = new Set(dests.map(d => normalizeKey(d)));
+    });
+    return out;
+  }
+
+  applyLegendGroup(key) {
+    const requestedKey = key === 'UNI' || key === 'FS' ? key : null;
+    const prevKey = this.state.legend.groupKey;
+    const wasInGroup = prevKey === 'UNI' || prevKey === 'FS';
+
+    if (requestedKey) {
+      if (!wasInGroup) this.state.legend.groupSnapshot = { ...this.state.lineVisibility };
+      this.state.legend.groupKey = requestedKey;
+
+      const group = LEGEND_GROUPS[requestedKey] || {};
+      Object.keys(this.state.lineVisibility).forEach(k => { this.state.lineVisibility[k] = false; });
+      Object.keys(group).forEach(lineCode => {
+        if (Object.prototype.hasOwnProperty.call(this.state.lineVisibility, lineCode)) {
+          this.state.lineVisibility[lineCode] = true;
+        }
+      });
+      this.saveLegendGroupKey();
+      return;
+    }
+
+    this.state.legend.groupKey = null;
+    if (wasInGroup) {
+      if (this.state.legend.groupSnapshot) this.state.lineVisibility = { ...this.state.legend.groupSnapshot };
+      else Object.keys(this.state.lineVisibility).forEach(k => { this.state.lineVisibility[k] = false; });
+    }
+    this.state.legend.groupSnapshot = null;
+    this.saveLegendGroupKey();
+  }
+
+  loadLegendView() {
+    try {
+      const raw = localStorage.getItem(this.state.legend.viewKey);
+      if (raw === 'grid' || raw === 'list') this.state.legend.viewMode = raw;
+    } catch {
+    }
+  }
+
+  saveLegendView() {
+    try {
+      localStorage.setItem(this.state.legend.viewKey, this.state.legend.viewMode);
+    } catch {
+    }
+  }
+
+  loadLegendGroupKey() {
+    try {
+      const raw = localStorage.getItem(this.state.legend.groupKeyStorageKey);
+      if (raw === 'UNI' || raw === 'FS') this.state.legend.groupKey = raw;
+    } catch {
+    }
+  }
+
+  saveLegendGroupKey() {
+    try {
+      if (this.state.legend.groupKey === 'UNI' || this.state.legend.groupKey === 'FS') {
+        localStorage.setItem(this.state.legend.groupKeyStorageKey, this.state.legend.groupKey);
+      } else {
+        localStorage.removeItem(this.state.legend.groupKeyStorageKey);
+      }
+    } catch {
+    }
   }
 
   init() {
@@ -128,6 +336,11 @@ class BusMagoApp {
     this.initToast();
     this.initVisibility();
     this.loadActiveLines();
+    this.loadLegendView();
+    this.loadLegendGroupKey();
+    if (this.state.legend.groupKey === 'UNI' || this.state.legend.groupKey === 'FS') {
+      this.applyLegendGroup(this.state.legend.groupKey);
+    }
     this.renderLegend();
     this.setupEvents();
     this.initUserLocation();
@@ -137,7 +350,6 @@ class BusMagoApp {
 
     this.state.uiTimers.infoAgeInterval = setInterval(() => {
       if (this.state.selectedVehicleKey) this.updateInfoAgeBadge();
-      this.updateGlobalStatus();
     }, 1000);
   }
 
@@ -188,14 +400,38 @@ class BusMagoApp {
         }
       });
     }
+
+    this.renderLegend();
+    this.updateBusMarkers(this.state.lastEnrichedBuses);
   }
 
   loadFavorites() {
     try {
       const raw = localStorage.getItem(this.state.favorites.key);
-      if (!raw) return;
-      const arr = JSON.parse(raw);
-      if (Array.isArray(arr)) this.state.favorites.set = new Set(arr.filter(x => typeof x === 'string'));
+      if (raw) {
+        const arr = JSON.parse(raw);
+        if (Array.isArray(arr)) this.state.favorites.set = new Set(arr.filter(x => typeof x === 'string'));
+        return;
+      }
+
+      const legacyRaw = localStorage.getItem('busmago:favorites:v1');
+      if (!legacyRaw) return;
+      const legacyArr = JSON.parse(legacyRaw);
+      if (!Array.isArray(legacyArr)) return;
+
+      const migrated = new Set();
+      legacyArr.forEach(x => {
+        if (typeof x !== 'string') return;
+        const label = x.includes(' - ') ? x.split(' - ')[0].trim() : x.trim();
+        const line = linesConfig.find(l => l.code === label || l.label === label);
+        if (line) migrated.add(line.code);
+      });
+
+      this.state.favorites.set = migrated;
+      try {
+        localStorage.setItem(this.state.favorites.key, JSON.stringify(Array.from(migrated)));
+      } catch {
+      }
     } catch {
     }
   }
@@ -209,7 +445,7 @@ class BusMagoApp {
 
   saveActiveLines() {
     try {
-      const active = Object.keys(this.state.directionVisibility).filter(k => this.state.directionVisibility[k] === true);
+      const active = Object.keys(this.state.lineVisibility).filter(k => this.state.lineVisibility[k] === true);
       localStorage.setItem(this.state.persisted.activeLinesKey, JSON.stringify(active));
     } catch {
     }
@@ -218,13 +454,37 @@ class BusMagoApp {
   loadActiveLines() {
     try {
       const raw = localStorage.getItem(this.state.persisted.activeLinesKey);
-      if (!raw) return;
-      const arr = JSON.parse(raw);
-      if (!Array.isArray(arr)) return;
-      const set = new Set(arr.filter(x => typeof x === 'string'));
-      Object.keys(this.state.directionVisibility).forEach(k => {
-        this.state.directionVisibility[k] = set.has(k);
+      if (raw) {
+        const arr = JSON.parse(raw);
+        if (!Array.isArray(arr)) return;
+        const set = new Set(arr.filter(x => typeof x === 'string'));
+        Object.keys(this.state.lineVisibility).forEach(k => {
+          this.state.lineVisibility[k] = set.has(k);
+        });
+        return;
+      }
+
+      const legacyRaw = localStorage.getItem('busmago:activeLines:v1');
+      if (!legacyRaw) return;
+      const legacyArr = JSON.parse(legacyRaw);
+      if (!Array.isArray(legacyArr)) return;
+
+      const migrated = new Set();
+      legacyArr.forEach(x => {
+        if (typeof x !== 'string') return;
+        const label = x.includes(' - ') ? x.split(' - ')[0].trim() : x.trim();
+        const line = linesConfig.find(l => l.code === label || l.label === label);
+        if (line) migrated.add(line.code);
       });
+
+      Object.keys(this.state.lineVisibility).forEach(k => {
+        this.state.lineVisibility[k] = migrated.has(k);
+      });
+
+      try {
+        localStorage.setItem(this.state.persisted.activeLinesKey, JSON.stringify(Array.from(migrated)));
+      } catch {
+      }
     } catch {
     }
   }
@@ -281,11 +541,9 @@ class BusMagoApp {
   }
 
   initVisibility() {
-    linesConfig.forEach(l => {
-      l.directions.forEach(d => {
-        const key = `${l.label} - ${d}`;
-        this.state.directionVisibility[key] = false;
-      });
+    linesConfig.forEach((l, idx) => {
+      this.state.lineVisibility[l.code] = false;
+      this.state.legendPaletteIndexByCode[l.code] = idx;
     });
   }
 
@@ -299,6 +557,15 @@ class BusMagoApp {
         e.preventDefault();
         e.stopPropagation();
         this.setTheme(this.state.theme.mode === 'dark' ? 'light' : 'dark');
+      });
+    }
+
+    const refreshBtn = document.getElementById('refresh-btn');
+    if (refreshBtn) {
+      refreshBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        this.scheduleNextRefresh(0);
       });
     }
     
@@ -410,91 +677,90 @@ class BusMagoApp {
     if (!this.legendDiv) return;
     let html = "";
     
+    const favoritesOnly = this.legendDiv.dataset.favoritesOnly === '1';
+    const viewMode = this.state.legend.viewMode === 'list' ? 'list' : 'grid';
     const filterValue = (this.state.legend.filterText || '').trim();
-    html += `<div style="margin-bottom: 12px;">
-              <input id="legend-search" type="text" placeholder="Cerca linea..." value="${filterValue.replace(/"/g, '&quot;')}" class="legend-search">
+    const iconTarget = viewMode === 'grid' ? 'list' : 'grid';
+    const iconLabel = iconTarget === 'list' ? 'Passa a lista' : 'Passa a griglia';
+    const svgGrid = `<svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><g fill="currentColor"><rect x="3" y="3" width="4" height="4" rx="1"/><rect x="10" y="3" width="4" height="4" rx="1"/><rect x="17" y="3" width="4" height="4" rx="1"/><rect x="3" y="10" width="4" height="4" rx="1"/><rect x="10" y="10" width="4" height="4" rx="1"/><rect x="17" y="10" width="4" height="4" rx="1"/><rect x="3" y="17" width="4" height="4" rx="1"/><rect x="10" y="17" width="4" height="4" rx="1"/><rect x="17" y="17" width="4" height="4" rx="1"/></g></svg>`;
+    const svgList = `<svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><g fill="currentColor"><circle cx="6" cy="6" r="1.5"/><rect x="9" y="5" width="12" height="2" rx="1"/><circle cx="6" cy="12" r="1.5"/><rect x="9" y="11" width="12" height="2" rx="1"/><circle cx="6" cy="18" r="1.5"/><rect x="9" y="17" width="12" height="2" rx="1"/></g></svg>`;
+    const iconSvg = iconTarget === 'list' ? svgList : svgGrid;
+
+    html += `<div class="legend-search-row">
+              <input id="legend-search" type="text" placeholder="Cerca linea..." value="${this.escapeHtmlAttribute(filterValue)}" class="legend-search">
             </div>`;
 
-    html += `<label class="legend-favorites-toggle">
-              <input type="checkbox" id="favorites-toggle">
-              <strong>Solo Preferiti</strong>
-            </label>`;
+    html += `<button id="favorites-only-btn" class="legend-action-btn legend-action-toggle ${favoritesOnly ? 'is-active' : ''}" type="button" aria-pressed="${favoritesOnly ? 'true' : 'false'}">PREFERITI</button>`;
 
-    // Presets
-    html += `<label>
-              <input type="checkbox" id="preset-universita">
-              <strong>Università</strong>
-            </label>`;
-    html += `<label>
-              <input type="checkbox" id="preset-stazione">
-              <strong>Stazione</strong>
-            </label>`;
-    html += `<label style="margin-bottom:8px;">
-              <input type="checkbox" id="preset-notturne">
-              <strong>Notturne (A-D)</strong>
-            </label>`;
-  
-    const favoritesOnly = this.legendDiv.dataset.favoritesOnly === '1';
     const filterText = (this.state.legend.filterText || '').trim().toLowerCase();
 
     // Clear All Button
     html += `<button id="clear-all-lines">CLEAR ALL</button>`;
 
+    const groupKey = this.state.legend.groupKey;
+    html += `<hr class="legend-grid-separator">`;
+    html += `<div class="legend-group-row">
+              <button id="legend-group-uni" class="legend-action-btn legend-action-toggle legend-group-btn ${groupKey === 'UNI' ? 'is-active' : ''}" type="button" aria-label="Gruppo UNI" aria-pressed="${groupKey === 'UNI' ? 'true' : 'false'}"><img class="legend-group-icon" src="icona_uni.webp" alt=""></button>
+              <button id="legend-group-fs" class="legend-action-btn legend-action-toggle legend-group-btn ${groupKey === 'FS' ? 'is-active' : ''}" type="button" aria-label="Gruppo FS" aria-pressed="${groupKey === 'FS' ? 'true' : 'false'}"><img class="legend-group-icon" src="icona_fs.webp" alt=""></button>
+            </div>`;
+    html += `<hr class="legend-grid-separator">`;
+
+    html += `<div class="legend-header-row">
+              <div class="legend-section-title legend-chip">LINEE</div>
+              <button id="legend-view-toggle" class="legend-view-toggle legend-chip" type="button" aria-label="${iconLabel}" title="${iconLabel}">${iconSvg}</button>
+            </div>`;
+
     // Lines
+    html += `<div class="legend-lines legend-lines--${viewMode}">`;
     let separatorAdded = false;
-    linesConfig.forEach(l => {
+    const orderedLines = Array.isArray(linesConfig) ? [...linesConfig] : [];
+    const idx17 = orderedLines.findIndex(l => l && l.code === '17');
+    const idx17s = orderedLines.findIndex(l => l && l.code === '17/');
+    if (idx17 !== -1 && idx17s !== -1 && idx17 > idx17s) {
+      const tmp = orderedLines[idx17];
+      orderedLines[idx17] = orderedLines[idx17s];
+      orderedLines[idx17s] = tmp;
+    }
+
+    orderedLines.forEach(l => {
       // Add separator before night lines
       if (!separatorAdded && ["A", "B", "C", "D"].includes(l.code)) {
-        html += '<hr>';
+        html += '<hr class="legend-grid-separator">';
         separatorAdded = true;
       }
       
       // Add separator before 777
       if (l.code === "777") {
-          html += '<hr>';
+          html += '<hr class="legend-grid-separator">';
       }
 
-      l.directions.forEach(d => {
-        const key = `${l.label} - ${d}`;
-        
-        // Ensure 777 Bateo Gambling is in directionVisibility
-        if (l.code === "777" && !this.state.directionVisibility.hasOwnProperty(key)) {
-            this.state.directionVisibility[key] = false;
-        }
-        
-        if (this.state.directionVisibility.hasOwnProperty(key)) {
-          const isFavorite = this.state.favorites.set.has(key);
-          if (favoritesOnly && !isFavorite) return;
-          if (filterText) {
-            const hay = `${l.code} ${l.label} ${d} ${key}`.toLowerCase();
-            if (!hay.includes(filterText)) return;
-          }
+      const isFavorite = this.state.favorites.set.has(l.code);
+      if (favoritesOnly && !isFavorite) return;
+      if (filterText) {
+        const hay = `${l.code} ${l.label} ${(Array.isArray(l.directions) ? l.directions.join(' ') : '')}`.toLowerCase();
+        if (!hay.includes(filterText)) return;
+      }
 
-          const checked = this.state.directionVisibility[key] ? "checked" : "";
-          const safeKey = key.replace(/"/g, '&quot;');
-          const colorBox = `<span style="display:inline-block;width:10px;height:10px;background-color:${l.color};margin-right:5px;border-radius:50%;"></span>`;
-          const activeClass = this.state.directionVisibility[key] ? 'active-line' : '';
-          const favSymbol = isFavorite ? '★' : '☆';
-          html += `<label class="legend-line ${activeClass}" style="display:flex; align-items:center; justify-content:space-between; gap:8px;">
-                    <span style="display:flex; align-items:center; gap:6px;">
-                      <input type="checkbox" data-key="${safeKey}" ${checked}>
-                      ${colorBox}${key}
-                    </span>
-                    <button type="button" class="fav-btn" data-fav="${safeKey}" style="background:transparent; border:0; color:inherit; cursor:pointer; font-size:14px; padding:2px 6px;">${favSymbol}</button>
-                  </label>`;
-        }
-      });
+      const safeKey = this.escapeHtmlAttribute(l.code);
+      const activeClass = this.state.lineVisibility[l.code] ? 'active-line' : '';
+      const favSymbol = isFavorite ? '★' : '☆';
+      const title = this.escapeHtmlAttribute(l.label || l.code);
+      const pressed = this.state.lineVisibility[l.code] ? 'true' : 'false';
+      const tileColor = this.getLegendLineColor(l.code);
+      html += `<div class="legend-line-tile ${activeClass}" style="--line-color:${tileColor};" title="${title}">
+                <button type="button" class="legend-line-select" data-key="${safeKey}" aria-pressed="${pressed}">
+                  <span class="legend-line-code">${this.escapeHtmlAttribute(l.code)}</span>
+                  ${viewMode === 'grid' ? `<span class="legend-line-meta">${this.escapeHtmlAttribute(Array.isArray(l.directions) && l.directions.length ? l.directions.join(' • ') : (l.label || l.code))}</span>` : ''}
+                </button>
+                <button type="button" class="fav-btn legend-line-fav" data-fav="${safeKey}" aria-label="Preferito ${title}">${favSymbol}</button>
+              </div>`;
     });
+    html += `</div>`;
   
     // "Select All"
-    const allSelected = Object.keys(this.state.directionVisibility)
-        .filter(k => !k.includes("777 Bateo Gambling"))
-        .every(k => this.state.directionVisibility[k]);
+    const allSelected = Object.keys(this.state.lineVisibility).every(k => this.state.lineVisibility[k]);
 
-    html += `<label style="margin-top:8px; border-top:1px solid rgba(255,255,255,0.1); padding-top:8px;">
-              <input type="checkbox" id="select-all-lines" ${allSelected ? 'checked' : ''}>
-              <strong>Seleziona tutto</strong>
-            </label>`;
+    html += `<button id="select-all-lines-btn" class="legend-action-btn legend-action-toggle ${allSelected ? 'is-active' : ''}" type="button" aria-pressed="${allSelected ? 'true' : 'false'}">SELEZIONA TUTTO</button>`;
 
     this.legendDiv.innerHTML = html;
     
@@ -520,24 +786,44 @@ class BusMagoApp {
       });
     }
 
-    const favoritesToggle = document.getElementById('favorites-toggle');
-    if (favoritesToggle) {
-      favoritesToggle.checked = this.legendDiv.dataset.favoritesOnly === '1';
-      favoritesToggle.addEventListener('change', (e) => {
-        const enabled = e.target.checked;
+    const viewToggle = document.getElementById('legend-view-toggle');
+    if (viewToggle) {
+      viewToggle.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        this.state.legend.viewMode = this.state.legend.viewMode === 'list' ? 'grid' : 'list';
+        this.saveLegendView();
+        this.renderLegend();
+      });
+    }
+
+    const favoritesOnlyBtn = document.getElementById('favorites-only-btn');
+    if (favoritesOnlyBtn) {
+      const enabledNow = this.legendDiv.dataset.favoritesOnly === '1';
+      favoritesOnlyBtn.classList.toggle('is-active', enabledNow);
+      favoritesOnlyBtn.setAttribute('aria-pressed', enabledNow ? 'true' : 'false');
+
+      favoritesOnlyBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        this.state.legend.groupKey = null;
+        this.state.legend.groupSnapshot = null;
+        this.saveLegendGroupKey();
+
+        const enabled = this.legendDiv.dataset.favoritesOnly !== '1';
         this.legendDiv.dataset.favoritesOnly = enabled ? '1' : '0';
 
         if (enabled) {
-          this.state.favorites.snapshot = { ...this.state.directionVisibility };
-          Object.keys(this.state.directionVisibility).forEach(k => {
-            this.state.directionVisibility[k] = this.state.favorites.set.has(k);
+          this.state.favorites.snapshot = { ...this.state.lineVisibility };
+          Object.keys(this.state.lineVisibility).forEach(k => {
+            this.state.lineVisibility[k] = this.state.favorites.set.has(k);
           });
           this.updateBusMarkers(this.state.lastEnrichedBuses);
           this.updateTrackStyles();
           this.saveActiveLines();
         } else {
           if (this.state.favorites.snapshot) {
-            this.state.directionVisibility = { ...this.state.favorites.snapshot };
+            this.state.lineVisibility = { ...this.state.favorites.snapshot };
             this.state.favorites.snapshot = null;
             this.updateBusMarkers(this.state.lastEnrichedBuses);
             this.updateTrackStyles();
@@ -565,109 +851,124 @@ class BusMagoApp {
         clearAllBtn.addEventListener('click', (e) => {
             e.preventDefault();
             e.stopPropagation();
-            Object.keys(this.state.directionVisibility).forEach(k => {
-                if (!k.includes("777 Bateo Gambling")) {
-                    this.state.directionVisibility[k] = false;
-                }
-            });
+            this.state.legend.groupKey = null;
+            this.state.legend.groupSnapshot = null;
+            this.saveLegendGroupKey();
+            Object.keys(this.state.lineVisibility).forEach(k => { this.state.lineVisibility[k] = false; });
             this.updateBusMarkers(this.state.lastEnrichedBuses);
+            this.updateTrackStyles();
             this.saveActiveLines();
             this.renderLegend();
+            this.scheduleNextRefresh(0);
         });
     }
 
     // Select All
-    const selectAllCheckbox = document.getElementById('select-all-lines');
-    if (selectAllCheckbox) {
-      selectAllCheckbox.addEventListener('change', (e) => {
-        const isChecked = e.target.checked;
-        const checkboxes = this.legendDiv.querySelectorAll('input[type="checkbox"][data-key]');
-        
-        checkboxes.forEach(cb => {
-          const k = cb.getAttribute('data-key');
-          if (k.includes("777 Bateo Gambling")) return; // Skip 777
+    const selectAllBtn = document.getElementById('select-all-lines-btn');
+    if (selectAllBtn) {
+      const allSelectedNow = Object.keys(this.state.lineVisibility).every(k => this.state.lineVisibility[k] === true);
+      selectAllBtn.classList.toggle('is-active', allSelectedNow);
+      selectAllBtn.setAttribute('aria-pressed', allSelectedNow ? 'true' : 'false');
 
-          cb.checked = isChecked;
-          this.state.directionVisibility[k] = isChecked;
+      selectAllBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        this.state.legend.groupKey = null;
+        this.state.legend.groupSnapshot = null;
+        this.saveLegendGroupKey();
+
+        const allSelectedNext = !Object.keys(this.state.lineVisibility).every(k => this.state.lineVisibility[k] === true);
+        const lineButtons = this.legendDiv.querySelectorAll('button.legend-line-select[data-key]');
+
+        lineButtons.forEach(btn => {
+          const k = btn.getAttribute('data-key');
+          if (!k) return;
+          this.state.lineVisibility[k] = allSelectedNext;
+          btn.setAttribute('aria-pressed', allSelectedNext ? 'true' : 'false');
+          const tile = btn.closest('.legend-line-tile');
+          if (tile) tile.classList.toggle('active-line', allSelectedNext);
         });
-        
+
+        selectAllBtn.classList.toggle('is-active', allSelectedNext);
+        selectAllBtn.setAttribute('aria-pressed', allSelectedNext ? 'true' : 'false');
+
         this.updateBusMarkers(this.state.lastEnrichedBuses);
+        this.updateTrackStyles();
         this.saveActiveLines();
+        this.scheduleNextRefresh(0);
       });
     }
 
-    // Presets helper
-    const handlePreset = (id, targets) => {
-        const checkbox = document.getElementById(id);
-        if (checkbox) {
-            checkbox.addEventListener('change', (e) => {
-                const isChecked = e.target.checked;
-                targets.forEach(k => {
-                    this.state.directionVisibility[k] = isChecked;
-                    const cb = this.legendDiv.querySelector(`input[type="checkbox"][data-key="${k.replace(/"/g, '&quot;')}"]`);
-                    if (cb) cb.checked = isChecked;
-                });
-                this.updateBusMarkers(this.state.lastEnrichedBuses);
-                this.saveActiveLines();
-            });
-        }
-    };
+    const lineButtons = this.legendDiv.querySelectorAll('button.legend-line-select[data-key]');
+    lineButtons.forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        this.state.legend.groupKey = null;
+        this.state.legend.groupSnapshot = null;
+        this.saveLegendGroupKey();
 
-    // Università Preset
-    handlePreset('preset-universita', [
-        "17 - SAN CILINO", "17/ - SAN CILINO", "4 - VILLA CARSIA",
-        "51 - STAZIONE FERROVIARIA", "51 - VILLA CARSIA", "51/ - STAZIONE FERROVIARIA"
-    ]);
+        const k = btn.getAttribute('data-key');
+        if (!k) return;
 
-    // Stazione Preset
-    handlePreset('preset-stazione', [
-        "17/ - STAZIONE FERROVIARIA", "17 - VIA DI CAMPO MARZIO", "4 - PIAZZA OBERDAN", "4 - PIAZZA TOMMASEO",
-        "51 - STAZIONE FERROVIARIA", "51 - VILLA CARSIA", "51/ - STAZIONE FERROVIARIA"
-    ]);
+        const next = !this.state.lineVisibility[k];
+        this.state.lineVisibility[k] = next;
+        btn.setAttribute('aria-pressed', next ? 'true' : 'false');
 
-    // Notturne Preset (A, B, C, D)
-    const nightLines = [];
-    linesConfig.forEach(l => {
-        if (["A", "B", "C", "D"].includes(l.code)) {
-            l.directions.forEach(d => nightLines.push(`${l.label} - ${d}`));
-        }
-    });
-    handlePreset('preset-notturne', nightLines);
+        const tile = btn.closest('.legend-line-tile');
+        if (tile) tile.classList.toggle('active-line', next);
 
-    // Individual checkboxes
-    const individualCheckboxes = this.legendDiv.querySelectorAll('input[type="checkbox"][data-key]');
-    individualCheckboxes.forEach(input => {
-      input.addEventListener('change', (e) => {
-        const k = e.target.getAttribute('data-key');
-        this.state.directionVisibility[k] = e.target.checked;
-        
-        // Update Select All state (ignoring 777)
-        if (selectAllCheckbox) {
-            const allOtherChecked = Array.from(individualCheckboxes)
-                .filter(cb => !cb.getAttribute('data-key').includes("777 Bateo Gambling"))
-                .every(cb => cb.checked);
-            selectAllCheckbox.checked = allOtherChecked;
+        if (selectAllBtn) {
+          const allSelectedNow = Object.keys(this.state.lineVisibility).every(key => this.state.lineVisibility[key] === true);
+          selectAllBtn.classList.toggle('is-active', allSelectedNow);
+          selectAllBtn.setAttribute('aria-pressed', allSelectedNow ? 'true' : 'false');
         }
 
         this.updateBusMarkers(this.state.lastEnrichedBuses);
+        this.updateTrackStyles();
         this.saveActiveLines();
+        this.scheduleNextRefresh(0);
       });
     });
+
+    const groupUniBtn = document.getElementById('legend-group-uni');
+    if (groupUniBtn) {
+      groupUniBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        const nextKey = this.state.legend.groupKey === 'UNI' ? null : 'UNI';
+        this.applyLegendGroup(nextKey);
+        this.updateBusMarkers(this.state.lastEnrichedBuses);
+        this.updateTrackStyles();
+        this.saveActiveLines();
+        this.renderLegend();
+        this.scheduleNextRefresh(0);
+      });
+    }
+
+    const groupFsBtn = document.getElementById('legend-group-fs');
+    if (groupFsBtn) {
+      groupFsBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        const nextKey = this.state.legend.groupKey === 'FS' ? null : 'FS';
+        this.applyLegendGroup(nextKey);
+        this.updateBusMarkers(this.state.lastEnrichedBuses);
+        this.updateTrackStyles();
+        this.saveActiveLines();
+        this.renderLegend();
+        this.scheduleNextRefresh(0);
+      });
+    }
   }
 
   getRefreshIntervalMs() {
     const isFollowingSelected = !!(this.state.selectedVehicleKey && !this.state.selectedVehicleKey.startsWith('TRACK_') && this.state.isFollowing);
     if (isFollowingSelected) return CONFIG.REFRESH.FOLLOWING_MS;
 
-    let activeDirectionCount = 0;
-    linesConfig.forEach(l => {
-      l.directions.forEach(d => {
-        const key = `${l.label} - ${d}`;
-        if (this.state.directionVisibility[key] === true) activeDirectionCount++;
-      });
-    });
+    const activeLineCount = Object.keys(this.state.lineVisibility).filter(k => this.state.lineVisibility[k] === true).length;
 
-    if (!this.state.selectedVehicleKey || activeDirectionCount > CONFIG.REFRESH.MANY_LINES_THRESHOLD) return CONFIG.REFRESH.MANY_LINES_MS;
+    if (!this.state.selectedVehicleKey || activeLineCount > CONFIG.REFRESH.MANY_LINES_THRESHOLD) return CONFIG.REFRESH.MANY_LINES_MS;
     return CONFIG.REFRESH.NORMAL_MS;
   }
 
@@ -693,16 +994,7 @@ class BusMagoApp {
     this.state.refreshControl.inFlight = true;
 
     try {
-        // 1. Count active directions to determine optimization level
-        let activeDirectionCount = 0;
-        linesConfig.forEach(l => {
-            l.directions.forEach(d => {
-                const key = `${l.label} - ${d}`;
-                if (this.state.directionVisibility[key] === true) {
-                    activeDirectionCount++;
-                }
-            });
-        });
+        const activeLineCount = Object.keys(this.state.lineVisibility).filter(k => this.state.lineVisibility[k] === true).length;
         
         // Optimization Logic
         // <= 5 directions: All stops
@@ -710,9 +1002,9 @@ class BusMagoApp {
         // > 10 directions: Terminals only (approx 2 stops total per line)
         
         let stopsLimitPerLine = Infinity;
-        if (activeDirectionCount > CONFIG.REFRESH.MANY_LINES_THRESHOLD) {
+        if (activeLineCount > CONFIG.REFRESH.MANY_LINES_THRESHOLD) {
             stopsLimitPerLine = 2; // Usually just terminals
-        } else if (activeDirectionCount > 5) {
+        } else if (activeLineCount > 5) {
             stopsLimitPerLine = 3; // Terminals + 1 intermediate
         }
 
@@ -720,11 +1012,7 @@ class BusMagoApp {
         let hasActiveLines = false;
 
         linesConfig.forEach(l => {
-            // Check if any direction of this line is active
-            const isLineActive = l.directions.some(d => {
-                const key = `${l.label} - ${d}`;
-                return this.state.directionVisibility[key] === true;
-            });
+            const isLineActive = this.state.lineVisibility[l.code] === true;
 
             if (isLineActive) {
                 hasActiveLines = true;
@@ -740,7 +1028,20 @@ class BusMagoApp {
                 if (stopsLimitPerLine === Infinity) {
                     stopsToUse = l.stops;
                 } else {
-                    stopsToUse = l.stops.slice(0, stopsLimitPerLine);
+                    const src = Array.isArray(l.stops) ? l.stops : [];
+                    if (src.length <= stopsLimitPerLine) {
+                        stopsToUse = src;
+                    } else if (stopsLimitPerLine <= 1) {
+                        stopsToUse = [src[0]];
+                    } else {
+                        const picked = [];
+                        const lastIdx = src.length - 1;
+                        for (let i = 0; i < stopsLimitPerLine; i++) {
+                            const idx = Math.round((i * lastIdx) / (stopsLimitPerLine - 1));
+                            picked.push(src[idx]);
+                        }
+                        stopsToUse = picked;
+                    }
                 }
                 
                 stopsToUse.forEach(s => uniqueStops.add(s));
@@ -773,6 +1074,7 @@ class BusMagoApp {
         // 3. Process Vehicles
         const buses = [];
         linesConfig.forEach(lineConf => {
+            const paletteColor = this.getLegendLineColor(lineConf.code);
             Object.keys(stopDataMap).forEach(sCode => {
                 const runs = stopDataMap[sCode];
                 runs.forEach(r => {
@@ -790,7 +1092,7 @@ class BusMagoApp {
                                 departure: r.Departure || "",
                                 nextPasses: r.NextPasses || "",
                                 lineLabel: lineConf.label,
-                                lineColor: lineConf.color,
+                                lineColor: paletteColor,
                                 lineCode: lineConf.code
                             });
                         }
@@ -849,7 +1151,6 @@ class BusMagoApp {
         }
         this.state.updateStatus.lastSuccessAt = Date.now();
         this.state.updateStatus.lastErrorMessage = '';
-        this.updateGlobalStatus();
 
         if (selected && selected.key && this.state.selectedVehicleKey === selected.key && selectedPrevLatLng) {
           const moved = selectedPrevLatLng.lat !== selected.coords[0] || selectedPrevLatLng.lng !== selected.coords[1];
@@ -861,7 +1162,6 @@ class BusMagoApp {
     } catch (err) {
         this.state.updateStatus.lastErrorAt = Date.now();
         this.state.updateStatus.lastErrorMessage = (err && err.message) ? String(err.message) : 'Errore di connessione';
-        this.updateGlobalStatus();
         console.error("Errore aggiornamento dati", err);
         this.showToast("Errore di connessione. Riprovo...", "error");
         this.updateInfoFromBus(this.state.selectedVehicleKey ? { key: this.state.selectedVehicleKey } : null);
@@ -875,89 +1175,104 @@ class BusMagoApp {
   }
 
   processTracks(stopDataMap) {
+    const visible = new Set();
+    const groupFilters = this.getLegendGroupFilters();
+
     linesConfig.forEach(lineConf => {
-        // Collect all active runs
+        if (this.state.lineVisibility[lineConf.code] !== true) return;
+
+        if (lineConf.code === "777") {
+            const dir = "CASINÒ VENEZIA";
+            this.handleEasterEggTrack(lineConf, dir);
+            visible.add("777_CASINÒ VENEZIA");
+            return;
+        }
+
         const allRuns = [];
         lineConf.stops.forEach(sCode => {
             const runs = stopDataMap[sCode];
-            if (Array.isArray(runs)) {
-                runs.forEach(r => {
-                    if ((r.LineCode || "").toUpperCase() === lineConf.code) {
-                        allRuns.push(r);
-                    }
-                });
-            }
+            if (!Array.isArray(runs)) return;
+            runs.forEach(r => {
+                if ((r.LineCode || "").toUpperCase() === lineConf.code) allRuns.push(r);
+            });
         });
 
-        lineConf.directions.forEach(dir => {
-            const targetDest = dir.toUpperCase();
-            
-            // Easter Egg 777
-            if (lineConf.code === "777" && dir === "CASINÒ VENEZIA") {
-                this.handleEasterEggTrack(lineConf, dir);
+        const bestByDest = new Map();
+        allRuns.forEach(r => {
+            const destRaw = (r.Destination || "").trim();
+            const destKey = normalizeKey(destRaw);
+            if (!destKey) return;
+            if (groupFilters) {
+              const allowed = groupFilters[lineConf.code];
+              if (!allowed || !allowed.has(destKey)) return;
+            }
+            const existing = bestByDest.get(destKey);
+            if (!existing) {
+                bestByDest.set(destKey, r);
+                return;
+            }
+            if (!existing.Race && r.Race) bestByDest.set(destKey, r);
+        });
+
+        bestByDest.forEach((bestRun, destKey) => {
+            if (!bestRun || !bestRun.Race) return;
+
+            const race = String(bestRun.Race);
+            const destination = (bestRun.Destination || destKey).trim();
+            const trackKey = `${lineConf.code}_${destKey}`;
+            visible.add(trackKey);
+
+            if (!this.state.trackRefreshCounters[trackKey]) this.state.trackRefreshCounters[trackKey] = 0;
+            if (!this.state.lastRaces[trackKey]) this.state.lastRaces[trackKey] = "";
+
+            const prevRace = this.state.lastRaces[trackKey];
+            const counter = this.state.trackRefreshCounters[trackKey] || 0;
+            const shouldFetch = race && (race !== prevRace || counter >= CONFIG.REFRESH.TRACK_REFRESH_INTERVAL || !this.state.routeLayers[trackKey]);
+
+            if (!shouldFetch) {
+                this.state.trackRefreshCounters[trackKey] = counter + 1;
                 return;
             }
 
-            // Find best run
-            let bestRun = null;
-            for (const r of allRuns) {
-                if ((r.Destination || "").toUpperCase() === targetDest && r.Race) {
-                    bestRun = r;
-                    break;
-                }
+            this.state.lastRaces[trackKey] = race;
+            this.state.trackRefreshCounters[trackKey] = 0;
+
+            let lineCodeForTrack = String(bestRun.Line || '').trim();
+            if (!lineCodeForTrack) {
+                lineCodeForTrack = String(bestRun.LineCode || '').trim();
+                if (lineCodeForTrack && !lineCodeForTrack.startsWith('T')) lineCodeForTrack = `T${lineCodeForTrack}`;
             }
+            if (!lineCodeForTrack) return;
 
-            if (bestRun) {
-                const race = String(bestRun.Race);
-                const legendKey = `${lineConf.label} - ${dir}`;
-                const trackKey = `${lineConf.code}_${dir}`;
+            const url = `https://realtime.tplfvg.it/API/v1.0/polemonitor/LineGeoTrack?Line=${encodeURIComponent(lineCodeForTrack)}&Race=${encodeURIComponent(race)}&_=${Date.now()}`;
 
-                // Optimization: If track already exists, do NOT update it.
-                // Tracks are static enough during a short session.
-                if (this.state.routeLayers[trackKey]) {
-                    return; 
-                }
-
-                if (!this.state.trackRefreshCounters[trackKey]) this.state.trackRefreshCounters[trackKey] = 0;
-                if (!this.state.lastRaces[trackKey]) this.state.lastRaces[trackKey] = "";
-
-                if (race && (race !== this.state.lastRaces[trackKey] || this.state.trackRefreshCounters[trackKey] >= CONFIG.REFRESH.TRACK_REFRESH_INTERVAL)) {
-                    this.state.lastRaces[trackKey] = race;
-                    this.state.trackRefreshCounters[trackKey] = 0;
-
-                    const lineCodeForTrack = bestRun.Line || ("T" + (lineConf.code.length === 1 ? "0" + lineConf.code : lineConf.code));
-                    const url = `https://realtime.tplfvg.it/API/v1.0/polemonitor/LineGeoTrack?Line=${encodeURIComponent(lineCodeForTrack)}&Race=${encodeURIComponent(race)}&_=${Date.now()}`;
-
-                    fetch(url)
-                        .then(r => r.json())
-                        .then(track => {
-                            if (Array.isArray(track)) {
-                                this.updateTrackLayer(trackKey, legendKey, lineConf, dir, track);
-                            }
-                        })
-                        .catch(err => console.error(`Errore caricamento tracciato ${trackKey}`, err));
-                } else {
-                    this.state.trackRefreshCounters[trackKey] += 1;
-                }
-            }
+            fetch(url)
+                .then(r => r.json())
+                .then(track => {
+                    if (Array.isArray(track)) this.updateTrackLayer(trackKey, lineConf, destination, track);
+                })
+                .catch(err => console.error(`Errore caricamento tracciato ${trackKey}`, err));
         });
     });
+
+    this.state.visibleTrackKeys = visible;
   }
 
   handleEasterEggTrack(lineConf, dir) {
       const trackKey = "777_CASINÒ VENEZIA";
-      const legendKey = `${lineConf.label} - ${dir}`;
+      const paletteColor = this.getLegendLineColor(lineConf.code);
       
       if (!this.state.routeLayers[trackKey]) {
           const pts = easterEggTrack777;
           const polyline = L.polyline(pts, { 
-              color: lineConf.color, 
+              color: paletteColor, 
               weight: 3.5, 
               dashArray: '10, 10' 
           }).addTo(this.state.map);
           
           this.state.routeLayers[trackKey] = polyline;
-          polyline.options.legendKey = legendKey;
+          polyline.options.lineCode = lineConf.code;
+          polyline.options.destination = dir;
 
           polyline.on('click', (e) => {
               L.DomEvent.stopPropagation(e);
@@ -984,7 +1299,8 @@ class BusMagoApp {
       }
   }
 
-  updateTrackLayer(trackKey, legendKey, lineConf, dir, trackData) {
+  updateTrackLayer(trackKey, lineConf, destination, trackData) {
+      const paletteColor = this.getLegendLineColor(lineConf.code);
       const pts = [];
       trackData.forEach(segment => {
           if (Array.isArray(segment)) {
@@ -1000,15 +1316,17 @@ class BusMagoApp {
       if (this.state.routeLayers[trackKey]) {
           // Just update geometry, do not remove/add (prevents flicker and layout thrashing)
           this.state.routeLayers[trackKey].setLatLngs(pts);
+          this.state.routeLayers[trackKey].options.destination = destination;
       } else {
-          const polyline = L.polyline(pts, { color: lineConf.color, weight: 3.5 }).addTo(this.state.map);
+          const polyline = L.polyline(pts, { color: paletteColor, weight: 3.5 }).addTo(this.state.map);
           this.state.routeLayers[trackKey] = polyline;
-          polyline.options.legendKey = legendKey;
+          polyline.options.lineCode = lineConf.code;
+          polyline.options.destination = destination;
 
           polyline.on('click', (e) => {
               L.DomEvent.stopPropagation(e);
               this.state.selectedVehicleKey = "TRACK_" + trackKey;
-              this.updateInfoFromTrack(lineConf, dir);
+              this.updateInfoFromTrack(lineConf, destination);
               if (this.legendDiv.style.display === 'block') {
                   this.legendDiv.style.display = 'none';
               }
@@ -1025,8 +1343,8 @@ class BusMagoApp {
       if (pts.length > 0) {
           const start = pts[0];
           const end = pts[pts.length - 1];
-          endpoints.push(L.circleMarker(start, { radius: 3.5, color: lineConf.color, fillColor: lineConf.color, fillOpacity: 1 }).addTo(this.state.map));
-          endpoints.push(L.circleMarker(end, { radius: 3.5, color: lineConf.color, fillColor: lineConf.color, fillOpacity: 1 }).addTo(this.state.map));
+          endpoints.push(L.circleMarker(start, { radius: 3.5, color: paletteColor, fillColor: paletteColor, fillOpacity: 1 }).addTo(this.state.map));
+          endpoints.push(L.circleMarker(end, { radius: 3.5, color: paletteColor, fillColor: paletteColor, fillOpacity: 1 }).addTo(this.state.map));
       }
       this.state.routeEndpointMarkers[trackKey] = endpoints;
       
@@ -1036,13 +1354,9 @@ class BusMagoApp {
   updateBusMarkers(buses) {
     this.state.lastEnrichedBuses = buses || [];
     const newKeys = new Set();
+    const groupFilters = this.getLegendGroupFilters();
     
-    // Calculate active line count for icon sizing
-    let activeLineCount = 0;
-    linesConfig.forEach(l => {
-        const isActive = l.directions.some(d => this.state.directionVisibility[`${l.label} - ${d}`]);
-        if (isActive) activeLineCount++;
-    });
+    const activeLineCount = Object.keys(this.state.lineVisibility).filter(k => this.state.lineVisibility[k] === true).length;
     const useSmallIcons = activeLineCount >= CONFIG.UI.SMALL_ICON_THRESHOLD;
     const iconSize = useSmallIcons ? [28, 28] : [40, 40];
     const iconAnchor = useSmallIcons ? [14, 14] : [20, 20];
@@ -1050,16 +1364,22 @@ class BusMagoApp {
 
     if (buses && buses.length > 0) {
       buses.forEach(b => {
-        const legendKey = `${b.lineLabel} - ${b.destination}`;
-        if (this.state.directionVisibility[legendKey] !== true) return;
+        if (this.state.lineVisibility[b.lineCode] !== true) return;
+        if (groupFilters) {
+          const allowed = groupFilters[b.lineCode];
+          if (!allowed || !allowed.has(normalizeKey(b.destination))) return;
+        }
 
         newKeys.add(b.key);
+
+        const paletteColor = this.getLegendLineColor(b.lineCode);
+        const labelTextColor = this.state.theme.mode === 'light' ? '#111' : '#fff';
         
         let isSelected = false;
         if (this.state.selectedVehicleKey) {
             if (this.state.selectedVehicleKey.startsWith("TRACK_")) {
                 const trackKey = this.state.selectedVehicleKey.substring(6);
-                const busTrackKey = `${b.lineCode}_${b.destination}`;
+                const busTrackKey = `${b.lineCode}_${normalizeKey(b.destination)}`;
                 if (trackKey === busTrackKey) isSelected = true;
             } else if (b.key === this.state.selectedVehicleKey) {
                 isSelected = true;
@@ -1070,7 +1390,7 @@ class BusMagoApp {
         const heading = typeof b.heading === 'number' ? b.heading : 0;
         const borderStyle = isSelected ? 'border: 3px solid #FFF;' : '';
         const opacityStyle = `opacity: ${opacity};`;
-        const iconHtml = `<div class="bus-icon ${sizeClass}" style="background-color: ${b.lineColor}; transform: rotate(${heading + 135}deg); ${borderStyle} ${opacityStyle}"><span style="display:inline-block; transform: rotate(${-(heading + 135)}deg);">${b.lineLabel}</span></div>`;
+        const iconHtml = `<div class="bus-icon ${sizeClass}" style="background-color: ${paletteColor}; transform: rotate(${heading + 135}deg); ${borderStyle} ${opacityStyle}"><span style="display:inline-block; transform: rotate(${-(heading + 135)}deg); color: ${labelTextColor};">${b.lineLabel}</span></div>`;
 
         let marker;
         if (this.state.busMarkers[b.key]) {
@@ -1092,7 +1412,7 @@ class BusMagoApp {
                     const iconDiv = el.querySelector('.bus-icon');
                     if (iconDiv) {
                         // Update styles directly
-                        iconDiv.style.backgroundColor = b.lineColor;
+                        iconDiv.style.backgroundColor = paletteColor;
                         iconDiv.style.transform = `rotate(${heading + 135}deg)`;
                         iconDiv.style.opacity = opacity;
                         iconDiv.style.border = isSelected ? '3px solid #FFF' : '';
@@ -1102,6 +1422,7 @@ class BusMagoApp {
                         if (span) {
                             if (span.textContent !== b.lineLabel) span.textContent = b.lineLabel;
                             span.style.transform = `rotate(${-(heading + 135)}deg)`;
+                            span.style.color = labelTextColor;
                         }
                         updated = true;
                     }
@@ -1170,7 +1491,7 @@ class BusMagoApp {
             if (this.state.lastEnrichedBuses) {
                 const selectedBus = this.state.lastEnrichedBuses.find(b => b.key === this.state.selectedVehicleKey);
                 if (selectedBus) {
-                    targetTrackKey = `${selectedBus.lineCode}_${selectedBus.destination}`;
+                    targetTrackKey = `${selectedBus.lineCode}_${normalizeKey(selectedBus.destination)}`;
                 }
             }
         }
@@ -1181,10 +1502,13 @@ class BusMagoApp {
         const endpoints = this.state.routeEndpointMarkers[tKey];
         if (!layer) return;
 
-        const legendKey = layer.options.legendKey;
-        const isVisibleInLegend = this.state.directionVisibility[legendKey] === true;
+        const lineCode = layer.options.lineCode;
+        const paletteColor = this.getLegendLineColor(lineCode);
+        const isVisibleByLine = this.state.lineVisibility[lineCode] === true;
+        const isVisibleByData = this.state.visibleTrackKeys instanceof Set ? this.state.visibleTrackKeys.has(tKey) : true;
+        const isVisible = isVisibleByLine && isVisibleByData;
 
-        if (!isVisibleInLegend) {
+        if (!isVisible) {
             layer.setStyle({ opacity: 0, weight: 0 });
             if (endpoints) {
                 endpoints.forEach(e => {
@@ -1205,10 +1529,10 @@ class BusMagoApp {
             }
         }
 
-        layer.setStyle({ opacity: opacity, weight: 3 });
+        layer.setStyle({ color: paletteColor, opacity: opacity, weight: 3 });
         if (endpoints) {
             endpoints.forEach(e => {
-                if (e.setStyle) e.setStyle({ opacity: opacity, fillOpacity: opacity });
+                if (e.setStyle) e.setStyle({ color: paletteColor, fillColor: paletteColor, opacity: opacity, fillOpacity: opacity });
                 else if (e.setOpacity) e.setOpacity(opacity);
             });
         }
@@ -1218,8 +1542,7 @@ class BusMagoApp {
   }
 
   updateEasterEggAnimation() {
-    const key = "777 Bateo Gambling - CASINÒ VENEZIA";
-    const isVisible = this.state.directionVisibility[key] === true;
+    const isVisible = this.state.lineVisibility["777"] === true;
 
     if (isVisible) {
         // Start if not active
@@ -1282,7 +1605,7 @@ class BusMagoApp {
         if (this.state.selectedVehicleKey && !this.state.selectedVehicleKey.startsWith('TRACK_')) {
           this.infoDiv.innerHTML = `
             <div class="info-header" style="border-bottom-color: rgba(220, 53, 69, 0.3)">
-              <div class="info-line-badge" style="background-color: #666">?</div>
+              <div class="info-line-badge" style="background-color: #666">⚠</div>
               <div class="info-destination" style="color: #ff6b6b">Corsa terminata</div>
             </div>
             <div class="info-body">
@@ -1328,7 +1651,7 @@ class BusMagoApp {
 
     this.infoDiv.innerHTML = `
       <div class="info-header">
-        <div class="info-line-badge" style="background-color: ${bus.lineColor}">${bus.lineLabel}</div>
+        <div class="info-line-badge" style="background-color: ${bus.lineCode ? this.getLegendLineColor(bus.lineCode) : bus.lineColor}">${bus.lineLabel}</div>
         <div class="info-destination">${bus.destination}</div>
       </div>
       <div class="info-body">
@@ -1346,43 +1669,6 @@ class BusMagoApp {
       </div>
     `;
     this.infoDiv.style.display = 'block';
-  }
-
-  updateGlobalStatus() {
-    if (!this.globalStatusDiv) return;
-    const textEl = this.globalStatusDiv.querySelector('.status-text');
-    if (!textEl) return;
-
-    // Se stiamo caricando dati (inFlight), mostriamo sempre "In attesa dati..."
-    if (this.state.refreshControl.inFlight) {
-        this.globalStatusDiv.className = `global-status`;
-        textEl.textContent = 'In attesa dati...';
-        return;
-    }
-
-    const now = Date.now();
-    const lastSuccessAt = this.state.updateStatus.lastSuccessAt || 0;
-    const lastErrorAt = this.state.updateStatus.lastErrorAt || 0;
-    const isOffline = lastErrorAt > lastSuccessAt;
-    const ageSec = lastSuccessAt ? Math.floor((now - lastSuccessAt) / 1000) : null;
-
-    let statusClass = 'live';
-    let statusText = 'Live';
-
-    if (isOffline) {
-      statusClass = 'offline';
-      statusText = 'Offline';
-    } else if (ageSec !== null) {
-      if (ageSec > 30) {
-        statusClass = 'delay';
-        statusText = 'Ritardo API';
-      }
-    } else {
-      statusText = 'In attesa dati...';
-    }
-
-    this.globalStatusDiv.className = `global-status ${statusClass}`;
-    textEl.textContent = statusText;
   }
 
   updateInfoAgeBadge() {
@@ -1424,7 +1710,7 @@ class BusMagoApp {
     }
     this.infoDiv.innerHTML = `
       <div class="info-header" style="border-bottom: none; margin-bottom: 0; padding-bottom: 0;">
-        <div class="info-line-badge" style="background-color: ${lineConf.color}">${lineConf.label}</div>
+        <div class="info-line-badge" style="background-color: ${this.getLegendLineColor(lineConf.code)}">${lineConf.label}</div>
         <div class="info-destination">${direction}</div>
       </div>
     `;
