@@ -578,6 +578,9 @@ class BusMagoApp {
     
     // Map interaction
     map.on('zoomstart', () => this.handleInteraction());
+    map.on('zoomend', () => {
+      if (this.state.map) this.updateBusMarkers(this.state.lastEnrichedBuses);
+    });
     map.on('dragstart', () => {
         this.handleInteraction();
         this.state.isFollowing = false;
@@ -751,6 +754,7 @@ class BusMagoApp {
       const safeKey = this.escapeHtmlAttribute(l.code);
       const activeClass = this.state.lineVisibility[l.code] ? 'active-line' : '';
       const favSymbol = isFavorite ? '★' : '☆';
+      const favClass = isFavorite ? 'is-favorite' : '';
       const title = this.escapeHtmlAttribute(l.label || l.code);
       const pressed = this.state.lineVisibility[l.code] ? 'true' : 'false';
       const tileColor = this.getLegendLineColor(l.code);
@@ -759,7 +763,7 @@ class BusMagoApp {
                   <span class="legend-line-code">${this.escapeHtmlAttribute(l.code)}</span>
                   ${viewMode === 'grid' ? `<span class="legend-line-meta">${this.escapeHtmlAttribute(Array.isArray(l.directions) && l.directions.length ? l.directions.join(' • ') : (l.label || l.code))}</span>` : ''}
                 </button>
-                <button type="button" class="fav-btn legend-line-fav" data-fav="${safeKey}" aria-label="Preferito ${title}">${favSymbol}</button>
+                <button type="button" class="fav-btn legend-line-fav ${favClass}" data-fav="${safeKey}" aria-label="Preferito ${title}">${favSymbol}</button>
               </div>`;
     });
     html += `</div>`;
@@ -1363,6 +1367,10 @@ class BusMagoApp {
     const newKeys = new Set();
     const groupFilters = this.getLegendGroupFilters();
     
+    const zoom = this.state.map ? this.state.map.getZoom() : CONFIG.MAP.DEFAULT_ZOOM;
+    const zoomScale = this.getBusIconZoomScale(zoom);
+    const showLabel = this.shouldShowBusLabel(zoom);
+
     const activeLineCount = Object.keys(this.state.lineVisibility).filter(k => this.state.lineVisibility[k] === true).length;
     const useSmallIcons = activeLineCount >= CONFIG.UI.SMALL_ICON_THRESHOLD;
     const iconSize = useSmallIcons ? [28, 28] : [40, 40];
@@ -1398,7 +1406,8 @@ class BusMagoApp {
         const selectionBorderColor = this.state.theme.mode === 'light' ? '#111' : '#FFF';
         const borderStyle = isSelected ? `border: 3px solid ${selectionBorderColor};` : '';
         const opacityStyle = `opacity: ${opacity};`;
-        const iconHtml = `<div class="bus-icon ${sizeClass}" style="background-color: ${paletteColor}; transform: rotate(${heading + 135}deg); ${borderStyle} ${opacityStyle}"><span style="display:inline-block; transform: rotate(${-(heading + 135)}deg); color: ${labelTextColor};">${b.lineLabel}</span></div>`;
+        const labelText = showLabel ? b.lineLabel : '';
+        const iconHtml = `<div class="bus-icon ${sizeClass}" style="background-color: ${paletteColor}; transform: rotate(${heading + 135}deg) scale(${zoomScale}); ${borderStyle} ${opacityStyle}"><span style="display:inline-block; transform: rotate(${-(heading + 135)}deg); color: ${labelTextColor}; opacity: ${showLabel ? 1 : 0};">${labelText}</span></div>`;
 
         let marker;
         if (this.state.busMarkers[b.key]) {
@@ -1421,16 +1430,17 @@ class BusMagoApp {
                     if (iconDiv) {
                         // Update styles directly
                         iconDiv.style.backgroundColor = paletteColor;
-                        iconDiv.style.transform = `rotate(${heading + 135}deg)`;
+                        iconDiv.style.transform = `rotate(${heading + 135}deg) scale(${zoomScale})`;
                         iconDiv.style.opacity = opacity;
                         iconDiv.style.border = isSelected ? `3px solid ${selectionBorderColor}` : '';
                         
                         // Update text content (only if changed)
                         const span = iconDiv.querySelector('span');
                         if (span) {
-                            if (span.textContent !== b.lineLabel) span.textContent = b.lineLabel;
+                            if (span.textContent !== labelText) span.textContent = labelText;
                             span.style.transform = `rotate(${-(heading + 135)}deg)`;
                             span.style.color = labelTextColor;
+                            span.style.opacity = showLabel ? '1' : '0';
                         }
                         updated = true;
                     }
@@ -1723,6 +1733,23 @@ class BusMagoApp {
       </div>
     `;
     this.infoDiv.style.display = 'block';
+  }
+
+  getBusIconZoomScale(zoom) {
+    const z = typeof zoom === 'number' ? zoom : CONFIG.MAP.DEFAULT_ZOOM;
+    const base = CONFIG.MAP.DEFAULT_ZOOM;
+    const max = 19;
+    const tRaw = (z - base) / (max - base);
+    const t = Math.max(0, Math.min(1, tRaw));
+    const eased = 1 - Math.pow(1 - t, 3);
+    const minScale = 0.56;
+    const maxScale = 1.15;
+    return minScale + (maxScale - minScale) * eased;
+  }
+
+  shouldShowBusLabel(zoom) {
+    const z = typeof zoom === 'number' ? zoom : CONFIG.MAP.DEFAULT_ZOOM;
+    return z >= (CONFIG.MAP.DEFAULT_ZOOM + 1);
   }
 
   computeBearing(lat1, lon1, lat2, lon2) {
