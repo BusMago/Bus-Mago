@@ -1388,7 +1388,8 @@ class BusMagoApp {
 
         const opacity = (this.state.selectedVehicleKey && !isSelected) ? 0.3 : 1.0;
         const heading = typeof b.heading === 'number' ? b.heading : 0;
-        const borderStyle = isSelected ? 'border: 3px solid #FFF;' : '';
+        const selectionBorderColor = this.state.theme.mode === 'light' ? '#111' : '#FFF';
+        const borderStyle = isSelected ? `border: 3px solid ${selectionBorderColor};` : '';
         const opacityStyle = `opacity: ${opacity};`;
         const iconHtml = `<div class="bus-icon ${sizeClass}" style="background-color: ${paletteColor}; transform: rotate(${heading + 135}deg); ${borderStyle} ${opacityStyle}"><span style="display:inline-block; transform: rotate(${-(heading + 135)}deg); color: ${labelTextColor};">${b.lineLabel}</span></div>`;
 
@@ -1415,7 +1416,7 @@ class BusMagoApp {
                         iconDiv.style.backgroundColor = paletteColor;
                         iconDiv.style.transform = `rotate(${heading + 135}deg)`;
                         iconDiv.style.opacity = opacity;
-                        iconDiv.style.border = isSelected ? '3px solid #FFF' : '';
+                        iconDiv.style.border = isSelected ? `3px solid ${selectionBorderColor}` : '';
                         
                         // Update text content (only if changed)
                         const span = iconDiv.querySelector('span');
