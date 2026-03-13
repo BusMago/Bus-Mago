@@ -732,6 +732,26 @@ html, body, #map {
   background-color: rgba(0, 119, 255, 0.28);
 }
 
+:root[data-theme="light"] .legend-action-btn.legend-group-btn {
+  background-color: #ffffff;
+  border-color: rgba(0, 0, 0, 0.18);
+  color: rgba(0, 0, 0, 0.95);
+}
+
+:root[data-theme="light"] .legend-action-btn.legend-group-btn:hover {
+  background-color: #ffffff;
+}
+
+:root[data-theme="light"] .legend-action-btn.legend-group-btn.is-active {
+  background-color: #ffffff;
+  border-color: transparent;
+  box-shadow: 0 0 0 2px #0077ff;
+}
+
+:root[data-theme="light"] .legend-action-btn.legend-group-btn.is-active:hover {
+  background-color: #ffffff;
+}
+
 .legend hr {
   border: 0;
   border-top: 1px solid rgba(255,255,255,0.1);
