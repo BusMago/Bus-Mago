@@ -545,6 +545,13 @@ class BusMagoApp {
       this.state.lineVisibility[l.code] = false;
       this.state.legendPaletteIndexByCode[l.code] = idx;
     });
+
+    const idx3 = this.state.legendPaletteIndexByCode['3'];
+    const idx10 = this.state.legendPaletteIndexByCode['10'];
+    if (typeof idx3 === 'number' && typeof idx10 === 'number') {
+      this.state.legendPaletteIndexByCode['3'] = idx10;
+      this.state.legendPaletteIndexByCode['10'] = idx3;
+    }
   }
 
   setupEvents() {
