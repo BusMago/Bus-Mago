@@ -1151,6 +1151,44 @@ class BusMagoApp {
     this.setupLegendListeners();
   }
 
+  preserveLegendScroll(anchorEl, action) {
+    if (!this.legendDiv || !anchorEl || typeof action !== 'function') {
+      if (typeof action === 'function') action();
+      return;
+    }
+    const container = this.legendDiv;
+    const containerRect = container.getBoundingClientRect();
+    const beforeTop = anchorEl.getBoundingClientRect().top - containerRect.top;
+    action();
+    const afterRect = container.getBoundingClientRect();
+    const afterTop = anchorEl.getBoundingClientRect().top - afterRect.top;
+    const delta = afterTop - beforeTop;
+    if (Number.isFinite(delta) && delta !== 0) container.scrollTop += delta;
+  }
+
+  preserveLegendScrollByLineKey(lineKey, action) {
+    if (!this.legendDiv || !lineKey || typeof action !== 'function') {
+      if (typeof action === 'function') action();
+      return;
+    }
+    const container = this.legendDiv;
+    const selectorKey = (window.CSS && typeof window.CSS.escape === 'function') ? window.CSS.escape(String(lineKey)) : String(lineKey).replace(/"/g, '\\"');
+    const anchorBefore = container.querySelector(`button.legend-line-select[data-key="${selectorKey}"]`);
+    if (!anchorBefore) {
+      action();
+      return;
+    }
+    const containerRect = container.getBoundingClientRect();
+    const beforeTop = anchorBefore.getBoundingClientRect().top - containerRect.top;
+    action();
+    const anchorAfter = container.querySelector(`button.legend-line-select[data-key="${selectorKey}"]`);
+    if (!anchorAfter) return;
+    const afterRect = container.getBoundingClientRect();
+    const afterTop = anchorAfter.getBoundingClientRect().top - afterRect.top;
+    const delta = afterTop - beforeTop;
+    if (Number.isFinite(delta) && delta !== 0) container.scrollTop += delta;
+  }
+
   setupLegendListeners() {
     const legendSearch = document.getElementById('legend-search');
     if (legendSearch) {
@@ -1297,32 +1335,35 @@ class BusMagoApp {
         const k = btn.getAttribute('data-key');
         if (!k) return;
 
-        const next = !this.state.lineVisibility[k];
-        this.state.lineVisibility[k] = next;
-        btn.setAttribute('aria-pressed', next ? 'true' : 'false');
+        this.preserveLegendScrollByLineKey(k, () => {
+          const next = !this.state.lineVisibility[k];
+          this.state.lineVisibility[k] = next;
+          btn.setAttribute('aria-pressed', next ? 'true' : 'false');
 
-        const tile = btn.closest('.legend-line-tile');
-        if (tile) tile.classList.toggle('active-line', next);
+          const tile = btn.closest('.legend-line-tile');
+          if (tile) tile.classList.toggle('active-line', next);
 
-        if (next) {
-          if (!this.state.directions.waitStartedAtByLine[k]) this.state.directions.waitStartedAtByLine[k] = Date.now();
-        } else {
-          delete this.state.directions.waitStartedAtByLine[k];
-          delete this.state.directions.filterByLine[k];
-          if (this.state.directions.expandedLineCode === k) this.state.directions.expandedLineCode = null;
-        }
+          if (next) {
+            if (!this.state.directions.waitStartedAtByLine[k]) this.state.directions.waitStartedAtByLine[k] = Date.now();
+          } else {
+            delete this.state.directions.waitStartedAtByLine[k];
+            delete this.state.directions.filterByLine[k];
+            if (this.state.directions.overrideModeByLine) delete this.state.directions.overrideModeByLine[k];
+            if (this.state.directions.expandedLineCode === k) this.state.directions.expandedLineCode = null;
+          }
 
-        if (selectAllBtn) {
-          const allSelectedNow = Object.keys(this.state.lineVisibility).every(key => this.state.lineVisibility[key] === true);
-          selectAllBtn.classList.toggle('is-active', allSelectedNow);
-          selectAllBtn.setAttribute('aria-pressed', allSelectedNow ? 'true' : 'false');
-        }
+          if (selectAllBtn) {
+            const allSelectedNow = Object.keys(this.state.lineVisibility).every(key => this.state.lineVisibility[key] === true);
+            selectAllBtn.classList.toggle('is-active', allSelectedNow);
+            selectAllBtn.setAttribute('aria-pressed', allSelectedNow ? 'true' : 'false');
+          }
 
-        this.updateBusMarkers(this.state.lastEnrichedBuses);
-        this.updateTrackStyles();
-        this.saveActiveLines();
-        this.renderLegend();
-        this.scheduleNextRefresh(0);
+          this.updateBusMarkers(this.state.lastEnrichedBuses);
+          this.updateTrackStyles();
+          this.saveActiveLines();
+          this.renderLegend();
+          this.scheduleNextRefresh(0);
+        });
       });
     });
 
