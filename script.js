@@ -16,6 +16,8 @@ const CONFIG = {
   UI: {
     TOAST_DURATION_MS: 3000,
     SMALL_ICON_THRESHOLD: 10,
+    BUS_ICON_SCALE_MAX: 1.2,
+    DIRECTIONS_EMPTY_AFTER_MS: 30000,
   },
   MAP: {
     DEFAULT_CENTER: [45.653, 13.776],
@@ -106,6 +108,7 @@ class BusMagoApp {
       visibleTrackKeys: new Set(),
       userHasInteracted: false,
       isFollowing: false,
+      suppressMenuAutoClose: false,
       map: null,
       easterEgg: {
         active: false,
@@ -131,9 +134,17 @@ class BusMagoApp {
         filterText: '',
         viewMode: 'grid',
         viewKey: 'busmago:legendView:v1',
-        groupKey: null,
-        groupSnapshot: null,
-        groupKeyStorageKey: 'busmago:legendGroupKey:v1'
+        groupKeys: new Set(),
+        groupKeysStorageKey: 'busmago:legendGroupKeys:v1'
+      },
+      directions: {
+        knownByLine: {},
+        filterByLine: {},
+        defaultFilterByLine: {},
+        overrideModeByLine: {},
+        expandedLineCode: null,
+        waitStartedAtByLine: {},
+        lastKnownSignature: ''
       },
       legendPaletteIndexByCode: {},
       persisted: {
@@ -147,7 +158,8 @@ class BusMagoApp {
       },
       uiTimers: {
         infoAgeInterval: null,
-        refreshTimeout: null
+        refreshTimeout: null,
+        directionsStatusTimeout: null
       },
       refreshControl: {
         inFlight: false,
@@ -251,48 +263,52 @@ class BusMagoApp {
     return palette[((idx % palette.length) + palette.length) % palette.length];
   }
 
-  getLegendGroupFilters() {
-    const key = this.state.legend.groupKey;
-    if (key !== 'UNI' && key !== 'FS') return null;
-    const group = LEGEND_GROUPS[key];
-    if (!group || typeof group !== 'object') return null;
-
+  recomputeGroupDefaultFilters() {
+    const active = this.state.legend && this.state.legend.groupKeys instanceof Set ? this.state.legend.groupKeys : new Set();
     const out = {};
-    Object.keys(group).forEach(lineCode => {
-      const dests = group[lineCode];
-      if (!Array.isArray(dests) || dests.length === 0) return;
-      out[String(lineCode)] = new Set(dests.map(d => normalizeKey(d)));
+    active.forEach(key => {
+      if (key !== 'UNI' && key !== 'FS') return;
+      const group = LEGEND_GROUPS[key];
+      if (!group || typeof group !== 'object') return;
+      Object.keys(group).forEach(lineCode => {
+        const dests = group[lineCode];
+        if (!Array.isArray(dests) || dests.length === 0) return;
+        const lc = String(lineCode);
+        if (!out[lc]) out[lc] = new Set();
+        dests.forEach(d => {
+          const dk = normalizeKey(d);
+          if (dk) out[lc].add(dk);
+        });
+      });
     });
-    return out;
+    this.state.directions.defaultFilterByLine = out;
   }
 
-  applyLegendGroup(key) {
-    const requestedKey = key === 'UNI' || key === 'FS' ? key : null;
-    const prevKey = this.state.legend.groupKey;
-    const wasInGroup = prevKey === 'UNI' || prevKey === 'FS';
-
-    if (requestedKey) {
-      if (!wasInGroup) this.state.legend.groupSnapshot = { ...this.state.lineVisibility };
-      this.state.legend.groupKey = requestedKey;
-
-      const group = LEGEND_GROUPS[requestedKey] || {};
-      Object.keys(this.state.lineVisibility).forEach(k => { this.state.lineVisibility[k] = false; });
+  applyGroupLineSelections() {
+    const active = this.state.legend && this.state.legend.groupKeys instanceof Set ? this.state.legend.groupKeys : new Set();
+    const now = Date.now();
+    active.forEach(key => {
+      if (key !== 'UNI' && key !== 'FS') return;
+      const group = LEGEND_GROUPS[key];
+      if (!group || typeof group !== 'object') return;
       Object.keys(group).forEach(lineCode => {
-        if (Object.prototype.hasOwnProperty.call(this.state.lineVisibility, lineCode)) {
-          this.state.lineVisibility[lineCode] = true;
-        }
+        const lc = String(lineCode);
+        if (!Object.prototype.hasOwnProperty.call(this.state.lineVisibility, lc)) return;
+        this.state.lineVisibility[lc] = true;
+        if (!this.state.directions.waitStartedAtByLine[lc]) this.state.directions.waitStartedAtByLine[lc] = now;
       });
-      this.saveLegendGroupKey();
-      return;
-    }
+    });
+  }
 
-    this.state.legend.groupKey = null;
-    if (wasInGroup) {
-      if (this.state.legend.groupSnapshot) this.state.lineVisibility = { ...this.state.legend.groupSnapshot };
-      else Object.keys(this.state.lineVisibility).forEach(k => { this.state.lineVisibility[k] = false; });
-    }
-    this.state.legend.groupSnapshot = null;
-    this.saveLegendGroupKey();
+  toggleLegendGroupKey(key) {
+    const k = key === 'UNI' || key === 'FS' ? key : null;
+    if (!k) return;
+    if (!(this.state.legend.groupKeys instanceof Set)) this.state.legend.groupKeys = new Set();
+    if (this.state.legend.groupKeys.has(k)) this.state.legend.groupKeys.delete(k);
+    else this.state.legend.groupKeys.add(k);
+    this.recomputeGroupDefaultFilters();
+    this.applyGroupLineSelections();
+    this.saveLegendGroupKeys();
   }
 
   loadLegendView() {
@@ -310,20 +326,36 @@ class BusMagoApp {
     }
   }
 
-  loadLegendGroupKey() {
+  loadLegendGroupKeys() {
+    if (!(this.state.legend.groupKeys instanceof Set)) this.state.legend.groupKeys = new Set();
     try {
-      const raw = localStorage.getItem(this.state.legend.groupKeyStorageKey);
-      if (raw === 'UNI' || raw === 'FS') this.state.legend.groupKey = raw;
+      const raw = localStorage.getItem(this.state.legend.groupKeysStorageKey);
+      if (raw) {
+        const arr = JSON.parse(raw);
+        if (Array.isArray(arr)) {
+          arr.forEach(k => {
+            if (k === 'UNI' || k === 'FS') this.state.legend.groupKeys.add(k);
+          });
+        }
+      }
+    } catch {
+    }
+
+    try {
+      const legacy = localStorage.getItem('busmago:legendGroupKey:v1');
+      if (legacy === 'UNI' || legacy === 'FS') this.state.legend.groupKeys.add(legacy);
     } catch {
     }
   }
 
-  saveLegendGroupKey() {
+  saveLegendGroupKeys() {
     try {
-      if (this.state.legend.groupKey === 'UNI' || this.state.legend.groupKey === 'FS') {
-        localStorage.setItem(this.state.legend.groupKeyStorageKey, this.state.legend.groupKey);
+      const active = this.state.legend.groupKeys instanceof Set ? Array.from(this.state.legend.groupKeys) : [];
+      const filtered = active.filter(k => k === 'UNI' || k === 'FS');
+      if (filtered.length > 0) {
+        localStorage.setItem(this.state.legend.groupKeysStorageKey, JSON.stringify(filtered));
       } else {
-        localStorage.removeItem(this.state.legend.groupKeyStorageKey);
+        localStorage.removeItem(this.state.legend.groupKeysStorageKey);
       }
     } catch {
     }
@@ -337,10 +369,15 @@ class BusMagoApp {
     this.initVisibility();
     this.loadActiveLines();
     this.loadLegendView();
-    this.loadLegendGroupKey();
-    if (this.state.legend.groupKey === 'UNI' || this.state.legend.groupKey === 'FS') {
-      this.applyLegendGroup(this.state.legend.groupKey);
-    }
+    this.loadLegendGroupKeys();
+    this.recomputeGroupDefaultFilters();
+    this.applyGroupLineSelections();
+    const now = Date.now();
+    Object.keys(this.state.lineVisibility).forEach(lineCode => {
+      if (this.state.lineVisibility[lineCode] === true && !this.state.directions.waitStartedAtByLine[lineCode]) {
+        this.state.directions.waitStartedAtByLine[lineCode] = now;
+      }
+    });
     this.renderLegend();
     this.setupEvents();
     this.initUserLocation();
@@ -594,17 +631,211 @@ class BusMagoApp {
     // Menu toggle
     const menuToggle = document.getElementById('menu-toggle');
     if (menuToggle) {
-        menuToggle.addEventListener('click', () => {
-            this.legendDiv.style.display = (this.legendDiv.style.display === 'none') ? 'block' : 'none';
+        menuToggle.addEventListener('click', (e) => {
+            if (e) {
+              e.preventDefault();
+              e.stopPropagation();
+            }
+            const willShow = !this.isLegendVisible();
+            this.legendDiv.style.display = willShow ? 'block' : 'none';
+            if (willShow) this.renderLegend();
         });
     }
   }
 
+  isLegendVisible() {
+    if (!this.legendDiv) return false;
+    const s = window.getComputedStyle(this.legendDiv);
+    return s && s.display !== 'none' && s.visibility !== 'hidden' && s.opacity !== '0';
+  }
+
+  updateKnownDirectionsFromBuses(buses) {
+    const nextKnown = {};
+
+    (Array.isArray(buses) ? buses : []).forEach(b => {
+      if (!b || !b.lineCode) return;
+      if (this.state.lineVisibility[b.lineCode] !== true) return;
+      const destRaw = String(b.destination || '').trim();
+      const destKey = normalizeKey(destRaw);
+      if (!destKey) return;
+
+      if (!nextKnown[b.lineCode]) nextKnown[b.lineCode] = {};
+      if (!nextKnown[b.lineCode][destKey]) nextKnown[b.lineCode][destKey] = destRaw || destKey;
+    });
+
+    this.setKnownDirections(nextKnown);
+  }
+
+  updateKnownDirectionsFromStopData(stopDataMap) {
+    const nextKnown = {};
+
+    linesConfig.forEach(lineConf => {
+      if (!lineConf || !lineConf.code) return;
+      if (this.state.lineVisibility[lineConf.code] !== true) return;
+
+      const stops = Array.isArray(lineConf.stops) ? lineConf.stops : [];
+      stops.forEach(sCode => {
+        const runs = stopDataMap && stopDataMap[sCode];
+        if (!Array.isArray(runs)) return;
+        runs.forEach(r => {
+          if (((r.LineCode || '').toUpperCase()) !== lineConf.code) return;
+          const lat = Number(r.Latitude || 0);
+          const lon = Number(r.Longitude || 0);
+          if (!Number.isFinite(lat) || !Number.isFinite(lon) || lat === 0 || lon === 0) return;
+          const destRaw = String(r.Destination || '').trim();
+          const destKey = normalizeKey(destRaw);
+          if (!destKey) return;
+
+          if (!nextKnown[lineConf.code]) nextKnown[lineConf.code] = {};
+          if (!nextKnown[lineConf.code][destKey]) nextKnown[lineConf.code][destKey] = destRaw || destKey;
+        });
+      });
+    });
+
+    this.setKnownDirections(nextKnown);
+  }
+
+  setKnownDirections(nextKnown) {
+    const signatureParts = [];
+    Object.keys(nextKnown).sort().forEach(lineCode => {
+      const obj = nextKnown[lineCode];
+      Object.keys(obj).sort().forEach(destKey => {
+        signatureParts.push(`${lineCode}|${destKey}|${obj[destKey]}`);
+      });
+    });
+    const nextSignature = signatureParts.join('||');
+    const prevSignature = this.state.directions.lastKnownSignature || '';
+
+    this.state.directions.knownByLine = nextKnown;
+    this.state.directions.lastKnownSignature = nextSignature;
+
+    const filterByLine = this.state.directions.filterByLine || {};
+    const modeByLine = this.state.directions.overrideModeByLine || {};
+    Object.keys(filterByLine).forEach(lineCode => {
+      const set = filterByLine[lineCode];
+      if (!(set instanceof Set)) return;
+      const knownForLine = nextKnown[lineCode] || null;
+      const knownKeys = knownForLine ? Object.keys(knownForLine) : [];
+      if (!knownForLine || knownKeys.length <= 1) {
+        delete filterByLine[lineCode];
+        if (modeByLine[lineCode] === 'set') delete modeByLine[lineCode];
+        return;
+      }
+      const nextSet = new Set();
+      knownKeys.forEach(k => {
+        if (set.has(k)) nextSet.add(k);
+      });
+      if (nextSet.size === 0) {
+        delete filterByLine[lineCode];
+        if (modeByLine[lineCode] === 'set') modeByLine[lineCode] = 'all';
+      } else {
+        filterByLine[lineCode] = nextSet;
+      }
+    });
+
+    if (nextSignature !== prevSignature && this.isLegendVisible()) {
+      this.renderLegend();
+    }
+  }
+
+  isDirectionAllowed(lineCode, destination) {
+    const directions = this.state.directions || {};
+    const modeByLine = directions.overrideModeByLine && typeof directions.overrideModeByLine === 'object' ? directions.overrideModeByLine : {};
+    const mode = modeByLine[lineCode];
+    if (mode === 'all') return true;
+
+    const filterByLine = directions.filterByLine && typeof directions.filterByLine === 'object' ? directions.filterByLine : {};
+    const defaultByLine = directions.defaultFilterByLine && typeof directions.defaultFilterByLine === 'object' ? directions.defaultFilterByLine : {};
+    const baseSet = mode === 'set' ? filterByLine[lineCode] : defaultByLine[lineCode];
+    if (!(baseSet instanceof Set) || baseSet.size === 0) return true;
+
+    const known = directions.knownByLine && typeof directions.knownByLine === 'object' ? directions.knownByLine[lineCode] : null;
+    const knownKeys = known && typeof known === 'object' ? Object.keys(known) : [];
+    if (knownKeys.length > 0) {
+      const knownSet = new Set(knownKeys);
+      let anyPresent = false;
+      baseSet.forEach(k => { if (knownSet.has(k)) anyPresent = true; });
+      if (!anyPresent) return true;
+    }
+
+    const destKey = normalizeKey(destination);
+    return baseSet.has(destKey);
+  }
+
+  toggleDirectionFilter(lineCode, destKey) {
+    if (!lineCode) return;
+    const key = normalizeKey(destKey);
+    if (!key) return;
+
+    if (!this.state.directions.filterByLine) this.state.directions.filterByLine = {};
+    if (!this.state.directions.overrideModeByLine) this.state.directions.overrideModeByLine = {};
+
+    const mode = this.state.directions.overrideModeByLine[lineCode];
+    const existing = this.state.directions.filterByLine[lineCode];
+    const defaultSet = this.state.directions.defaultFilterByLine && this.state.directions.defaultFilterByLine[lineCode] instanceof Set
+      ? this.state.directions.defaultFilterByLine[lineCode]
+      : null;
+
+    let next;
+    if (mode === 'all') {
+      next = new Set();
+    } else if (mode === 'set') {
+      next = existing instanceof Set ? new Set(existing) : (defaultSet instanceof Set ? new Set(defaultSet) : new Set());
+    } else {
+      next = defaultSet instanceof Set ? new Set(defaultSet) : new Set();
+    }
+
+    if (next.has(key)) next.delete(key);
+    else next.add(key);
+
+    const knownForLine = this.state.directions.knownByLine && this.state.directions.knownByLine[lineCode] ? this.state.directions.knownByLine[lineCode] : null;
+    const knownKeys = knownForLine && typeof knownForLine === 'object' ? Object.keys(knownForLine) : [];
+    if (knownKeys.length > 0 && next.size >= knownKeys.length) {
+      delete this.state.directions.filterByLine[lineCode];
+      this.state.directions.overrideModeByLine[lineCode] = 'all';
+      return;
+    }
+
+    if (next.size === 0) {
+      delete this.state.directions.filterByLine[lineCode];
+      this.state.directions.overrideModeByLine[lineCode] = 'all';
+    } else {
+      this.state.directions.filterByLine[lineCode] = next;
+      this.state.directions.overrideModeByLine[lineCode] = 'set';
+    }
+  }
+
+  clearDirectionFilter(lineCode) {
+    if (!lineCode) return;
+    if (!this.state.directions.overrideModeByLine) this.state.directions.overrideModeByLine = {};
+    this.state.directions.overrideModeByLine[lineCode] = 'all';
+    if (this.state.directions.filterByLine && this.state.directions.filterByLine[lineCode]) delete this.state.directions.filterByLine[lineCode];
+  }
+
   handleInteraction() {
+    if (this.state.suppressMenuAutoClose) return;
     this.state.userHasInteracted = true;
     if (this.legendDiv.style.display === 'block') {
       this.legendDiv.style.display = 'none';
     }
+  }
+
+  suppressMenuAutoCloseUntilMapSettles() {
+    this.state.suppressMenuAutoClose = true;
+    const map = this.state.map;
+    let cleared = false;
+    const clear = () => {
+      if (cleared) return;
+      cleared = true;
+      this.state.suppressMenuAutoClose = false;
+    };
+
+    if (map) {
+      map.once('moveend', clear);
+      map.once('zoomend', clear);
+    }
+
+    setTimeout(clear, 1200);
   }
 
   deselectVehicle() {
@@ -655,6 +886,7 @@ class BusMagoApp {
         }
         
         if (firstLocationUpdate) {
+          this.suppressMenuAutoCloseUntilMapSettles();
           this.state.map.setView([lat, lon], 15);
           firstLocationUpdate = false;
         }
@@ -674,6 +906,7 @@ class BusMagoApp {
           e.preventDefault();
           e.stopPropagation();
           if (lastLat !== null && lastLon !== null) {
+            this.suppressMenuAutoCloseUntilMapSettles();
             this.state.map.setView([lastLat, lastLon], 15);
           } else {
             this.showToast("Posizione non ancora rilevata. Controlla i permessi.", "error");
@@ -685,7 +918,16 @@ class BusMagoApp {
 
   renderLegend() {
     if (!this.legendDiv) return;
+    const prevScrollTop = this.legendDiv.scrollTop;
+    const activeEl = document.activeElement;
+    const wasSearchFocused = !!(activeEl && activeEl.id === 'legend-search');
+    const searchSelStart = wasSearchFocused ? activeEl.selectionStart : null;
+    const searchSelEnd = wasSearchFocused ? activeEl.selectionEnd : null;
     let html = "";
+    if (this.state.uiTimers.directionsStatusTimeout) {
+      clearTimeout(this.state.uiTimers.directionsStatusTimeout);
+      this.state.uiTimers.directionsStatusTimeout = null;
+    }
     
     const favoritesOnly = this.legendDiv.dataset.favoritesOnly === '1';
     const viewMode = this.state.legend.viewMode === 'list' ? 'list' : 'grid';
@@ -707,13 +949,135 @@ class BusMagoApp {
     // Clear All Button
     html += `<button id="clear-all-lines">CLEAR ALL</button>`;
 
-    const groupKey = this.state.legend.groupKey;
+    const groupKeys = (this.state.legend && this.state.legend.groupKeys instanceof Set) ? this.state.legend.groupKeys : new Set();
+    const uniActive = groupKeys.has('UNI');
+    const fsActive = groupKeys.has('FS');
     html += `<hr class="legend-grid-separator">`;
     html += `<div class="legend-group-row">
-              <button id="legend-group-uni" class="legend-action-btn legend-action-toggle legend-group-btn ${groupKey === 'UNI' ? 'is-active' : ''}" type="button" aria-label="Gruppo UNI" aria-pressed="${groupKey === 'UNI' ? 'true' : 'false'}"><img class="legend-group-icon" src="icona_uni.webp" alt=""></button>
-              <button id="legend-group-fs" class="legend-action-btn legend-action-toggle legend-group-btn ${groupKey === 'FS' ? 'is-active' : ''}" type="button" aria-label="Gruppo FS" aria-pressed="${groupKey === 'FS' ? 'true' : 'false'}"><img class="legend-group-icon" src="icona_fs.webp" alt=""></button>
+              <button id="legend-group-uni" class="legend-action-btn legend-action-toggle legend-group-btn ${uniActive ? 'is-active' : ''}" type="button" aria-label="Gruppo UNI" aria-pressed="${uniActive ? 'true' : 'false'}"><img class="legend-group-icon" src="icona_uni.webp" alt=""></button>
+              <button id="legend-group-fs" class="legend-action-btn legend-action-toggle legend-group-btn ${fsActive ? 'is-active' : ''}" type="button" aria-label="Gruppo FS" aria-pressed="${fsActive ? 'true' : 'false'}"><img class="legend-group-icon" src="icona_fs.webp" alt=""></button>
             </div>`;
     html += `<hr class="legend-grid-separator">`;
+
+    const activeLineCodes = Object.keys(this.state.lineVisibility).filter(k => this.state.lineVisibility[k] === true);
+    if (activeLineCodes.length > 0) {
+      html += `<div class="legend-header-row">
+                <div class="legend-section-title legend-chip">SELEZIONATE & DIREZIONI</div>
+              </div>`;
+      html += `<div class="selected-lines-panel">`;
+
+      const expanded = this.state.directions ? this.state.directions.expandedLineCode : null;
+      const knownByLine = (this.state.directions && this.state.directions.knownByLine) ? this.state.directions.knownByLine : {};
+      const filterByLine = (this.state.directions && this.state.directions.filterByLine) ? this.state.directions.filterByLine : {};
+      const defaultFilterByLine = (this.state.directions && this.state.directions.defaultFilterByLine) ? this.state.directions.defaultFilterByLine : {};
+      const overrideModeByLine = (this.state.directions && this.state.directions.overrideModeByLine) ? this.state.directions.overrideModeByLine : {};
+      const waitStartedAtByLine = (this.state.directions && this.state.directions.waitStartedAtByLine) ? this.state.directions.waitStartedAtByLine : {};
+      const now = Date.now();
+      let nextRerenderInMs = null;
+
+      activeLineCodes.forEach(lineCode => {
+        const lineColor = this.getLegendLineColor(lineCode);
+        const known = knownByLine[lineCode] && typeof knownByLine[lineCode] === 'object' ? knownByLine[lineCode] : {};
+        const userSet = filterByLine[lineCode] instanceof Set ? filterByLine[lineCode] : null;
+        const defaultSet = defaultFilterByLine[lineCode] instanceof Set ? defaultFilterByLine[lineCode] : null;
+        const overrideMode = overrideModeByLine && typeof overrideModeByLine === 'object' ? overrideModeByLine[lineCode] : null;
+
+        const knownKeys = Object.keys(known);
+        knownKeys.sort((a, b) => {
+          const la = String(known[a] || a);
+          const lb = String(known[b] || b);
+          return la.localeCompare(lb);
+        });
+
+        let summary = 'Tutte';
+        const knownSet = new Set(knownKeys);
+        let effectiveSelectedSet = null;
+
+        if (knownKeys.length === 0) {
+          let startedAt = Number(waitStartedAtByLine[lineCode] || 0);
+          if (!startedAt) {
+            startedAt = now;
+            waitStartedAtByLine[lineCode] = now;
+          }
+          const age = startedAt > 0 ? (now - startedAt) : 0;
+          const remaining = CONFIG.UI.DIRECTIONS_EMPTY_AFTER_MS - age;
+          if (remaining > 0) {
+            nextRerenderInMs = nextRerenderInMs === null ? remaining : Math.min(nextRerenderInMs, remaining);
+          }
+          summary = age >= CONFIG.UI.DIRECTIONS_EMPTY_AFTER_MS ? 'Nessuna vettura in circolazione' : 'In attesa dati…';
+        } else if (knownKeys.length === 1) {
+          summary = String(known[knownKeys[0]] || knownKeys[0]);
+        } else {
+          let baseSet = null;
+          if (overrideMode === 'all') baseSet = null;
+          else if (overrideMode === 'set') baseSet = userSet;
+          else baseSet = defaultSet;
+
+          if (baseSet instanceof Set && baseSet.size > 0) {
+            const presentSelected = new Set();
+            baseSet.forEach(k => { if (knownSet.has(k)) presentSelected.add(k); });
+            if (presentSelected.size > 0) {
+              if (presentSelected.size >= knownKeys.length) effectiveSelectedSet = null;
+              else effectiveSelectedSet = presentSelected;
+            }
+          }
+
+          if (effectiveSelectedSet instanceof Set && effectiveSelectedSet.size > 0) {
+            const selected = Array.from(effectiveSelectedSet);
+            selected.sort((a, b) => {
+              const la = String(known[a] || a);
+              const lb = String(known[b] || b);
+              return la.localeCompare(lb);
+            });
+            const first = selected[0];
+            const firstLabel = String(known[first] || first);
+            summary = selected.length > 1 ? `${firstLabel} +${selected.length - 1}` : firstLabel;
+          }
+        }
+
+        const isExpandable = knownKeys.length >= 2;
+        const isExpanded = isExpandable && expanded === lineCode;
+        if (!isExpandable && this.state.directions.expandedLineCode === lineCode) this.state.directions.expandedLineCode = null;
+
+        html += `<div class="selected-line-tile" style="--line-color:${lineColor};">`;
+        if (isExpandable) {
+          html += `<button type="button" class="selected-line-toggle" data-line="${this.escapeHtmlAttribute(lineCode)}" aria-expanded="${isExpanded ? 'true' : 'false'}">
+                    <span class="selected-line-code">${this.escapeHtmlAttribute(lineCode)}</span>
+                    <span class="selected-line-meta">${this.escapeHtmlAttribute(summary)}</span>
+                    <span class="selected-line-chevron" aria-hidden="true"></span>
+                  </button>`;
+        } else {
+          html += `<div class="selected-line-static" aria-label="Linea ${this.escapeHtmlAttribute(lineCode)}">
+                    <span class="selected-line-code">${this.escapeHtmlAttribute(lineCode)}</span>
+                    <span class="selected-line-meta">${this.escapeHtmlAttribute(summary)}</span>
+                    <span class="selected-line-spacer" aria-hidden="true"></span>
+                  </div>`;
+        }
+
+        if (isExpanded) {
+          const allActive = !(effectiveSelectedSet instanceof Set && effectiveSelectedSet.size > 0);
+          html += `<div class="selected-line-menu" role="group" aria-label="Direzioni ${this.escapeHtmlAttribute(lineCode)}">`;
+          knownKeys.forEach(destKey => {
+            const label = String(known[destKey] || destKey);
+            const active = allActive || (effectiveSelectedSet instanceof Set && effectiveSelectedSet.has(destKey));
+            html += `<button type="button" class="selected-line-chip ${active ? 'is-active' : ''}" data-line="${this.escapeHtmlAttribute(lineCode)}" data-dest="${this.escapeHtmlAttribute(destKey)}">${this.escapeHtmlAttribute(label)}</button>`;
+          });
+          html += `<button type="button" class="selected-line-chip ${allActive ? 'is-active' : ''}" data-line="${this.escapeHtmlAttribute(lineCode)}" data-dest="__ALL__">Tutte</button>`;
+          html += `</div>`;
+        }
+
+        html += `</div>`;
+      });
+
+      html += `</div>`;
+      html += `<hr class="legend-grid-separator">`;
+
+      if (nextRerenderInMs !== null) {
+        this.state.uiTimers.directionsStatusTimeout = setTimeout(() => {
+          if (this.isLegendVisible()) this.renderLegend();
+        }, Math.max(0, Math.ceil(nextRerenderInMs + 25)));
+      }
+    }
 
     html += `<div class="legend-header-row">
               <div class="legend-section-title legend-chip">LINEE</div>
@@ -774,6 +1138,14 @@ class BusMagoApp {
     html += `<button id="select-all-lines-btn" class="legend-action-btn legend-action-toggle ${allSelected ? 'is-active' : ''}" type="button" aria-pressed="${allSelected ? 'true' : 'false'}">SELEZIONA TUTTO</button>`;
 
     this.legendDiv.innerHTML = html;
+    this.legendDiv.scrollTop = prevScrollTop;
+    if (wasSearchFocused) {
+      const next = document.getElementById('legend-search');
+      if (next) {
+        next.focus();
+        if (typeof searchSelStart === 'number' && typeof searchSelEnd === 'number') next.setSelectionRange(searchSelStart, searchSelEnd);
+      }
+    }
     
     // Add Listeners
     this.setupLegendListeners();
@@ -817,9 +1189,9 @@ class BusMagoApp {
       favoritesOnlyBtn.addEventListener('click', (e) => {
         e.preventDefault();
         e.stopPropagation();
-        this.state.legend.groupKey = null;
-        this.state.legend.groupSnapshot = null;
-        this.saveLegendGroupKey();
+        if (this.state.legend.groupKeys instanceof Set) this.state.legend.groupKeys.clear();
+        this.recomputeGroupDefaultFilters();
+        this.saveLegendGroupKeys();
 
         const enabled = this.legendDiv.dataset.favoritesOnly !== '1';
         this.legendDiv.dataset.favoritesOnly = enabled ? '1' : '0';
@@ -862,9 +1234,9 @@ class BusMagoApp {
         clearAllBtn.addEventListener('click', (e) => {
             e.preventDefault();
             e.stopPropagation();
-            this.state.legend.groupKey = null;
-            this.state.legend.groupSnapshot = null;
-            this.saveLegendGroupKey();
+            if (this.state.legend.groupKeys instanceof Set) this.state.legend.groupKeys.clear();
+            this.recomputeGroupDefaultFilters();
+            this.saveLegendGroupKeys();
             Object.keys(this.state.lineVisibility).forEach(k => { this.state.lineVisibility[k] = false; });
             this.updateBusMarkers(this.state.lastEnrichedBuses);
             this.updateTrackStyles();
@@ -884,21 +1256,26 @@ class BusMagoApp {
       selectAllBtn.addEventListener('click', (e) => {
         e.preventDefault();
         e.stopPropagation();
-        this.state.legend.groupKey = null;
-        this.state.legend.groupSnapshot = null;
-        this.saveLegendGroupKey();
 
         const allSelectedNext = !Object.keys(this.state.lineVisibility).every(k => this.state.lineVisibility[k] === true);
         const lineButtons = this.legendDiv.querySelectorAll('button.legend-line-select[data-key]');
 
+        const now = Date.now();
         lineButtons.forEach(btn => {
           const k = btn.getAttribute('data-key');
           if (!k) return;
           this.state.lineVisibility[k] = allSelectedNext;
+          if (allSelectedNext) {
+            if (!this.state.directions.waitStartedAtByLine[k]) this.state.directions.waitStartedAtByLine[k] = now;
+          } else {
+            delete this.state.directions.waitStartedAtByLine[k];
+            delete this.state.directions.filterByLine[k];
+          }
           btn.setAttribute('aria-pressed', allSelectedNext ? 'true' : 'false');
           const tile = btn.closest('.legend-line-tile');
           if (tile) tile.classList.toggle('active-line', allSelectedNext);
         });
+        if (!allSelectedNext) this.state.directions.expandedLineCode = null;
 
         selectAllBtn.classList.toggle('is-active', allSelectedNext);
         selectAllBtn.setAttribute('aria-pressed', allSelectedNext ? 'true' : 'false');
@@ -906,6 +1283,7 @@ class BusMagoApp {
         this.updateBusMarkers(this.state.lastEnrichedBuses);
         this.updateTrackStyles();
         this.saveActiveLines();
+        this.renderLegend();
         this.scheduleNextRefresh(0);
       });
     }
@@ -915,9 +1293,6 @@ class BusMagoApp {
       btn.addEventListener('click', (e) => {
         e.preventDefault();
         e.stopPropagation();
-        this.state.legend.groupKey = null;
-        this.state.legend.groupSnapshot = null;
-        this.saveLegendGroupKey();
 
         const k = btn.getAttribute('data-key');
         if (!k) return;
@@ -929,6 +1304,14 @@ class BusMagoApp {
         const tile = btn.closest('.legend-line-tile');
         if (tile) tile.classList.toggle('active-line', next);
 
+        if (next) {
+          if (!this.state.directions.waitStartedAtByLine[k]) this.state.directions.waitStartedAtByLine[k] = Date.now();
+        } else {
+          delete this.state.directions.waitStartedAtByLine[k];
+          delete this.state.directions.filterByLine[k];
+          if (this.state.directions.expandedLineCode === k) this.state.directions.expandedLineCode = null;
+        }
+
         if (selectAllBtn) {
           const allSelectedNow = Object.keys(this.state.lineVisibility).every(key => this.state.lineVisibility[key] === true);
           selectAllBtn.classList.toggle('is-active', allSelectedNow);
@@ -938,6 +1321,7 @@ class BusMagoApp {
         this.updateBusMarkers(this.state.lastEnrichedBuses);
         this.updateTrackStyles();
         this.saveActiveLines();
+        this.renderLegend();
         this.scheduleNextRefresh(0);
       });
     });
@@ -947,8 +1331,7 @@ class BusMagoApp {
       groupUniBtn.addEventListener('click', (e) => {
         e.preventDefault();
         e.stopPropagation();
-        const nextKey = this.state.legend.groupKey === 'UNI' ? null : 'UNI';
-        this.applyLegendGroup(nextKey);
+        this.toggleLegendGroupKey('UNI');
         this.updateBusMarkers(this.state.lastEnrichedBuses);
         this.updateTrackStyles();
         this.saveActiveLines();
@@ -962,8 +1345,7 @@ class BusMagoApp {
       groupFsBtn.addEventListener('click', (e) => {
         e.preventDefault();
         e.stopPropagation();
-        const nextKey = this.state.legend.groupKey === 'FS' ? null : 'FS';
-        this.applyLegendGroup(nextKey);
+        this.toggleLegendGroupKey('FS');
         this.updateBusMarkers(this.state.lastEnrichedBuses);
         this.updateTrackStyles();
         this.saveActiveLines();
@@ -971,6 +1353,35 @@ class BusMagoApp {
         this.scheduleNextRefresh(0);
       });
     }
+
+    const selectedLineToggles = this.legendDiv.querySelectorAll('button.selected-line-toggle[data-line]');
+    selectedLineToggles.forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        const lineCode = btn.getAttribute('data-line');
+        if (!lineCode) return;
+        const expanded = this.state.directions ? this.state.directions.expandedLineCode : null;
+        this.state.directions.expandedLineCode = expanded === lineCode ? null : lineCode;
+        this.renderLegend();
+      });
+    });
+
+    const selectedLineChips = this.legendDiv.querySelectorAll('button.selected-line-chip[data-line][data-dest]');
+    selectedLineChips.forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        const lineCode = btn.getAttribute('data-line');
+        const dest = btn.getAttribute('data-dest');
+        if (!lineCode || !dest) return;
+        if (dest === '__ALL__') this.clearDirectionFilter(lineCode);
+        else this.toggleDirectionFilter(lineCode, dest);
+        this.updateBusMarkers(this.state.lastEnrichedBuses);
+        this.updateTrackStyles();
+        this.renderLegend();
+      });
+    });
   }
 
   getRefreshIntervalMs() {
@@ -1112,10 +1523,7 @@ class BusMagoApp {
             });
         });
 
-        // 4. Process Tracks
-        this.processTracks(stopDataMap);
-
-        // 5. Deduplicate and Enrich
+        // 4. Deduplicate and Enrich
         const byVehicle = {};
         buses.forEach(b => {
             const k = b.vehicle || `NO_VEHICLE_${b.coords[0]}_${b.coords[1]}`;
@@ -1146,6 +1554,11 @@ class BusMagoApp {
             b.moved = moved;
             return b;
         });
+
+        this.updateKnownDirectionsFromStopData(stopDataMap);
+
+        // 5. Process Tracks
+        this.processTracks(stopDataMap);
 
         let selected = null;
         let selectedPrevLatLng = null;
@@ -1187,7 +1600,6 @@ class BusMagoApp {
 
   processTracks(stopDataMap) {
     const visible = new Set();
-    const groupFilters = this.getLegendGroupFilters();
 
     linesConfig.forEach(lineConf => {
         if (this.state.lineVisibility[lineConf.code] !== true) return;
@@ -1213,10 +1625,6 @@ class BusMagoApp {
             const destRaw = (r.Destination || "").trim();
             const destKey = normalizeKey(destRaw);
             if (!destKey) return;
-            if (groupFilters) {
-              const allowed = groupFilters[lineConf.code];
-              if (!allowed || !allowed.has(destKey)) return;
-            }
             const existing = bestByDest.get(destKey);
             if (!existing) {
                 bestByDest.set(destKey, r);
@@ -1227,6 +1635,7 @@ class BusMagoApp {
 
         bestByDest.forEach((bestRun, destKey) => {
             if (!bestRun || !bestRun.Race) return;
+            if (!this.isDirectionAllowed(lineConf.code, destKey)) return;
 
             const race = String(bestRun.Race);
             const destination = (bestRun.Destination || destKey).trim();
@@ -1365,7 +1774,6 @@ class BusMagoApp {
   updateBusMarkers(buses) {
     this.state.lastEnrichedBuses = buses || [];
     const newKeys = new Set();
-    const groupFilters = this.getLegendGroupFilters();
     
     const zoom = this.state.map ? this.state.map.getZoom() : CONFIG.MAP.DEFAULT_ZOOM;
     const zoomScale = this.getBusIconZoomScale(zoom);
@@ -1380,10 +1788,7 @@ class BusMagoApp {
     if (buses && buses.length > 0) {
       buses.forEach(b => {
         if (this.state.lineVisibility[b.lineCode] !== true) return;
-        if (groupFilters) {
-          const allowed = groupFilters[b.lineCode];
-          if (!allowed || !allowed.has(normalizeKey(b.destination))) return;
-        }
+        if (!this.isDirectionAllowed(b.lineCode, b.destination)) return;
 
         newKeys.add(b.key);
 
@@ -1524,7 +1929,11 @@ class BusMagoApp {
         const paletteColor = this.getLegendLineColor(lineCode);
         const isVisibleByLine = this.state.lineVisibility[lineCode] === true;
         const isVisibleByData = this.state.visibleTrackKeys instanceof Set ? this.state.visibleTrackKeys.has(tKey) : true;
-        const isVisible = isVisibleByLine && isVisibleByData;
+        const idxDir = tKey.indexOf('_');
+        const destKeyForDir = idxDir !== -1 ? tKey.slice(idxDir + 1) : '';
+        const isVisibleByDirection = this.isDirectionAllowed(lineCode, destKeyForDir);
+
+        const isVisible = isVisibleByLine && isVisibleByData && isVisibleByDirection;
 
         if (!isVisible) {
             layer.setStyle({ opacity: 0, weight: 0 });
@@ -1743,7 +2152,7 @@ class BusMagoApp {
     const t = Math.max(0, Math.min(1, tRaw));
     const eased = 1 - Math.pow(1 - t, 3);
     const minScale = 0.56;
-    const maxScale = 1.15;
+    const maxScale = Math.max(minScale, Number(CONFIG.UI.BUS_ICON_SCALE_MAX) || 1.0);
     return minScale + (maxScale - minScale) * eased;
   }
 
