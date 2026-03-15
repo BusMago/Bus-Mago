@@ -1105,12 +1105,14 @@ html, body, #map {
   .legend {
     font-size: 14px;
     padding: 16px;
-    right: 15px;
-    left: 15px;
+    right: 12px;
+    left: 12px;
     top: 70px;
     bottom: auto;
     max-width: none;
     max-height: calc(100% - 90px);
+    width: auto;
+    border-radius: 16px;
     scrollbar-width: none;
     -ms-overflow-style: none;
   }
