@@ -716,21 +716,13 @@ class BusMagoApp {
       if (!(set instanceof Set)) return;
       const knownForLine = nextKnown[lineCode] || null;
       const knownKeys = knownForLine ? Object.keys(knownForLine) : [];
-      if (!knownForLine || knownKeys.length <= 1) {
-        delete filterByLine[lineCode];
-        if (modeByLine[lineCode] === 'set') delete modeByLine[lineCode];
-        return;
-      }
+      if (!knownForLine || knownKeys.length <= 1) return;
       const nextSet = new Set();
       knownKeys.forEach(k => {
         if (set.has(k)) nextSet.add(k);
       });
-      if (nextSet.size === 0) {
-        delete filterByLine[lineCode];
-        if (modeByLine[lineCode] === 'set') modeByLine[lineCode] = 'all';
-      } else {
-        filterByLine[lineCode] = nextSet;
-      }
+      if (nextSet.size === 0) return;
+      filterByLine[lineCode] = nextSet;
     });
 
     if (nextSignature !== prevSignature && this.isLegendVisible()) {
@@ -790,7 +782,7 @@ class BusMagoApp {
 
     const knownForLine = this.state.directions.knownByLine && this.state.directions.knownByLine[lineCode] ? this.state.directions.knownByLine[lineCode] : null;
     const knownKeys = knownForLine && typeof knownForLine === 'object' ? Object.keys(knownForLine) : [];
-    if (knownKeys.length > 0 && next.size >= knownKeys.length) {
+    if (knownKeys.length >= 2 && next.size >= knownKeys.length) {
       delete this.state.directions.filterByLine[lineCode];
       this.state.directions.overrideModeByLine[lineCode] = 'all';
       return;
