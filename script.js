@@ -755,7 +755,7 @@ class BusMagoApp {
       const knownSet = new Set(knownKeys);
       let anyPresent = false;
       baseSet.forEach(k => { if (knownSet.has(k)) anyPresent = true; });
-      if (!anyPresent) return true;
+      if (!anyPresent) return false;
     }
 
     const destKey = normalizeKey(destination);
