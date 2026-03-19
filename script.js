@@ -146,6 +146,16 @@ class BusMagoApp {
         waitStartedAtByLine: {},
         lastKnownSignature: ''
       },
+      departures: {
+        collapsed: false,
+        storageKey: 'busmago:departuresCollapsed:v1'
+      },
+      infoPanel: {
+        selectedBus: null,
+        selectedTrack: null,
+        finishedTrip: false
+      },
+      lastStopDataMap: null,
       legendPaletteIndexByCode: {},
       persisted: {
         activeLinesKey: 'busmago:activeLines:v2'
@@ -306,6 +316,20 @@ class BusMagoApp {
     if (!(this.state.legend.groupKeys instanceof Set)) this.state.legend.groupKeys = new Set();
     if (this.state.legend.groupKeys.has(k)) this.state.legend.groupKeys.delete(k);
     else this.state.legend.groupKeys.add(k);
+
+    const active = this.state.legend.groupKeys;
+    const affectedLineCodes = new Set();
+    active.forEach(gk => {
+      const group = LEGEND_GROUPS[gk];
+      if (!group || typeof group !== 'object') return;
+      Object.keys(group).forEach(lineCode => affectedLineCodes.add(String(lineCode)));
+    });
+
+    affectedLineCodes.forEach(lc => {
+      if (this.state.directions && this.state.directions.filterByLine) delete this.state.directions.filterByLine[lc];
+      if (this.state.directions && this.state.directions.overrideModeByLine) delete this.state.directions.overrideModeByLine[lc];
+    });
+
     this.recomputeGroupDefaultFilters();
     this.applyGroupLineSelections();
     this.saveLegendGroupKeys();
@@ -343,7 +367,7 @@ class BusMagoApp {
 
     try {
       const legacy = localStorage.getItem('busmago:legendGroupKey:v1');
-      if (legacy === 'UNI' || legacy === 'FS') this.state.legend.groupKeys.add(legacy);
+      if ((legacy === 'UNI' || legacy === 'FS') && this.state.legend.groupKeys.size === 0) this.state.legend.groupKeys.add(legacy);
     } catch {
     }
   }
@@ -364,6 +388,7 @@ class BusMagoApp {
   init() {
     this.loadTheme();
     this.loadFavorites();
+    this.loadDeparturesCollapsed();
     this.initMap();
     this.initToast();
     this.initVisibility();
@@ -381,6 +406,7 @@ class BusMagoApp {
     this.renderLegend();
     this.setupEvents();
     this.initUserLocation();
+    this.renderInfoPanel();
 
     // Start loop
     this.scheduleNextRefresh(0);
@@ -388,6 +414,39 @@ class BusMagoApp {
     this.state.uiTimers.infoAgeInterval = setInterval(() => {
       if (this.state.selectedVehicleKey) this.updateInfoAgeBadge();
     }, 1000);
+  }
+
+  loadDeparturesCollapsed() {
+    try {
+      const raw = localStorage.getItem(this.state.departures.storageKey);
+      if (raw === '1') {
+        this.state.departures.collapsed = true;
+        return;
+      }
+      if (raw === '0') {
+        this.state.departures.collapsed = false;
+        return;
+      }
+    } catch {
+    }
+
+    const prefersCollapsed = typeof window !== 'undefined' && window.matchMedia
+      ? window.matchMedia('(max-width: 600px)').matches
+      : false;
+    this.state.departures.collapsed = prefersCollapsed;
+  }
+
+  saveDeparturesCollapsed() {
+    try {
+      localStorage.setItem(this.state.departures.storageKey, this.state.departures.collapsed ? '1' : '0');
+    } catch {
+    }
+  }
+
+  toggleDeparturesCollapsed() {
+    this.state.departures.collapsed = !this.state.departures.collapsed;
+    this.saveDeparturesCollapsed();
+    this.renderInfoPanel();
   }
 
   initMap() {
@@ -622,8 +681,14 @@ class BusMagoApp {
         this.handleInteraction();
         this.state.isFollowing = false;
     });
-    map.on('click', () => {
+    map.on('click', (e) => {
       this.handleInteraction();
+      const oe = e && e.originalEvent ? e.originalEvent : null;
+      if (oe && oe._stopped) return;
+      const t = oe && oe.target ? oe.target : null;
+      if (t && t.closest) {
+        if (t.closest('.leaflet-interactive, .leaflet-marker-icon, .leaflet-marker-shadow')) return;
+      }
       this.deselectVehicle();
       this.state.isFollowing = false;
     });
@@ -640,6 +705,17 @@ class BusMagoApp {
             this.legendDiv.style.display = willShow ? 'block' : 'none';
             if (willShow) this.renderLegend();
         });
+    }
+
+    if (this.infoDiv) {
+      this.infoDiv.addEventListener('click', (e) => {
+        const t = e && e.target ? e.target : null;
+        const btn = t && t.closest ? t.closest('#departures-toggle') : null;
+        if (!btn) return;
+        e.preventDefault();
+        e.stopPropagation();
+        this.toggleDeparturesCollapsed();
+      });
     }
   }
 
@@ -833,7 +909,13 @@ class BusMagoApp {
   deselectVehicle() {
     if (this.state.selectedVehicleKey) {
       this.state.selectedVehicleKey = null;
-      this.updateInfoFromBus(null);
+      if (this.state.departures) this.state.departures.collapsed = true;
+      if (this.state.infoPanel) {
+        this.state.infoPanel.selectedBus = null;
+        this.state.infoPanel.selectedTrack = null;
+        this.state.infoPanel.finishedTrip = false;
+      }
+      this.renderInfoPanel();
       this.updateBusMarkers(this.state.lastEnrichedBuses);
     }
   }
@@ -1141,6 +1223,7 @@ class BusMagoApp {
     
     // Add Listeners
     this.setupLegendListeners();
+    this.renderInfoPanel();
   }
 
   preserveLegendScroll(anchorEl, action) {
@@ -1525,6 +1608,7 @@ class BusMagoApp {
         stopsList.forEach((code, idx) => {
             stopDataMap[code] = Array.isArray(results[idx]) ? results[idx] : [];
         });
+        this.state.lastStopDataMap = stopDataMap;
 
         // 3. Process Vehicles
         const buses = [];
@@ -1621,7 +1705,7 @@ class BusMagoApp {
         this.state.updateStatus.lastErrorMessage = (err && err.message) ? String(err.message) : 'Errore di connessione';
         console.error("Errore aggiornamento dati", err);
         this.showToast("Errore di connessione. Riprovo...", "error");
-        this.updateInfoFromBus(this.state.selectedVehicleKey ? { key: this.state.selectedVehicleKey } : null);
+        this.renderInfoPanel();
     } finally {
         if (requestId >= this.state.refreshControl.lastAppliedRequestSeq) {
           this.state.refreshControl.lastAppliedRequestSeq = requestId;
@@ -1728,8 +1812,13 @@ class BusMagoApp {
           polyline.options.destination = dir;
 
           polyline.on('click', (e) => {
-              L.DomEvent.stopPropagation(e);
+              const oe = e && e.originalEvent ? e.originalEvent : e;
+              if (oe) {
+                L.DomEvent.preventDefault(oe);
+                L.DomEvent.stopPropagation(oe);
+              }
               this.state.selectedVehicleKey = "TRACK_" + trackKey;
+              if (this.state.departures) this.state.departures.collapsed = false;
               this.updateInfoFromTrack(lineConf, dir);
               if (this.legendDiv.style.display === 'block') {
                   this.legendDiv.style.display = 'none';
@@ -1742,8 +1831,27 @@ class BusMagoApp {
           if (pts.length > 0) {
               const startIcon = L.divIcon({ className: 'endpoint-icon start', html: '', iconSize: [12, 12] });
               const endIcon = L.divIcon({ className: 'endpoint-icon end', html: '', iconSize: [12, 12] });
-              endpoints.push(L.marker(pts[0], { icon: startIcon }).addTo(this.state.map));
-              endpoints.push(L.marker(pts[pts.length - 1], { icon: endIcon }).addTo(this.state.map));
+              const startMarker = L.marker(pts[0], { icon: startIcon }).addTo(this.state.map);
+              const endMarker = L.marker(pts[pts.length - 1], { icon: endIcon }).addTo(this.state.map);
+              [startMarker, endMarker].forEach(m => {
+                m.off('click');
+                m.on('click', (e) => {
+                  const oe = e && e.originalEvent ? e.originalEvent : e;
+                  if (oe) {
+                    L.DomEvent.preventDefault(oe);
+                    L.DomEvent.stopPropagation(oe);
+                  }
+                  this.state.selectedVehicleKey = "TRACK_" + trackKey;
+                  if (this.state.departures) this.state.departures.collapsed = false;
+                  this.updateInfoFromTrack(lineConf, dir);
+                  if (this.legendDiv.style.display === 'block') {
+                    this.legendDiv.style.display = 'none';
+                  }
+                  this.updateBusMarkers(this.state.lastEnrichedBuses);
+                });
+              });
+              endpoints.push(startMarker);
+              endpoints.push(endMarker);
               this.state.routeEndpointMarkers[trackKey] = endpoints;
           }
           
@@ -1777,8 +1885,13 @@ class BusMagoApp {
           polyline.options.destination = destination;
 
           polyline.on('click', (e) => {
-              L.DomEvent.stopPropagation(e);
+              const oe = e && e.originalEvent ? e.originalEvent : e;
+              if (oe) {
+                L.DomEvent.preventDefault(oe);
+                L.DomEvent.stopPropagation(oe);
+              }
               this.state.selectedVehicleKey = "TRACK_" + trackKey;
+              if (this.state.departures) this.state.departures.collapsed = false;
               this.updateInfoFromTrack(lineConf, destination);
               if (this.legendDiv.style.display === 'block') {
                   this.legendDiv.style.display = 'none';
@@ -1796,8 +1909,27 @@ class BusMagoApp {
       if (pts.length > 0) {
           const start = pts[0];
           const end = pts[pts.length - 1];
-          endpoints.push(L.circleMarker(start, { radius: 3.5, color: paletteColor, fillColor: paletteColor, fillOpacity: 1 }).addTo(this.state.map));
-          endpoints.push(L.circleMarker(end, { radius: 3.5, color: paletteColor, fillColor: paletteColor, fillOpacity: 1 }).addTo(this.state.map));
+          const startMarker = L.circleMarker(start, { radius: 6, color: paletteColor, fillColor: paletteColor, fillOpacity: 1, weight: 2 }).addTo(this.state.map);
+          const endMarker = L.circleMarker(end, { radius: 6, color: paletteColor, fillColor: paletteColor, fillOpacity: 1, weight: 2 }).addTo(this.state.map);
+          [startMarker, endMarker].forEach(m => {
+            m.off('click');
+            m.on('click', (e) => {
+              const oe = e && e.originalEvent ? e.originalEvent : e;
+              if (oe) {
+                L.DomEvent.preventDefault(oe);
+                L.DomEvent.stopPropagation(oe);
+              }
+              this.state.selectedVehicleKey = "TRACK_" + trackKey;
+              if (this.state.departures) this.state.departures.collapsed = false;
+              this.updateInfoFromTrack(lineConf, destination);
+              if (this.legendDiv.style.display === 'block') {
+                this.legendDiv.style.display = 'none';
+              }
+              this.updateBusMarkers(this.state.lastEnrichedBuses);
+            });
+          });
+          endpoints.push(startMarker);
+          endpoints.push(endMarker);
       }
       this.state.routeEndpointMarkers[trackKey] = endpoints;
       
@@ -1910,7 +2042,11 @@ class BusMagoApp {
         // Update click handler (for both new and existing to ensure fresh closure and isFollowing logic)
         marker.off('click');
         marker.on('click', (e) => {
-            L.DomEvent.stopPropagation(e);
+            const oe = e && e.originalEvent ? e.originalEvent : e;
+            if (oe) {
+              L.DomEvent.preventDefault(oe);
+              L.DomEvent.stopPropagation(oe);
+            }
             this.state.selectedVehicleKey = b.key || (b.vehicle || (`NO_VEHICLE_${b.coords[0]}_${b.coords[1]}`));
             this.state.isFollowing = true;
             this.updateInfoFromBus(b);
@@ -2060,81 +2196,32 @@ class BusMagoApp {
 
   updateInfoFromBus(bus) {
     if (!bus) {
-      if (this.state.lastInfoSignature !== null) {
-        // If we had a selected vehicle and now it's gone, it might have finished its trip
-        if (this.state.selectedVehicleKey && !this.state.selectedVehicleKey.startsWith('TRACK_')) {
-          this.infoDiv.innerHTML = `
-            <div class="info-header" style="border-bottom-color: rgba(220, 53, 69, 0.3)">
-              <div class="info-line-badge" style="background-color: #666">⚠</div>
-              <div class="info-destination" style="color: #ff6b6b">Corsa terminata</div>
-            </div>
-            <div class="info-body">
-              <div style="grid-column: 1 / -1; color: #aaa; font-size: 12px; margin-top: 4px;">
-                Il veicolo non è più rilevato dal sistema. È probabile che abbia raggiunto il capolinea.
-              </div>
-            </div>
-          `;
-          this.infoDiv.style.display = 'block';
-          // We keep the selected key so the message stays until user deselects or selects another
-          this.state.lastInfoSignature = "FINISHED_TRIP"; 
-          return;
-        }
-        
-        this.infoDiv.style.display = 'none';
-        this.infoDiv.innerHTML = "";
-        this.state.lastInfoSignature = null;
+      if (this.state.selectedVehicleKey && !this.state.selectedVehicleKey.startsWith('TRACK_')) {
+        this.state.infoPanel.selectedBus = null;
+        this.state.infoPanel.selectedTrack = null;
+        this.state.infoPanel.finishedTrip = true;
+      } else {
+        this.state.infoPanel.selectedBus = null;
+        this.state.infoPanel.finishedTrip = false;
       }
+      this.renderInfoPanel();
       return;
     }
 
-    const now = Date.now();
-    const lastSuccessAt = this.state.updateStatus.lastSuccessAt || 0;
-    const lastErrorAt = this.state.updateStatus.lastErrorAt || 0;
-    const lastSelectedMoveAt = this.state.updateStatus.lastSelectedMoveAt || 0;
-    const isOffline = lastErrorAt > lastSuccessAt;
-    const ageSec = lastSelectedMoveAt ? Math.max(0, Math.floor((now - lastSelectedMoveAt) / 1000)) : null;
-    const statusText = isOffline ? 'offline/errore' : 'ok';
-
-    const signature = `${bus.key}|${bus.lineLabel}|${bus.destination}|${bus.departure}|${bus.race}|${bus.vehicle}|${statusText}|${ageSec}`;
-    if (signature === this.state.lastInfoSignature) return;
-    this.state.lastInfoSignature = signature;
-
-    const baseTs = lastSelectedMoveAt || lastSuccessAt;
-    let timeStr = "--:--:--";
-    if (baseTs) {
-      const dt = new Date(baseTs);
-      timeStr = `${String(dt.getHours()).padStart(2, '0')}:${String(dt.getMinutes()).padStart(2, '0')}:${String(dt.getSeconds()).padStart(2, '0')}`;
+    if (this.state.selectedVehicleKey && this.state.selectedVehicleKey.startsWith('TRACK_')) {
+      this.state.infoPanel.selectedTrack = null;
     }
-
-    const badgeClass = isOffline ? "offline" : "online";
-    const ageText = isOffline ? "offline" : `${(lastSelectedMoveAt ? Math.max(0, Math.floor((now - lastSelectedMoveAt) / 1000)) : Math.max(0, Math.floor((now - lastSuccessAt) / 1000)))}s fa`;
-
-    this.infoDiv.innerHTML = `
-      <div class="info-header">
-        <div class="info-line-badge" style="background-color: ${bus.lineCode ? this.getLegendLineColor(bus.lineCode) : bus.lineColor}">${bus.lineLabel}</div>
-        <div class="info-destination">${bus.destination}</div>
-      </div>
-      <div class="info-body">
-        <div class="info-label">Partenza</div><div class="info-value">${bus.departure || '-'}</div>
-        <div class="info-label">Corsa</div><div class="info-value">${bus.race || '-'}</div>
-        <div class="info-label">Vettura</div><div class="info-value">${bus.vehicle || '-'}</div>
-      </div>
-      <div class="info-footer">
-        <div style="display: flex; justify-content: space-between; align-items: center; font-size: 11px;">
-          <span id="info-update-badge" class="${badgeClass}" style="padding: 2px 8px; border-radius: 10px; background: ${isOffline ? 'rgba(180,60,60,0.2)' : 'rgba(60,180,120,0.15)'}; border: 1px solid ${isOffline ? 'rgba(180,60,60,0.4)' : 'rgba(60,180,120,0.4)'}">
-            Aggiornato ${ageText}
-          </span>
-          <span style="color: #888;">${timeStr}</span>
-        </div>
-      </div>
-    `;
-    this.infoDiv.style.display = 'block';
+    this.state.infoPanel.selectedBus = bus;
+    this.state.infoPanel.finishedTrip = false;
+    this.renderInfoPanel();
   }
 
   updateInfoAgeBadge() {
     if (!this.infoDiv || this.infoDiv.style.display === 'none') return;
-    const badge = this.infoDiv.querySelector('#info-update-badge');
-    const timeSpan = this.infoDiv.querySelector('.info-footer span:last-child');
+    const vehicleRoot = this.infoDiv.querySelector('.vehicle-info');
+    if (!vehicleRoot) return;
+    const badge = vehicleRoot.querySelector('#info-update-badge');
+    const timeSpan = vehicleRoot.querySelector('.info-footer span:last-child');
     if (!badge) return;
 
     const now = Date.now();
@@ -2164,17 +2251,365 @@ class BusMagoApp {
 
   updateInfoFromTrack(lineConf, direction) {
     if (!lineConf) {
-        this.infoDiv.style.display = 'none';
-        this.infoDiv.innerHTML = "";
-        return;
+      this.state.infoPanel.selectedTrack = null;
+      this.renderInfoPanel();
+      return;
     }
-    this.infoDiv.innerHTML = `
-      <div class="info-header" style="border-bottom: none; margin-bottom: 0; padding-bottom: 0;">
-        <div class="info-line-badge" style="background-color: ${this.getLegendLineColor(lineConf.code)}">${lineConf.label}</div>
-        <div class="info-destination">${direction}</div>
+    this.state.infoPanel.selectedBus = null;
+    this.state.infoPanel.finishedTrip = false;
+    this.state.infoPanel.selectedTrack = {
+      lineCode: String(lineConf.code || ''),
+      lineLabel: String(lineConf.label || lineConf.code || ''),
+      destination: String(direction || '')
+    };
+    this.renderInfoPanel();
+  }
+
+  renderInfoPanel() {
+    if (!this.infoDiv) return;
+
+    const vehicleHtml = this.buildVehicleInfoHtml();
+    const departuresHtml = this.buildDeparturesHtml();
+    const activeLineCodes = Object.keys(this.state.lineVisibility).filter(k => this.state.lineVisibility[k] === true);
+    const vehicleSig = this.getVehicleInfoSignature();
+    const departuresSig = this.getDeparturesSignature(activeLineCodes);
+    const signature = `${vehicleSig}|${departuresSig}|${this.state.departures.collapsed ? 1 : 0}|${activeLineCodes.join(',')}|${this.state.directions.lastKnownSignature || ''}|${this.state.selectedVehicleKey || ''}|${this.state.updateStatus.lastSuccessAt || 0}|${this.state.updateStatus.lastErrorAt || 0}`;
+    if (signature === this.state.lastInfoSignature) return;
+    this.state.lastInfoSignature = signature;
+
+    const combined = `${vehicleHtml || ''}${vehicleHtml && departuresHtml ? `<div class="info-section-divider"></div>` : ''}${departuresHtml || ''}`;
+    if (!combined) {
+      this.infoDiv.style.display = 'none';
+      this.infoDiv.innerHTML = '';
+      this.infoDiv.classList.remove('info--departures-only', 'info--departures-collapsed');
+      return;
+    }
+
+    const departuresOnly = !vehicleHtml && !!departuresHtml;
+    this.infoDiv.classList.toggle('info--departures-only', departuresOnly);
+    this.infoDiv.classList.toggle('info--departures-collapsed', departuresOnly && !!(this.state.departures && this.state.departures.collapsed));
+    this.infoDiv.innerHTML = combined;
+    this.infoDiv.style.display = 'block';
+  }
+
+  getVehicleInfoSignature() {
+    const track = this.state.infoPanel && this.state.infoPanel.selectedTrack ? this.state.infoPanel.selectedTrack : null;
+    if (track) return `T:${track.lineCode}|${track.destination}`;
+    if (this.state.infoPanel && this.state.infoPanel.finishedTrip && this.state.selectedVehicleKey && !this.state.selectedVehicleKey.startsWith('TRACK_')) {
+      return `F:${this.state.selectedVehicleKey}`;
+    }
+    const bus = this.state.infoPanel ? this.state.infoPanel.selectedBus : null;
+    if (!bus) return '';
+    return `B:${bus.key || ''}|${bus.lineCode || ''}|${bus.destination || ''}|${bus.departure || ''}|${bus.race || ''}|${bus.vehicle || ''}`;
+  }
+
+  getDeparturesSignature(activeLineCodes) {
+    if (!Array.isArray(activeLineCodes) || activeLineCodes.length === 0) return '';
+    const forced = this.getForcedDeparturesFilter();
+    const items = this.getDeparturesItems(forced.lineCodes, forced.forcedDestinationKeyByLine);
+    if (!items || items.length === 0) return 'EMPTY';
+    return items.map(it => {
+      const t = Array.isArray(it.times) && it.times.length ? it.times.join(',') : '';
+      return `${it.lineCode}|${it.destinationKey}|${it.originLabel || ''}|${t}|${it.message || ''}`;
+    }).join('~');
+  }
+
+  getForcedDeparturesFilter() {
+    const baseLineCodes = Object.keys(this.state.lineVisibility).filter(k => this.state.lineVisibility[k] === true);
+    let lineCodes = baseLineCodes;
+    let forcedDestinationKeyByLine = null;
+    const selectedBus = this.state.infoPanel ? this.state.infoPanel.selectedBus : null;
+    if (selectedBus && selectedBus.lineCode) {
+      const lc = String(selectedBus.lineCode);
+      if (this.state.lineVisibility[lc] === true) {
+        lineCodes = [lc];
+        const dk = normalizeKey(selectedBus.destination || '');
+        if (dk) forcedDestinationKeyByLine = { [lc]: dk };
+      }
+    } else if (this.state.selectedVehicleKey && this.state.selectedVehicleKey.startsWith('TRACK_')) {
+      const track = this.state.infoPanel ? this.state.infoPanel.selectedTrack : null;
+      if (track && track.lineCode) {
+        const lc = String(track.lineCode);
+        if (this.state.lineVisibility[lc] === true) {
+          lineCodes = [lc];
+          const dk = normalizeKey(track.destination || '');
+          if (dk) forcedDestinationKeyByLine = { [lc]: dk };
+        }
+      }
+    }
+    return { lineCodes, forcedDestinationKeyByLine };
+  }
+
+  buildVehicleInfoHtml() {
+    const track = this.state.infoPanel && this.state.infoPanel.selectedTrack ? this.state.infoPanel.selectedTrack : null;
+    if (track) {
+      return `
+        <div class="vehicle-info">
+          <div class="info-header" style="border-bottom: none; margin-bottom: 0; padding-bottom: 0;">
+            <div class="info-line-badge" style="background-color: ${this.getLegendLineColor(track.lineCode)}">${this.escapeHtmlAttribute(track.lineLabel)}</div>
+            <div class="info-destination">${this.escapeHtmlAttribute(track.destination)}</div>
+          </div>
+        </div>
+      `;
+    }
+
+    if (this.state.infoPanel && this.state.infoPanel.finishedTrip && this.state.selectedVehicleKey && !this.state.selectedVehicleKey.startsWith('TRACK_')) {
+      return `
+        <div class="vehicle-info">
+          <div class="info-header" style="border-bottom-color: rgba(220, 53, 69, 0.3)">
+            <div class="info-line-badge" style="background-color: #666">⚠</div>
+            <div class="info-destination" style="color: #ff6b6b">Corsa terminata</div>
+          </div>
+          <div class="info-body">
+            <div style="grid-column: 1 / -1; color: #aaa; font-size: 12px; margin-top: 4px;">
+              Il veicolo non è più rilevato dal sistema. È probabile che abbia raggiunto il capolinea.
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    const bus = this.state.infoPanel ? this.state.infoPanel.selectedBus : null;
+    if (!bus) return '';
+
+    const now = Date.now();
+    const lastSuccessAt = this.state.updateStatus.lastSuccessAt || 0;
+    const lastErrorAt = this.state.updateStatus.lastErrorAt || 0;
+    const lastSelectedMoveAt = this.state.updateStatus.lastSelectedMoveAt || 0;
+    const isOffline = lastErrorAt > lastSuccessAt;
+    const baseTs = lastSelectedMoveAt || lastSuccessAt;
+    let timeStr = "--:--:--";
+    if (baseTs) {
+      const dt = new Date(baseTs);
+      timeStr = `${String(dt.getHours()).padStart(2, '0')}:${String(dt.getMinutes()).padStart(2, '0')}:${String(dt.getSeconds()).padStart(2, '0')}`;
+    }
+
+    const badgeClass = isOffline ? "offline" : "online";
+    const ageText = isOffline ? "offline" : `${(lastSelectedMoveAt ? Math.max(0, Math.floor((now - lastSelectedMoveAt) / 1000)) : Math.max(0, Math.floor((now - lastSuccessAt) / 1000)))}s fa`;
+    const badgeBg = isOffline ? 'rgba(180,60,60,0.2)' : 'rgba(60,180,120,0.15)';
+    const badgeBorder = isOffline ? 'rgba(180,60,60,0.4)' : 'rgba(60,180,120,0.4)';
+    const lineBadgeColor = bus.lineCode ? this.getLegendLineColor(bus.lineCode) : (bus.lineColor || '#666');
+    const lineLabel = bus.lineLabel || (bus.lineCode || '-');
+
+    return `
+      <div class="vehicle-info">
+        <div class="info-header">
+          <div class="info-line-badge" style="background-color: ${lineBadgeColor}">${this.escapeHtmlAttribute(lineLabel)}</div>
+          <div class="info-destination">${this.escapeHtmlAttribute(bus.destination || '-')}</div>
+        </div>
+        <div class="info-body">
+          <div class="info-label">Partenza</div><div class="info-value">${this.escapeHtmlAttribute(bus.departure || '-')}</div>
+          <div class="info-label">Corsa</div><div class="info-value">${this.escapeHtmlAttribute(bus.race || '-')}</div>
+          <div class="info-label">Vettura</div><div class="info-value">${this.escapeHtmlAttribute(bus.vehicle || '-')}</div>
+        </div>
+        <div class="info-footer">
+          <div style="display: flex; justify-content: space-between; align-items: center; font-size: 11px;">
+            <span id="info-update-badge" class="${badgeClass}" style="padding: 2px 8px; border-radius: 10px; background: ${badgeBg}; border: 1px solid ${badgeBorder}">
+              Aggiornato ${this.escapeHtmlAttribute(ageText)}
+            </span>
+            <span style="color: #888;">${this.escapeHtmlAttribute(timeStr)}</span>
+          </div>
+        </div>
       </div>
     `;
-    this.infoDiv.style.display = 'block';
+  }
+
+  buildDeparturesHtml() {
+    const baseActiveLineCodes = Object.keys(this.state.lineVisibility).filter(k => this.state.lineVisibility[k] === true);
+    if (baseActiveLineCodes.length === 0) return '';
+
+    let activeLineCodes = baseActiveLineCodes;
+    let forcedDestinationKeyByLine = null;
+    const selectedBus = this.state.infoPanel ? this.state.infoPanel.selectedBus : null;
+    if (selectedBus && selectedBus.lineCode) {
+      const lc = String(selectedBus.lineCode);
+      if (this.state.lineVisibility[lc] === true) {
+        activeLineCodes = [lc];
+        const dk = normalizeKey(selectedBus.destination || '');
+        if (dk) forcedDestinationKeyByLine = { [lc]: dk };
+      }
+    } else if (this.state.selectedVehicleKey && this.state.selectedVehicleKey.startsWith('TRACK_')) {
+      const track = this.state.infoPanel ? this.state.infoPanel.selectedTrack : null;
+      if (track && track.lineCode) {
+        const lc = String(track.lineCode);
+        if (this.state.lineVisibility[lc] === true) {
+          activeLineCodes = [lc];
+          const dk = normalizeKey(track.destination || '');
+          if (dk) forcedDestinationKeyByLine = { [lc]: dk };
+        }
+      }
+    }
+
+    const collapsed = !!(this.state.departures && this.state.departures.collapsed);
+    const btnLabel = collapsed ? 'Apri' : 'Chiudi';
+    const icon = collapsed ? '▾' : '▴';
+    const bodyStyle = collapsed ? 'display:none;' : '';
+
+    const items = this.getDeparturesItems(activeLineCodes, forcedDestinationKeyByLine);
+    let body = '';
+
+    if (items.length === 0) {
+      body = `<div class="departures-empty">In attesa dati…</div>`;
+    } else {
+      body = items.map(it => {
+        const badgeColor = this.getLegendLineColor(it.lineCode);
+        const times = it.times && it.times.length ? it.times.map(t => this.escapeHtmlAttribute(t)).join(' · ') : '';
+        const meta = it.originLabel ? `Da: ${this.escapeHtmlAttribute(it.originLabel)}` : '';
+        const destLabel = it.destinationLabel ? this.escapeHtmlAttribute(it.destinationLabel) : this.escapeHtmlAttribute(it.destinationKey || '');
+        const right = times ? `<div class="departures-times">${times}</div>` : `<div class="departures-times departures-times--empty">${this.escapeHtmlAttribute(it.message || 'In attesa dati…')}</div>`;
+
+        return `
+          <div class="departures-line">
+            <div class="departures-line-badge" style="background-color:${badgeColor};">${this.escapeHtmlAttribute(it.lineCode)}</div>
+            <div class="departures-line-main">
+              <div class="departures-dest">${destLabel}</div>
+              ${meta ? `<div class="departures-meta">${meta}</div>` : ''}
+              ${right}
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    return `
+      <div class="departures-section">
+        <div class="departures-header">
+          <div class="departures-title">Prossime partenze</div>
+          <button id="departures-toggle" class="departures-toggle" type="button" aria-label="${btnLabel}" aria-expanded="${collapsed ? 'false' : 'true'}">${icon}</button>
+        </div>
+        <div class="departures-body" style="${bodyStyle}">
+          ${body}
+        </div>
+      </div>
+    `;
+  }
+
+  getDeparturesItems(activeLineCodes, forcedDestinationKeyByLine = null) {
+    const stopDataMap = this.state.lastStopDataMap && typeof this.state.lastStopDataMap === 'object' ? this.state.lastStopDataMap : null;
+    const directions = this.state.directions || {};
+    const knownByLine = directions.knownByLine && typeof directions.knownByLine === 'object' ? directions.knownByLine : {};
+    const filterByLine = directions.filterByLine && typeof directions.filterByLine === 'object' ? directions.filterByLine : {};
+    const defaultFilterByLine = directions.defaultFilterByLine && typeof directions.defaultFilterByLine === 'object' ? directions.defaultFilterByLine : {};
+    const overrideModeByLine = directions.overrideModeByLine && typeof directions.overrideModeByLine === 'object' ? directions.overrideModeByLine : {};
+
+    const out = [];
+
+    activeLineCodes.forEach(lineCode => {
+      const lc = String(lineCode);
+      const lineConf = Array.isArray(linesConfig) ? linesConfig.find(l => l && l.code === lc) : null;
+      const stops = lineConf && Array.isArray(lineConf.stops) ? lineConf.stops : [];
+      const stopA = stops.length ? String(stops[0]) : null;
+      const stopB = stops.length ? String(stops[stops.length - 1]) : null;
+      const forcedKeyForLine = forcedDestinationKeyByLine && forcedDestinationKeyByLine[lc] ? String(forcedDestinationKeyByLine[lc]) : '';
+
+      const known = knownByLine[lc] && typeof knownByLine[lc] === 'object' ? knownByLine[lc] : {};
+      const knownKeys = Object.keys(known);
+
+      const mode = overrideModeByLine[lc];
+      const userSet = filterByLine[lc] instanceof Set ? filterByLine[lc] : null;
+      const defaultSet = defaultFilterByLine[lc] instanceof Set ? defaultFilterByLine[lc] : null;
+
+      const availableKeysFromStopData = new Set();
+      if (stopDataMap && stops.length > 0) {
+        stops.forEach(sCode => {
+          const runs = stopDataMap[sCode];
+          if (!Array.isArray(runs)) return;
+          runs.forEach(r => {
+            if (String((r.LineCode || '')).toUpperCase() !== lc) return;
+            const dk = normalizeKey(String(r.Destination || '').trim());
+            if (dk) availableKeysFromStopData.add(dk);
+          });
+        });
+      }
+
+      let destKeys = [];
+      if (forcedKeyForLine) {
+        destKeys = [forcedKeyForLine];
+      } else
+      if (mode === 'set' && userSet instanceof Set && userSet.size > 0) {
+        const base = Array.from(userSet);
+        if (availableKeysFromStopData.size > 0) destKeys = base.filter(k => availableKeysFromStopData.has(String(k)));
+        else destKeys = base;
+      } else if (defaultSet instanceof Set && defaultSet.size > 0) {
+        const base = Array.from(defaultSet);
+        if (availableKeysFromStopData.size > 0) destKeys = base.filter(k => availableKeysFromStopData.has(String(k)));
+        else destKeys = base;
+      } else if (knownKeys.length > 0) {
+        destKeys = knownKeys;
+      } else if (availableKeysFromStopData.size > 0) {
+        destKeys = Array.from(availableKeysFromStopData);
+      }
+
+      if (destKeys.length === 0) {
+        if (forcedKeyForLine) {
+          out.push({
+            lineCode: lc,
+            destinationKey: '',
+            destinationLabel: '',
+            originLabel: '',
+            times: [],
+            message: 'Nessun dato disponibile'
+          });
+        }
+        return;
+      }
+
+      destKeys.forEach(destKey => {
+        const dk = String(destKey);
+        const destLabel = String(known[dk] || dk);
+
+        let originStop = stopA;
+        if (stopDataMap && stopA && stopB && stopA !== stopB) {
+          const aHas = Array.isArray(stopDataMap[stopA]) && stopDataMap[stopA].some(r => String((r.LineCode || '')).toUpperCase() === lc && normalizeKey(r.Destination) === dk);
+          const bHas = Array.isArray(stopDataMap[stopB]) && stopDataMap[stopB].some(r => String((r.LineCode || '')).toUpperCase() === lc && normalizeKey(r.Destination) === dk);
+          if (aHas && !bHas) originStop = stopA;
+          else if (!aHas && bHas) originStop = stopB;
+          else originStop = stopA;
+        }
+
+        let originLabel = '';
+        let times = [];
+        let message = '';
+        if (!stopDataMap || !originStop || !Array.isArray(stopDataMap[originStop])) {
+          if (!forcedKeyForLine) return;
+          message = 'In attesa dati…';
+        } else {
+          const runs = stopDataMap[originStop].filter(r => String((r.LineCode || '')).toUpperCase() === lc && normalizeKey(r.Destination) === dk);
+          const bestWithNext = runs.find(r => String(r.NextPasses || '').trim()) || null;
+          const best = bestWithNext || (forcedKeyForLine ? (runs[0] || null) : null);
+          if (!best) {
+            if (!forcedKeyForLine) return;
+            message = 'Nessun dato disponibile';
+          } else {
+            originLabel = String(best.Departure || '').trim();
+            const raw = String(best.NextPasses || '').trim();
+            if (raw) {
+              times = raw.split('-').map(x => x.trim()).filter(Boolean).slice(0, 8);
+            } else {
+              if (!forcedKeyForLine) return;
+              message = 'Nessuna corsa imminente';
+            }
+          }
+        }
+
+        out.push({
+          lineCode: lc,
+          destinationKey: dk,
+          destinationLabel: destLabel,
+          originLabel,
+          times,
+          message
+        });
+      });
+    });
+
+    out.sort((a, b) => {
+      const la = a.lineCode.localeCompare(b.lineCode, undefined, { numeric: true, sensitivity: 'base' });
+      if (la !== 0) return la;
+      return String(a.destinationLabel || a.destinationKey || '').localeCompare(String(b.destinationLabel || b.destinationKey || ''), undefined, { sensitivity: 'base' });
+    });
+
+    return out;
   }
 
   getBusIconZoomScale(zoom) {
