@@ -150,6 +150,9 @@ class BusMagoApp {
         collapsed: false,
         storageKey: 'busmago:departuresCollapsed:v1'
       },
+      installBanner: {
+        dismissedKey: 'busmago:installBannerDismissed:v1'
+      },
       infoPanel: {
         selectedBus: null,
         selectedTrack: null,
@@ -391,6 +394,7 @@ class BusMagoApp {
     this.loadDeparturesCollapsed();
     this.initMap();
     this.initToast();
+    this.initInstallBanner();
     this.initVisibility();
     this.loadActiveLines();
     this.loadLegendView();
@@ -454,6 +458,42 @@ class BusMagoApp {
     this.state.departures.collapsed = !this.state.departures.collapsed;
     this.saveDeparturesCollapsed();
     this.renderInfoPanel();
+  }
+
+  initInstallBanner() {
+    const banner = document.getElementById('install-banner');
+    const closeBtn = document.getElementById('install-banner-close');
+    if (!banner || !closeBtn) return;
+
+    // Check if dismissed
+    const dismissed = localStorage.getItem(this.state.installBanner.dismissedKey);
+    if (dismissed === '1') return;
+
+    // Check if mobile (screen width <= 1024px)
+    if (window.innerWidth > 1024) return;
+
+    // Check if already in standalone mode (PWA installed)
+    const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
+    if (isStandalone) return;
+
+    // Show banner
+    banner.style.display = 'flex';
+
+    banner.addEventListener('click', (e) => {
+      if (e.target === closeBtn) return;
+      // Redirect to README anchor
+      window.open('https://github.com/BusMago/Bus-Mago#installazione', '_blank');
+      // Mark as dismissed so it doesn't reappear
+      localStorage.setItem(this.state.installBanner.dismissedKey, '1');
+      banner.style.display = 'none';
+    });
+
+    closeBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      localStorage.setItem(this.state.installBanner.dismissedKey, '1');
+      banner.style.display = 'none';
+    });
   }
 
   initMap() {

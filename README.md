@@ -25,10 +25,19 @@ L'app ufficiale esiste, è fatta da professionisti seri (probabilmente con crava
 Noi siamo qui per la passione, per la gloria, e perché ci piace vedere le cose muoversi su una mappa in stile *CyberPunk 2077*.
 
 ### 4. Contatti
-Per reclami e informazioni siete pregati di contattare gli svilupaptori omertosi che possono essere trovati nella sezione contributors della repo.
+Per reclami e informazioni siete pregati di contattare gli sviluppatori omertosi che possono essere trovati nella sezione contributors della repo.
 *   No scam
 *   No perditempo
 *   No Ciosoti
+
+<a id="installazione"></a>
+### 5. Installazione su Smartphone (Android/Chrome) 📱
+Per installare Bus Mago come un'app sul tuo telefono e usarla a tutto schermo:
+1. Apri il sito in **Chrome** sul tuo smartphone.
+2. Clicca sui **tre puntini** (⋮) in alto a sinistra.
+3. Scorri verso il basso e seleziona **"Aggiungi alla schermata Home"**.
+4. Clicca su **"Installa app"**.
+Ora troverai l'icona di Bus Mago tra le tue app!
 
 ### In conclusione...
 Usate **Bus Mago** a vostro rischio e pericolo. Divertitevi, esplorate, ma ricordate sempre la regola d'oro del pendolare:
