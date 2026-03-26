@@ -39,6 +39,15 @@ Per installare Bus Mago come un'app sul tuo telefono e usarla a tutto schermo:
 4. Clicca su **"Installa app"**.
 Ora troverai l'icona di Bus Mago tra le tue app!
 
+<a id="installazione-ios"></a>
+### 6. Installazione su iPhone (Safari) 🍎
+Per installare Bus Mago come un'app sul tuo iPhone:
+1. Apri il sito in **Safari**.
+2. Tocca il tasto **Condividi** (quadrato con freccia verso l'alto).
+3. Seleziona **"Aggiungi alla schermata Home"**.
+4. Conferma con **"Aggiungi"**.
+Aprendo l'icona dalla Home, l'app partirà a **schermo intero**.
+
 ### In conclusione...
 Usate **Bus Mago** a vostro rischio e pericolo. Divertitevi, esplorate, ma ricordate sempre la regola d'oro del pendolare:
 > *Il bus che state aspettando arriverà sempre nell'istante esatto in cui vi sarete appena accesi una sigaretta (anche se non fumate).* 🚬🚫

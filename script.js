@@ -476,13 +476,23 @@ class BusMagoApp {
     const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
     if (isStandalone) return;
 
+    const ua = navigator.userAgent || '';
+    const isIOS = /iPad|iPhone|iPod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+    const isSafari = /^((?!chrome|android).)*safari/i.test(ua) || 'standalone' in window.navigator;
+    const bannerText = isIOS && isSafari 
+      ? '✨ Installa l\'app su iPhone: Condividi → Aggiungi alla Home'
+      : '✨ Installa l\'app su Android: Menu ⋮ → Aggiungi alla Home';
+    const linkAnchor = isIOS && isSafari ? '#installazione-ios' : '#installazione';
+    const contentEl = banner.querySelector('.install-banner-content span');
+    if (contentEl) contentEl.textContent = bannerText;
+
     // Show banner
     banner.style.display = 'flex';
 
     banner.addEventListener('click', (e) => {
       if (e.target === closeBtn) return;
       // Redirect to README anchor
-      window.open('https://github.com/BusMago/Bus-Mago#installazione', '_blank');
+      window.open(`https://github.com/BusMago/Bus-Mago${linkAnchor}`, '_blank');
       // Mark as dismissed so it doesn't reappear
       localStorage.setItem(this.state.installBanner.dismissedKey, '1');
       banner.style.display = 'none';
