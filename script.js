@@ -408,6 +408,13 @@ class BusMagoApp {
     this.initUserLocation();
     this.renderInfoPanel();
 
+    // PWA Service Worker registration
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js').catch(() => {});
+      });
+    }
+
     // Start loop
     this.scheduleNextRefresh(0);
 
