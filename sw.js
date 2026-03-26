@@ -6,6 +6,7 @@ const ASSETS = [
   './script.js',
   './lines.js',
   './icona_bus_mago.webp',
+  './icona_bus_mago.png',
   './icona_centre_map.webp',
   './icona_fs.webp',
   './icona_uni.webp'
