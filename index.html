@@ -35,6 +35,7 @@
   <button id="recenter-btn" class="map-btn recenter-btn" title="Centra su posizione">
     <img src="icona_centre_map.webp" alt="Centra">
   </button>
+  <button id="help-btn" class="map-btn help-btn" title="Come funziona" aria-label="Come funziona">?</button>
 </div>
 
 <div id="install-banner" class="install-banner">
@@ -42,6 +43,39 @@
     <span>✨ Installa l'app sul telefono</span>
   </div>
   <button id="install-banner-close" class="install-banner-close" aria-label="Chiudi banner">×</button>
+</div>
+
+<div id="welcome-overlay" class="welcome-overlay" style="display:none;">
+  <div class="welcome-modal">
+    <div class="welcome-header">
+      <img src="icona_bus_mago.webp" alt="Bus Mago" class="welcome-logo">
+      <h1 class="welcome-title">Bus Mago</h1>
+      <p class="welcome-subtitle">Tracciamento in tempo reale dei bus di Trieste</p>
+    </div>
+    <div class="welcome-steps">
+      <div class="welcome-step">
+        <span class="welcome-step-icon">☰</span>
+        <span class="welcome-step-text">Tocca <strong>☰</strong> in alto a destra per aprire il pannello linee</span>
+      </div>
+      <div class="welcome-step">
+        <span class="welcome-step-icon">🚌</span>
+        <span class="welcome-step-text">Seleziona le <strong>linee</strong> che vuoi monitorare sulla mappa</span>
+      </div>
+      <div class="welcome-step">
+        <span class="welcome-step-icon">📍</span>
+        <span class="welcome-step-text">Tocca un <strong>bus</strong> per vedere info e prossime partenze</span>
+      </div>
+      <div class="welcome-step">
+        <span class="welcome-step-icon">⭐</span>
+        <span class="welcome-step-text">Aggiungi linee ai <strong>preferiti</strong> per accedervi velocemente</span>
+      </div>
+      <div class="welcome-step">
+        <span class="welcome-step-icon">🎓</span>
+        <span class="welcome-step-text">I tasti <strong>UNI</strong> e <strong>FS</strong> selezionano le linee verso l'Università e la Stazione</span>
+      </div>
+    </div>
+    <button id="welcome-close" class="welcome-close-btn" type="button">Inizia</button>
+  </div>
 </div>
 
 <div class="repo-link">

@@ -1,4 +1,5 @@
-const CACHE_NAME = 'bus-mago-cache-v1';
+// Incrementa questo valore ad ogni deploy per invalidare la cache degli utenti
+const CACHE_NAME = 'bus-mago-cache-v2';
 const ASSETS = [
   './',
   './index.html',

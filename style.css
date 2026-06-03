@@ -246,6 +246,12 @@ html, body, #map {
   line-height: 1;
 }
 
+.help-btn {
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1;
+}
+
 .map-btn {
   width: 44px;
   height: 44px;
@@ -1446,6 +1452,114 @@ html, body, #map {
 .toast-notification.success {
   background-color: rgba(40, 167, 69, 0.9);
 }
+
+/* Welcome Overlay */
+.welcome-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9000;
+  background: rgba(0, 0, 0, 0.72);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  box-sizing: border-box;
+}
+
+.welcome-modal {
+  background: rgba(25, 25, 25, 0.97);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 20px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
+  padding: 28px 24px 24px;
+  max-width: 360px;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+:root[data-theme="light"] .welcome-modal {
+  background: rgba(255, 255, 255, 0.98);
+  border-color: rgba(0, 0, 0, 0.08);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.18);
+}
+
+.welcome-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  text-align: center;
+}
+
+.welcome-logo {
+  width: 56px;
+  height: 56px;
+  border-radius: 14px;
+}
+
+.welcome-title {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 800;
+  color: #fff;
+  letter-spacing: 0.3px;
+}
+
+:root[data-theme="light"] .welcome-title { color: #111; }
+
+.welcome-subtitle {
+  margin: 0;
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.65);
+}
+
+:root[data-theme="light"] .welcome-subtitle { color: rgba(0, 0, 0, 0.55); }
+
+.welcome-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.welcome-step {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.88);
+  line-height: 1.4;
+}
+
+:root[data-theme="light"] .welcome-step { color: rgba(0, 0, 0, 0.82); }
+
+.welcome-step-icon {
+  font-size: 18px;
+  flex: 0 0 auto;
+  width: 26px;
+  text-align: center;
+  margin-top: 1px;
+}
+
+.welcome-close-btn {
+  width: 100%;
+  padding: 14px;
+  background: #0077ff;
+  color: #fff;
+  border: none;
+  border-radius: 12px;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.2s ease, transform 0.1s ease;
+  letter-spacing: 0.3px;
+}
+
+.welcome-close-btn:hover { background: #0066dd; }
+.welcome-close-btn:active { transform: scale(0.98); }
 
 /* Smooth Marker Transition */
 .leaflet-marker-icon.bus-icon-wrapper {
