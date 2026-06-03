@@ -180,7 +180,8 @@ class BusMagoApp {
         requestSeq: 0,
         lastAppliedRequestSeq: 0,
         abortController: null
-      }
+      },
+      wakeLock: null
     };
 
     // DOM Elements
@@ -690,6 +691,24 @@ class BusMagoApp {
     this.renderLegend();
   }
 
+  async requestWakeLock() {
+    if (!('wakeLock' in navigator)) return;
+    if (this.state.wakeLock) return;
+    try {
+      this.state.wakeLock = await navigator.wakeLock.request('screen');
+      this.state.wakeLock.addEventListener('release', () => {
+        this.state.wakeLock = null;
+      });
+    } catch {}
+  }
+
+  releaseWakeLock() {
+    if (this.state.wakeLock) {
+      this.state.wakeLock.release().catch(() => {});
+      this.state.wakeLock = null;
+    }
+  }
+
   compactStopCache() {
     const now = Date.now();
     Object.keys(this.state.stopCache.entries).forEach(key => {
@@ -792,6 +811,7 @@ class BusMagoApp {
     map.on('dragstart', () => {
         this.handleInteraction();
         this.state.isFollowing = false;
+        this.releaseWakeLock();
     });
     map.on('click', (e) => {
       this.handleInteraction();
@@ -803,6 +823,7 @@ class BusMagoApp {
       }
       this.deselectVehicle();
       this.state.isFollowing = false;
+      this.releaseWakeLock();
     });
 
     // Menu toggle
@@ -818,6 +839,13 @@ class BusMagoApp {
             if (willShow) this.renderLegend();
         });
     }
+
+    // Reacquire wake lock when app returns to foreground during active follow
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible' && this.state.isFollowing && this.state.selectedVehicleKey) {
+        this.requestWakeLock();
+      }
+    });
 
     if (this.infoDiv) {
       this.infoDiv.addEventListener('click', (e) => {
@@ -1020,6 +1048,7 @@ class BusMagoApp {
 
   deselectVehicle() {
     if (this.state.selectedVehicleKey) {
+      this.releaseWakeLock();
       this.state.selectedVehicleKey = null;
       if (this.state.departures) this.state.departures.collapsed = true;
       if (this.state.infoPanel) {
@@ -2214,6 +2243,7 @@ class BusMagoApp {
             }
             this.state.selectedVehicleKey = b.key || (b.vehicle || (`NO_VEHICLE_${b.coords[0]}_${b.coords[1]}`));
             this.state.isFollowing = true;
+            this.requestWakeLock();
             this.updateInfoFromBus(b);
             if (this.legendDiv.style.display === 'block') {
                 this.legendDiv.style.display = 'none';

@@ -1,45 +1,87 @@
 // Incrementa questo valore ad ogni deploy per invalidare la cache degli utenti
-const CACHE_NAME = 'bus-mago-cache-v2';
-const ASSETS = [
+const CACHE_NAME = 'bus-mago-cache-v3';
+
+// Immagini: cache-first (cambiano raramente, utili offline)
+const STATIC_IMAGES = [
+  './icona_bus_mago.webp',
+  './icona_bus_mago.png',
+  './icona_centre_map.webp',
+  './icona_fs.webp',
+  './icona_uni.webp',
+  './icona_bateo_gambling.webp'
+];
+
+// File app: network-first (aggiornati ad ogni push su GitHub)
+const APP_FILES = [
   './',
   './index.html',
   './style.css',
   './script.js',
   './lines.js',
-  './icona_bus_mago.webp',
-  './icona_bus_mago.png',
-  './icona_centre_map.webp',
-  './icona_fs.webp',
-  './icona_uni.webp'
+  './manifest.json'
 ];
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll(ASSETS);
+      return cache.addAll([...STATIC_IMAGES, ...APP_FILES]);
     })
   );
+  // Attiva subito senza aspettare che le tab vecchie siano chiuse
+  self.skipWaiting();
 });
 
 self.addEventListener('activate', (event) => {
   event.waitUntil(
-    caches.keys().then((keys) => {
-      return Promise.all(
+    caches.keys()
+      .then((keys) => Promise.all(
         keys.filter((key) => key !== CACHE_NAME).map((key) => caches.delete(key))
-      );
-    })
+      ))
+      // Prende controllo di tutte le tab aperte immediatamente
+      .then(() => self.clients.claim())
   );
 });
 
 self.addEventListener('fetch', (event) => {
-  // Pass through external requests (like OpenStreetMap or TPL FVG)
-  if (event.request.url.includes('tile.openstreetmap.org') || event.request.url.includes('tplfvg.it')) {
+  const url = event.request.url;
+
+  // Lascia passare le richieste esterne (tile OSM, API TPL FVG)
+  if (url.includes('tile.openstreetmap.org') || url.includes('tplfvg.it') || url.includes('unpkg.com')) {
     return;
   }
 
-  event.respondWith(
-    caches.match(event.request).then((cachedResponse) => {
-      return cachedResponse || fetch(event.request);
-    })
-  );
+  // Solo richieste GET
+  if (event.request.method !== 'GET') return;
+
+  const isImage = /\.(webp|png|jpg|jpeg|gif|svg|ico)(\?.*)?$/i.test(url);
+
+  if (isImage) {
+    // Cache-first per le immagini: veloce e disponibile offline
+    event.respondWith(
+      caches.match(event.request).then((cached) => {
+        if (cached) return cached;
+        return fetch(event.request).then((response) => {
+          if (response && response.status === 200) {
+            const clone = response.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
+          }
+          return response;
+        });
+      })
+    );
+  } else {
+    // Network-first per HTML/JS/CSS: ad ogni push su GitHub l'utente riceve subito
+    // la versione aggiornata. Se offline, usa la cache come fallback.
+    event.respondWith(
+      fetch(event.request)
+        .then((response) => {
+          if (response && response.status === 200) {
+            const clone = response.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
+          }
+          return response;
+        })
+        .catch(() => caches.match(event.request))
+    );
+  }
 });
