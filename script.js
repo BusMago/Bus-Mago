@@ -90,6 +90,12 @@ const LEGEND_GROUPS = {
     '4': ['PIAZZA OBERDAN', 'PIAZZA TOMMASEO'],
     '51': ['STAZIONE FERROVIARIA'],
     '3': ['STAZIONE FERROVIARIA']
+  },
+  BARCOLA: {
+    '6': [],
+    '19': [],
+    '20': [],
+    '36': []
   }
 };
 
@@ -283,7 +289,7 @@ class BusMagoApp {
     const active = this.state.legend && this.state.legend.groupKeys instanceof Set ? this.state.legend.groupKeys : new Set();
     const out = {};
     active.forEach(key => {
-      if (key !== 'UNI' && key !== 'FS') return;
+      if (key !== 'UNI' && key !== 'FS' && key !== 'BARCOLA') return;
       const group = LEGEND_GROUPS[key];
       if (!group || typeof group !== 'object') return;
       Object.keys(group).forEach(lineCode => {
@@ -304,7 +310,7 @@ class BusMagoApp {
     const active = this.state.legend && this.state.legend.groupKeys instanceof Set ? this.state.legend.groupKeys : new Set();
     const now = Date.now();
     active.forEach(key => {
-      if (key !== 'UNI' && key !== 'FS') return;
+      if (key !== 'UNI' && key !== 'FS' && key !== 'BARCOLA') return;
       const group = LEGEND_GROUPS[key];
       if (!group || typeof group !== 'object') return;
       Object.keys(group).forEach(lineCode => {
@@ -317,11 +323,34 @@ class BusMagoApp {
   }
 
   toggleLegendGroupKey(key) {
-    const k = key === 'UNI' || key === 'FS' ? key : null;
+    const k = key === 'UNI' || key === 'FS' || key === 'BARCOLA' ? key : null;
     if (!k) return;
     if (!(this.state.legend.groupKeys instanceof Set)) this.state.legend.groupKeys = new Set();
-    if (this.state.legend.groupKeys.has(k)) this.state.legend.groupKeys.delete(k);
-    else this.state.legend.groupKeys.add(k);
+    
+    const wasActive = this.state.legend.groupKeys.has(k);
+    if (wasActive) {
+      this.state.legend.groupKeys.delete(k);
+      // Turn off lines associated with this group if not in other active groups
+      const group = LEGEND_GROUPS[k];
+      if (group) {
+        Object.keys(group).forEach(lc => {
+          let inOtherActive = false;
+          this.state.legend.groupKeys.forEach(otherGk => {
+            if (LEGEND_GROUPS[otherGk] && Object.prototype.hasOwnProperty.call(LEGEND_GROUPS[otherGk], lc)) {
+              inOtherActive = true;
+            }
+          });
+          if (!inOtherActive) {
+            this.state.lineVisibility[lc] = false;
+            delete this.state.directions.waitStartedAtByLine[lc];
+            if (this.state.directions.filterByLine) delete this.state.directions.filterByLine[lc];
+            if (this.state.directions.overrideModeByLine) delete this.state.directions.overrideModeByLine[lc];
+          }
+        });
+      }
+    } else {
+      this.state.legend.groupKeys.add(k);
+    }
 
     const active = this.state.legend.groupKeys;
     const affectedLineCodes = new Set();
@@ -339,6 +368,7 @@ class BusMagoApp {
     this.recomputeGroupDefaultFilters();
     this.applyGroupLineSelections();
     this.saveLegendGroupKeys();
+    this.saveActiveLines();
   }
 
   loadLegendView() {
@@ -364,7 +394,7 @@ class BusMagoApp {
         const arr = JSON.parse(raw);
         if (Array.isArray(arr)) {
           arr.forEach(k => {
-            if (k === 'UNI' || k === 'FS') this.state.legend.groupKeys.add(k);
+            if (k === 'UNI' || k === 'FS' || k === 'BARCOLA') this.state.legend.groupKeys.add(k);
           });
         }
       }
@@ -373,7 +403,7 @@ class BusMagoApp {
 
     try {
       const legacy = localStorage.getItem('busmago:legendGroupKey:v1');
-      if ((legacy === 'UNI' || legacy === 'FS') && this.state.legend.groupKeys.size === 0) {
+      if ((legacy === 'UNI' || legacy === 'FS' || legacy === 'BARCOLA') && this.state.legend.groupKeys.size === 0) {
         this.state.legend.groupKeys.add(legacy);
         localStorage.removeItem('busmago:legendGroupKey:v1');
       }
@@ -384,7 +414,7 @@ class BusMagoApp {
   saveLegendGroupKeys() {
     try {
       const active = this.state.legend.groupKeys instanceof Set ? Array.from(this.state.legend.groupKeys) : [];
-      const filtered = active.filter(k => k === 'UNI' || k === 'FS');
+      const filtered = active.filter(k => k === 'UNI' || k === 'FS' || k === 'BARCOLA');
       if (filtered.length > 0) {
         localStorage.setItem(this.state.legend.groupKeysStorageKey, JSON.stringify(filtered));
       } else {
@@ -1167,10 +1197,14 @@ class BusMagoApp {
     const groupKeys = (this.state.legend && this.state.legend.groupKeys instanceof Set) ? this.state.legend.groupKeys : new Set();
     const uniActive = groupKeys.has('UNI');
     const fsActive = groupKeys.has('FS');
+    const barcolaActive = groupKeys.has('BARCOLA');
     html += `<hr class="legend-grid-separator">`;
     html += `<div class="legend-group-row">
               <button id="legend-group-uni" class="legend-action-btn legend-action-toggle legend-group-btn ${uniActive ? 'is-active' : ''}" type="button" aria-label="Gruppo UNI" aria-pressed="${uniActive ? 'true' : 'false'}"><img class="legend-group-icon" src="icona_uni.webp" alt=""></button>
               <button id="legend-group-fs" class="legend-action-btn legend-action-toggle legend-group-btn ${fsActive ? 'is-active' : ''}" type="button" aria-label="Gruppo FS" aria-pressed="${fsActive ? 'true' : 'false'}"><img class="legend-group-icon" src="icona_fs.webp" alt=""></button>
+            </div>
+            <div class="legend-group-row legend-group-row--centered">
+              <button id="legend-group-barcola" class="legend-action-btn legend-action-toggle legend-group-btn ${barcolaActive ? 'is-active' : ''}" type="button" aria-label="Gruppo BARCOLA" aria-pressed="${barcolaActive ? 'true' : 'false'}"><img class="legend-group-icon" src="barcola.webp" alt=""></button>
             </div>`;
     html += `<hr class="legend-grid-separator">`;
 
@@ -1625,6 +1659,20 @@ class BusMagoApp {
         e.preventDefault();
         e.stopPropagation();
         this.toggleLegendGroupKey('FS');
+        this.updateBusMarkers(this.state.lastEnrichedBuses);
+        this.updateTrackStyles();
+        this.saveActiveLines();
+        this.renderLegend();
+        this.scheduleNextRefresh(0);
+      });
+    }
+
+    const groupBarcolaBtn = document.getElementById('legend-group-barcola');
+    if (groupBarcolaBtn) {
+      groupBarcolaBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        this.toggleLegendGroupKey('BARCOLA');
         this.updateBusMarkers(this.state.lastEnrichedBuses);
         this.updateTrackStyles();
         this.saveActiveLines();

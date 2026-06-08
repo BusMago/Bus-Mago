@@ -30,6 +30,8 @@ Per reclami e informazioni siete pregati di contattare gli sviluppatori omertosi
 *   No perditempo
 *   No Ciosoti
 
+E non fate i moralisti, sappiamo tutti perché andate a Barcola. 🌞
+
 <a id="installazione"></a>
 ### 5. Installazione su Smartphone (Android/Chrome) 📱
 Per installare Bus Mago come un'app sul tuo telefono e usarla a tutto schermo:
