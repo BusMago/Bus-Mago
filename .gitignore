@@ -1,3 +1,4 @@
 check_lines.ps1
 *.tmp
 *.log
+*.code-workspace

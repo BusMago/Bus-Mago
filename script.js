@@ -187,6 +187,7 @@ class BusMagoApp {
         lastAppliedRequestSeq: 0,
         abortController: null
       },
+      isHardRefreshing: false,
       wakeLock: null
     };
 
@@ -197,6 +198,7 @@ class BusMagoApp {
 
     // Bindings
     this.refreshData = this.refreshData.bind(this);
+    this.hardRefreshData = this.hardRefreshData.bind(this);
   }
 
   escapeHtmlAttribute(value) {
@@ -628,6 +630,16 @@ class BusMagoApp {
     this.updateBusMarkers(this.state.lastEnrichedBuses);
   }
 
+  updateRefreshButtonVisual() {
+    const btn = document.getElementById('refresh-btn');
+    if (!btn) return;
+    if (this.state.isHardRefreshing) {
+      btn.classList.add('refreshing');
+    } else {
+      btn.classList.remove('refreshing');
+    }
+  }
+
   loadFavorites() {
     try {
       const raw = localStorage.getItem(this.state.favorites.key);
@@ -829,7 +841,7 @@ class BusMagoApp {
       refreshBtn.addEventListener('click', (e) => {
         e.preventDefault();
         e.stopPropagation();
-        this.scheduleNextRefresh(0);
+        this.hardRefreshData();
       });
     }
     
@@ -1731,6 +1743,63 @@ class BusMagoApp {
     this.state.uiTimers.refreshTimeout = setTimeout(() => {
       this.refreshData();
     }, ms);
+  }
+
+  async hardRefreshData() {
+    this.state.isHardRefreshing = true;
+    this.updateRefreshButtonVisual();
+
+    // 1. Clear all markers from map
+    Object.values(this.state.busMarkers).forEach(marker => {
+      if (marker && this.state.map) {
+        this.state.map.removeLayer(marker);
+      }
+    });
+    this.state.busMarkers = {};
+
+    // 2. Clear track layers
+    Object.values(this.state.routeLayers).forEach(layer => {
+      if (layer && this.state.map) {
+        this.state.map.removeLayer(layer);
+      }
+    });
+    this.state.routeLayers = {};
+
+    // 3. Clear endpoint markers
+    Object.values(this.state.routeEndpointMarkers).forEach(markers => {
+      markers.forEach(marker => {
+        if (marker && this.state.map) {
+          this.state.map.removeLayer(marker);
+        }
+      });
+    });
+    this.state.routeEndpointMarkers = {};
+
+    // 4. Clear vehicle state and other data
+    this.state.vehicleState = {};
+    this.state.lastEnrichedBuses = [];
+    this.state.lastStopDataMap = null;
+    this.state.stopCache = {
+      entries: {},
+      inFlight: {}
+    };
+    this.state.trackRefreshCounters = {};
+    this.state.lastRaces = {};
+    this.state.visibleTrackKeys = new Set();
+    this.state.directions.knownByLine = {};
+    this.state.directions.lastKnownSignature = '';
+
+    // 5. Update UI
+    this.updateBusMarkers([]);
+    this.updateTrackStyles();
+    this.renderLegend({ skipInfoPanel: true });
+
+    // 6. Now do a fresh data fetch
+    await this.refreshData();
+
+    // 7. Done
+    this.state.isHardRefreshing = false;
+    this.updateRefreshButtonVisual();
   }
 
   async refreshData() {
