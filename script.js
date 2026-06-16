@@ -57,6 +57,16 @@ const easterEggTrack777 = [
 
 const normalizeKey = (value) => String(value || '').trim().toUpperCase();
 
+// directions can be a legacy array of names OR an object keyed by API
+// direction. Values may be a single name or a list of terminals per direction
+// (e.g. { "A": ["PIAZZA OBERDAN", "PIAZZA TOMMASEO"], "R": ["VILLA CARSIA"] }).
+// Normalize to a flat list of destination names.
+const directionsList = (d) => {
+  if (Array.isArray(d)) return d.flat(Infinity).filter(Boolean);
+  if (d && typeof d === 'object') return Object.values(d).flat(Infinity).filter(Boolean);
+  return [];
+};
+
 const BUS_PALETTE = [
   "#b80000",
   "#0086b3",
@@ -1384,7 +1394,7 @@ class BusMagoApp {
       const isFavorite = this.state.favorites.set.has(l.code);
       if (favoritesOnly && !isFavorite) return;
       if (filterText) {
-        const hay = `${l.code} ${l.label} ${(Array.isArray(l.directions) ? l.directions.join(' ') : '')}`.toLowerCase();
+        const hay = `${l.code} ${l.label} ${directionsList(l.directions).join(' ')}`.toLowerCase();
         if (!hay.includes(filterText)) return;
       }
 
@@ -1398,7 +1408,7 @@ class BusMagoApp {
       html += `<div class="legend-line-tile ${activeClass}" style="--line-color:${tileColor};" title="${title}">
                 <button type="button" class="legend-line-select" data-key="${safeKey}" aria-pressed="${pressed}">
                   <span class="legend-line-code">${this.escapeHtmlAttribute(l.code)}</span>
-                  ${viewMode === 'grid' ? `<span class="legend-line-meta">${this.escapeHtmlAttribute(Array.isArray(l.directions) && l.directions.length ? l.directions.join(' • ') : (l.label || l.code))}</span>` : ''}
+                  ${viewMode === 'grid' ? `<span class="legend-line-meta">${this.escapeHtmlAttribute(directionsList(l.directions).length ? directionsList(l.directions).join(' • ') : (l.label || l.code))}</span>` : ''}
                 </button>
                 <button type="button" class="fav-btn legend-line-fav ${favClass}" data-fav="${safeKey}" aria-label="Preferito ${title}">${favSymbol}</button>
               </div>`;
@@ -1832,16 +1842,19 @@ class BusMagoApp {
     try {
         const activeLineCount = Object.keys(this.state.lineVisibility).filter(k => this.state.lineVisibility[k] === true).length;
         
-        // Optimization Logic
-        // <= 5 directions: All stops
-        // > 5 directions: Terminals + 1 intermediate (approx 3 stops total per line)
-        // > 10 directions: Terminals only (approx 2 stops total per line)
-        
-        let stopsLimitPerLine = Infinity;
+        // Quante fermate interrogare per linea. lines.js ora contiene l'elenco
+        // COMPLETO ordinato spazialmente (capolinea agli estremi), quindi va
+        // SEMPRE campionato per non interrogarne centinaia. Il campionamento per
+        // indice include sempre il primo e l'ultimo (= i due capolinea) piu'
+        // alcuni intermedi distribuiti lungo il percorso: basta per intercettare
+        // tutti i bus in servizio senza sovraccaricare l'API.
+        let stopsLimitPerLine;
         if (activeLineCount > CONFIG.REFRESH.MANY_LINES_THRESHOLD) {
-            stopsLimitPerLine = 2; // Usually just terminals
+            stopsLimitPerLine = 3;   // molte linee: capolinea + 1 intermedio
         } else if (activeLineCount > 5) {
-            stopsLimitPerLine = 3; // Terminals + 1 intermediate
+            stopsLimitPerLine = 6;
+        } else {
+            stopsLimitPerLine = 16;  // poche linee: buona copertura del percorso
         }
 
         const uniqueStops = new Set();
@@ -1853,34 +1866,30 @@ class BusMagoApp {
             if (isLineActive) {
                 hasActiveLines = true;
                 
-                // Select stops based on limit
-                // IMPORTANT: l.stops is ordered. Usually terminals are first? 
-                // We should ensure we pick meaningful stops if we limit them.
-                // Assuming linesConfig has relevant stops first or we just take the first N.
-                // The user said "Terminals + 1 intermediate". 
-                // In lines.js, stops are just a list. We assume the first 2 are often terminals or main stops.
-                
+                // Campiona le fermate per indice. Le fermate in lines.js sono
+                // ordinate lungo il percorso: indice 0 e ultimo = i due capolinea.
+                const src = Array.isArray(l.stops) ? l.stops : [];
                 let stopsToUse;
-                if (stopsLimitPerLine === Infinity) {
-                    stopsToUse = l.stops;
+                if (src.length <= stopsLimitPerLine) {
+                    stopsToUse = src;
+                } else if (stopsLimitPerLine <= 1) {
+                    stopsToUse = [src[0]];
                 } else {
-                    const src = Array.isArray(l.stops) ? l.stops : [];
-                    if (src.length <= stopsLimitPerLine) {
-                        stopsToUse = src;
-                    } else if (stopsLimitPerLine <= 1) {
-                        stopsToUse = [src[0]];
-                    } else {
-                        const picked = [];
-                        const lastIdx = src.length - 1;
-                        for (let i = 0; i < stopsLimitPerLine; i++) {
-                            const idx = Math.round((i * lastIdx) / (stopsLimitPerLine - 1));
-                            picked.push(src[idx]);
-                        }
-                        stopsToUse = picked;
+                    const picked = [];
+                    const lastIdx = src.length - 1;
+                    for (let i = 0; i < stopsLimitPerLine; i++) {
+                        const idx = Math.round((i * lastIdx) / (stopsLimitPerLine - 1));
+                        picked.push(src[idx]);
                     }
+                    stopsToUse = picked;
                 }
-                
+
                 stopsToUse.forEach(s => uniqueStops.add(s));
+
+                // Interroga SEMPRE i capolinea: li' convergono tutti i bus della
+                // linea (ogni corsa e' diretta a un capolinea), quindi garantiscono
+                // di intercettare ogni vettura indipendentemente dal campionamento.
+                if (Array.isArray(l.terminals)) l.terminals.forEach(s => uniqueStops.add(s));
             }
         });
 

@@ -1,1114 +1,4496 @@
 window.linesConfig = [
     {
-        "code":  "1",
-        "label":  "1",
-        "stops":  [
-                      "29016",
-                      "04018",
-                      "03002",
-                      "03004",
-                      "03010",
-                      "03003",
-                      "03001",
-                      "29006",
-                      "10001"
-                  ],
-        "directions":  [
-                           "VIA SVEVO",
-                           "STAZIONE FERROVIARIA"
-                       ]
+        "code": "1",
+        "label": "1",
+        "terminals": ["04018", "04022", "29016"],
+        "stops": [
+            "04018",  // STAZIONE FERROVIARIA
+            "04022",  // STAZIONE FERROVIARIA
+            "04002",  // VIA GHEGA 9 (CONSERVATORIO TARTINI)
+            "10001",  // PIAZZA OBERDAN
+            "03001",  // PIAZZA OBERDAN
+            "03002",  // VIA CARDUCCI (LUMINOSA)
+            "03004",  // PIAZZA GOLDONI
+            "03003",  // PIAZZA GOLDONI
+            "03010",  // PIAZZA GOLDONI
+            "06001",  // PIAZZA DEL SANSOVINO (CROCE ROSSA)
+            "06002",  // PIAZZA DEL SANSOVINO 6 (CROCE ROSSA)
+            "07002",  // PIAZZA VICO 9 (ANGOLO VIA DEL BOSCO)
+            "15001",  // VIA SAN GIACOMO IN MONTE 2 (ANGOLO VIA DEL BOSCO)
+            "07001",  // VIA SAN GIACOMO IN MONTE 12 (GIARDINO BASEVI)
+            "15002",  // VIA SAN GIACOMO IN MONTE 9
+            "15003",  // CAMPO SAN GIACOMO 3
+            "15004",  // CAMPO SAN GIACOMO 1/B
+            "16001",  // VIA PONZIANA 5 (ANGOLO VIA ORLANDINI)
+            "16002",  // VIA PONZIANA 2 (ANGOLO VIA ORLANDINI)
+            "30004",  // VIA ORLANDINI 9 (ANGOLO VIA PONZIANA)
+            "29001",  // VIA ORLANDINI 15 (ANGOLO VIA PONZIANA)
+            "29002",  // VIA ORLANDINI 31 (ANGOLO VIA UCEKAR)
+            "30003",  // VIA ORLANDINI 22 (ANGOLO VIA CARLO UCEKAR)
+            "30002",  // VIA ORLANDINI 38 (ANGOLO VIA SAN GIOVANNI BOSCO)
+            "29003",  // VIA ORLANDINI (ANGOLO VIA SAN GIOVANNI BOSCO)
+            "29006",  // VIA ZORUTTI 18 (ANGOLO VIA BATTERA)
+            "29004",  // VIA ZORUTTI 20 (ANGOLO VIA BATTERA)
+            "29005",  // VIA LORENZETTI (ANGOLO VIA DODA)
+            "30001",  // VIA ZORUTTI 38
+            "29013",  // VIA D'ALVIANO 39 (UFFICIO POSTALE)
+            "30008",  // VIA VISINADA (PALAZZETTO)
+            "29016",  // VIA SVEVO
+            "31003",  // VIA CAPODISTRIA 31 (ANGOLO VIA ORSERA)
+            "31006",  // VIA BAIAMONTI 14 (ANGOLO VIA SVEVO)
+            "31005",  // VIA BAIAMONTI 38 (BANCA)
+            "31002",  // VIA BAIAMONTI 52 (ANGOLO VIA PIRANO)
+            "41026",  // VIA BAIAMONTI 68 (ANGOLO VIA DELL'ISTRIA)
+            "43015",  // VIA COSTALUNGA 230 (ANGOLO DELLA PACE)
+            "41017",  // VIA BAIAMONTI 93 (ANGOLO VIA PIRANO)
+            "41018",  // VIA BAIAMONTI 103 (ANGOLO VIA DELL'ISTRIA)
+            "42023",  // VIA COSTALUNGA 232 (ANGOLO VIA DELLA PACE)
+            "42021",  // VIA DELL'ISTRIA 190 (PONTE VIA SONCINI)
+            "42022",  // VIA DELLA PACE (PONTE DEI SONCINI)
+            "42010",  // VIA COSTALUNGA 240 (CIMITERO SANT'ANNA, OBITORIO)
+            "42011",  // VIA COSTALUNGA 240 (CIMITERO)
+            "42024",  // VIA COSTALUNGA 272 (ANGOLO VIA SANTA MARIA MADDALENA)
+            "42029",  // VIA SANTA MARIA MADDALENA 2 (ANGOLO VIA COSTALUNGA)
+            "42025",  // VIA COSTALUNGA 125
+            "42030",  // VIA PAISIELLO (ANGOLO SALITA DI ZUGNANO)
+            "42026",  // VIA COSTALUNGA 151
+            "42009",  // VIA PAISIELLO 9 (ANGOLO VIA ZANDONAI)
+            "42015",  // VIA ERTA DI SANT'ANNA 51
+            "42008",  // VIA PAISIELLO
+            "42027",  // VIA COSTALUNGA 177 (PIAZZETTA)
+            "42017",  // VIA ERTA DI SANT'ANNA 10 (PIAZZETTA)
+            "42016",  // VIA ERTA DI SANT'ANNA 92 (ANGOLO VIA DEI VERGOTTINI)
+            "42028"  // VIA PAISIELLO 11 (SOTTOPASSO, TUNNEL)
+        ],
+        "directions": [
+            "STAZIONE FERROVIARIA",
+            "VIA SVEVO"
+        ]
     },
     {
-        "code":  "2",
-        "label":  "2",
-        "stops":  [
-                      "D3012",
-                      "TRDAL"
-                  ],
-        "directions":  [
-                           "OPICINA - TRAMVIA",
-                           "PIAZZA DALMAZIA - TRAMVIA"
-                       ]
+        "code": "2",
+        "label": "2",
+        "terminals": ["D3012", "TRDAL"],
+        "stops": [
+            "TROPI",  // OPICINA - TRAMVIA
+            "TR01R",  // QUADRIVIO OPICINA - TRAMVIA
+            "TR01A",  // QUADRIVIO OPICINA - TRAMVIA
+            "TR02R",  // CAMPO ROMANO - TRAMVIA
+            "TR02A",  // CAMPO ROMANO - TRAMVIA
+            "TR03R",  // OBELISCO - TRAMVIA
+            "TR03A",  // OBELISCO - TRAMVIA
+            "TR04R",  // BANNE - TRAMVIA
+            "TR04A",  // BANNE - TRAMVIA
+            "TR05R",  // CONCONELLO - TRAMVIA
+            "TR05A",  // CONCONELLO - TRAMVIA
+            "TR06A",  // COLOGNA (CHIESETTA) - TRAMVIA
+            "TR06R",  // COLOGNA (CHIESETTA) - TRAMVIA
+            "TR07R",  // COLOGNA (CAMPO SPORTIVO) - TRAMVIA
+            "TR07A",  // COLOGNA (CAMPO SPORTIVO) - TRAMVIA
+            "TR08A",  // VETTA SCORCOLA - TRAMVIA
+            "TR08R",  // VETTA SCORCOLA - TRAMVIA
+            "TR09A",  // ROMAGNA - TRAMVIA
+            "TR09R",  // ROMAGNA - TRAMVIA
+            "TR10R",  // SANT'ANASTASIO - TRAMVIA
+            "TR10A",  // SANT'ANASTASIO - TRAMVIA
+            "TR11R",  // PIAZZA CASALI - TRAMVIA
+            "TR11A",  // PIAZZA CASALI - TRAMVIA
+            "TRDAL"  // PIAZZA DALMAZIA - TRAMVIA
+        ],
+        "directions": [
+            "PIAZZA OBERDAN",
+            "VILLA OPICINA"
+        ]
     },
     {
-        "code":  "3",
-        "label":  "3",
-        "stops":  [
-                      "48004",
-                      "04007",
-                      "09001",
-                      "46042",
-                      "47007",
-                      "47001",
-                      "19002",
-                      "46023",
-                      "48006",
-                      "47003",
-                      "47006",
-                      "46005",
-                      "38007",
-                      "10001"
-                  ],
-        "directions":  [
-                           "CONCONELLO",
-                           "STAZIONE FERROVIARIA"
-                       ]
+        "code": "3",
+        "label": "3",
+        "terminals": ["04007", "48004"],
+        "stops": [
+            "04002",  // VIA GHEGA 9 (CONSERVATORIO TARTINI)
+            "04007",  // STAZIONE FERROVIARIA
+            "03001",  // PIAZZA OBERDAN
+            "10001",  // PIAZZA OBERDAN
+            "09001",  // VIA BATTISTI (GALLERIA FENICE)
+            "09002",  // VIA BATTISTI (GALLERIA FENICE)
+            "19008",  // VIA BATTISTI 22 (ANGOLO VIA GIUSEPPE LORENZO GATTERI)
+            "19003",  // VIA GIULIA 3/C (GIARDINO PUBBLICO, TEATRO ROSSETTI)
+            "19002",  // LARGO TOMIZZA
+            "19010",  // LARGO TOMIZZA (GIARDINO PUBBLICO DE TOMMASINI)
+            "39012",  // VIA DI COLOGNA 18 (ANGOLO VIA KANDLER)
+            "38007",  // VIA DI COLOGNA 27 (ANGOLO VIA KANDLER)
+            "38008",  // PENDICE DELLO SCOGLIETTO 3 (SCALA FEROLLI)
+            "39011",  // VIA DI COLOGNA 32 (ANGOLO PENDICE DELLO SCOGLIETTO)
+            "39007",  // PENDICE DELLO SCOGLIETTO 20
+            "39006",  // PENDICE DELLO SCOGLIETTO 7 (SCUOLA DELL'INFANZIA)
+            "39010",  // VIA DI COLOGNA 76 (ANGOLO VIA SOTTORIPA)
+            "39004",  // VIA FABIO SEVERO (UNIVERSIT�, PIAZZALE EUROPA)
+            "39008",  // PENDICE DELLO SCOGLIETTO (ANGOLO VIA DELLO SCOGLIO)
+            "47007",  // VIA ALFONSO VALERIO 2 (UNIVERSIT�)
+            "39009",  // VIA DI COLOGNA 86 (ANGOLO VIA FABIO SEVERO)
+            "47001",  // VIA ALFONSO VALERIO 2
+            "39002",  // VIA FABIO SEVERO 143 (CURVA MAS�)
+            "47020",  // VIA DELLO SCOGLIO 167 (ANGOLO VIA ZANELLA GIANELLA)
+            "22001",  // VIA DELLA BELLAVISTA 2 (CASA CANTONIERA)
+            "47003",  // VIA DELLA BELLAVISTA 1 (CASA CANTONIERA)
+            "47006",  // VIA ALFONSO VALERIO 20 (VIA DELLO SCOGLIO)
+            "48002",  // VIA DELLA BELLAVISTA 5 (ANGOLO VIA DEI MANTOVANI)
+            "46001",  // VIA VALERIO 20
+            "48006",  // VIA DELLA BELLAVISTA 5 (ANGOLO VIA DEI MANTOVANI)
+            "47004",  // STRADA NUOVA PER OPICINA 18
+            "47002",  // STRADA NUOVA PER OPICINA 18
+            "46024",  // VIA VALERIO 38 (ANGOLO CLIVO ARTEMISIO)
+            "48005",  // VIA DELLA BELLAVISTA 12 (TRATTORIA FERLUGA)
+            "48003",  // VIA DELLA BELLAVISTA 12 (FONTANA)
+            "48004",  // CONCONELLO
+            "47005",  // STRADA NUOVA PER OPICINA 14 (ANGOLO VIA DEI BAIARDI)
+            "48001",  // STRADA NUOVA PER OPICINA 29 (ANGOLO VIA DEI BAIARDI)
+            "46023",  // SAN CILINO
+            "46029",  // VIA ALFONSO VALERIO 73
+            "46042",  // VIA ALFONSO VALERIO (VIA SAN CILINO)
+            "46006",  // STRADA NUOVA PER OPICINA 2/1 (CASA LE BEATITUDINI)
+            "46005",  // STRADA NUOVA PER OPICINA 2/1 (CASA LE BEATITUDINI)
+            "46009",  // VIA VALERIO 142
+            "46004",  // STRADA NUOVA PER OPICINA 9
+            "46007",  // STRADA NUOVA PER OPICINA 9
+            "46002",  // VIA VALERIO 113
+            "46008",  // VIA VALERIO (CAVA FACCANONI)
+            "46003"  // STRADA NUOVA PER OPICINA (CAVA FACCANONI)
+        ],
+        "directions": [
+            "STAZIONE FERROVIARIA",
+            "CONCONELLO"
+        ]
     },
     {
-        "code":  "4",
-        "label":  "4",
-        "stops":  [
-                      "D3008",
-                      "03018",
-                      "10008",
-                      "20001",
-                      "47001",
-                      "47007",
-                      "20003",
-                      "10004",
-                      "D3012",
-                      "46042",
-                      "47006",
-                      "10003",
-                      "46005",
-                      "10007",
-                      "20002",
-                      "47002",
-                      "02004"
-                  ],
-        "directions":  [
-                           "VILLA CARSIA",
-                           "PIAZZA OBERDAN",
-                           "PIAZZA TOMMASEO"
-                       ]
+        "code": "4",
+        "label": "4",
+        "terminals": ["03018", "D3008"],
+        "stops": [
+            "02004",  // PIAZZA TOMMASEO
+            "01001",  // VIA FILZI 3 (PIAZZA SANT'ANTONIO NUOVO, PONTE ROSSO)
+            "03018",  // PIAZZA OBERDAN
+            "10008",  // VIA DEL CORONEO (REGIONE)
+            "10003",  // VIA DEL CORONEO 27 (TRIBUNALE)
+            "20004",  // VIA DEL CORONEO 41 (ANGOLO VIA SEVERO)
+            "20001",  // VIA FABIO SEVERO 53 (CAMPUS DELL'EX OSPEDALE MILITARE)
+            "39001",  // VIA FABIO SEVERO 107 (ANGOLO VIA SOTTORIPA)
+            "39002",  // VIA FABIO SEVERO 143 (CURVA MAS�)
+            "39004",  // VIA FABIO SEVERO (UNIVERSIT�, PIAZZALE EUROPA)
+            "47001",  // VIA ALFONSO VALERIO 2
+            "46001",  // VIA VALERIO 20
+            "46024",  // VIA VALERIO 38 (ANGOLO CLIVO ARTEMISIO)
+            "46029",  // VIA ALFONSO VALERIO 73
+            "46002",  // VIA VALERIO 113
+            "46003",  // STRADA NUOVA PER OPICINA (CAVA FACCANONI)
+            "46004",  // STRADA NUOVA PER OPICINA 9
+            "46005",  // STRADA NUOVA PER OPICINA 2/1 (CASA LE BEATITUDINI)
+            "48001",  // STRADA NUOVA PER OPICINA 29 (ANGOLO VIA DEI BAIARDI)
+            "47002",  // STRADA NUOVA PER OPICINA 18
+            "22002",  // STRADA NUOVA PER OPICINA (CASA CANTONIERA)
+            "48007",  // STRADA NUOVA PER OPICINA 31 (DIREZIONE CONCONELLO)
+            "23001",  // STRADA NUOVA PER OPICINA 26 (ANGOLO VIA COMMERCIALE)
+            "D3001",  // STRADA NUOVA PER OPICINA 37 (CAMPEGGIO OBELISCO)
+            "D3002",  // VIA NAZIONALE 4 (SOTTOPASSO NAPOLEONICA)
+            "D3057",  // VIA NAZIONALE 43/A (RISTORANTE)
+            "D3058",  // VIA DI PROSECCO 37 (CHIESA)
+            "D3036",  // VIA DI PROSECCO 233 (ANGOLO STRADA PROVINCIALE 1 DEL CARSO)
+            "D3041",  // STRADA PROVINCIALE 1 DEL CARSO (CASERME)
+            "D3008",  // VILLA CARSIA
+            "D3009",  // STRADA PROVINCIALE 1 DEL CARSO (CASERMA)
+            "D3010",  // VIA DI PROSECCO 44 (ANGOLO STRADA PROVINCIALE 1 DEL CARSO)
+            "D3011",  // VIA DI PROSECCO 10 (ANGOLO VIA DOBERD�)
+            "D3012",  // OPICINA TRENOVIA
+            "D3013",  // VIA NAZIONALE 4 (SOTTOPASSO NAPOLEONICA)
+            "48008",  // STRADA NUOVA PER OPICINA 26 (ANGOLO VIA COMMERCIALE)
+            "48009",  // STRADA NUOVA PER OPICINA 22 (DIREZIONE CONCONELLO)
+            "22003",  // STRADA NUOVA PER OPICINA 2 (CASA CANTONIERA)
+            "47004",  // STRADA NUOVA PER OPICINA 18
+            "47005",  // STRADA NUOVA PER OPICINA 14 (ANGOLO VIA DEI BAIARDI)
+            "46006",  // STRADA NUOVA PER OPICINA 2/1 (CASA LE BEATITUDINI)
+            "46007",  // STRADA NUOVA PER OPICINA 9
+            "46008",  // VIA VALERIO (CAVA FACCANONI)
+            "46009",  // VIA VALERIO 142
+            "46042",  // VIA ALFONSO VALERIO (VIA SAN CILINO)
+            "47006",  // VIA ALFONSO VALERIO 20 (VIA DELLO SCOGLIO)
+            "47007",  // VIA ALFONSO VALERIO 2 (UNIVERSIT�)
+            "47008",  // VIA FABIO SEVERO 143 (CURVA MAS�)
+            "20002",  // VIA FABIO SEVERO 107 (ANGOLO VIA SOTTORIPA)
+            "20003",  // VIA FABIO SEVERO 40 (CAMPUS DELL'EX OSPEDALE MILITARE)
+            "10007",  // VIA FABIO SEVERO 30 (ANGOLO VIA CATULLO)
+            "10004",  // VIA FABIO SEVERO 4 (TRIBUNALE)
+            "02002",  // VIA MAZZINI 4
+            "20005",  // VIA FABIO SEVERO 88/A (ANGOLO VIA VERO)
+            "01002",  // VIA ROMA 18/B (PONTE ROSSO)
+            "04003",  // VIA ROMA 28 (PIAZZA VITTORIO VENETO, POSTA CENTRALE)
+            "47017",  // VIA CESARE CANT� 1 (ANGOLO VICOLO DEL CASTAGNETO)
+            "47009",  // VIA CESARE CANT� 1 (ANGOLO VICOLO DEL CASTAGNETO)
+            "47016",  // VIA CESARE CANT� 39 (SCUOLE)
+            "47010",  // VIA CESARE CANT� 39 (ANGOLO VIA MONTE SAN GABRIELE)
+            "21002",  // VIA CANT� 10 (SCUOLA)
+            "47011",  // VIA CESARE CANT� 43 (SCUOLA)
+            "47019",  // VIA CESARE CANT� 12 (ANGOLO VIA DEL MONTELLO)
+            "21005",  // VIA CANT� 12 (ANGOLO VIA DEL MONTELLO)
+            "21001",  // VIA CANT� 34 (ANGOLO VIA GUICCIARDINI)
+            "47012",  // VIA CESARE CANT� 34 (ANGOLO VIA GUICCIARDINI)
+            "47013",  // VIA CANTU'
+            "D2005",  // VIA DI BASOVIZZA 60 (SCUOLA)
+            "D3026",  // VIA DI BASOVIZZA 37
+            "D3060",  // STRADA PROVINCIALE 35 DI OPICINA 52 (VILLAGGIO)
+            "D3025",  // VIA DI BASOVIZZA 29/13
+            "D3043",  // VIA DI BASOVIZZA 29
+            "D3015",  // VIA CAMPO ROMANO 50
+            "D3016",  // VIA CAMPO ROMANO 22 (LARGO BERTOLINI)
+            "D3024",  // VIA DI BASOVIZZA 7 (SCUOLA DI OPICINA)
+            "D3023",  // STRADA PER VIENNA 9 (BAR)
+            "D3003",  // VIA DELLA PINETA (BIVIO STRADA PROVINCIALE 35 DI OPICINA)
+            "D3017",  // VIA DEI VOLPI (CAMPO ROMANO)
+            "D3018",  // VIA DELLA PINETA 50 (SCUOLA DELL'INFANZIA)
+            "D3004",  // VIA CARSIA 44 (VIGILI DEL FUOCO)
+            "D3005",  // VIA SANTA FOSCA 11
+            "D3042",  // OPICINA (STAZIONE FERROVIARIA)
+            "D3052",  // VIA DEI PAPAVERI 33
+            "D3038",  // VIA DEI FIORDALISI 21
+            "D3029",  // VIA DEI FIORDALISI 9/B
+            "D3006",  // VIA DEI PAPAVERI 11 (ANGOLO VIA DEI FIORDALISI)
+            "D3007",  // VIA DEI PAPAVERI 6
+            "D4036"  // DEVINCINA
+        ],
+        "directions": [
+            "PIAZZA OBERDAN",
+            "VILLA CARSIA"
+        ]
     },
     {
-        "code":  "5",
-        "label":  "5",
-        "stops":  [
-                      "33002",
-                      "23004",
-                      "08003",
-                      "23006",
-                      "23005",
-                      "03007",
-                      "08002",
-                      "23002",
-                      "08004"
-                  ],
-        "directions":  [
-                           "PIAZZA PERUGINO",
-                           "ROIANO"
-                       ]
+        "code": "5",
+        "label": "5",
+        "terminals": ["23004", "33001"],
+        "stops": [
+            "23004",  // ROIANO
+            "23005",  // VIA STOCK (LARGO DEI PETAZZI, AGENZIA DELLE ENTRATE)
+            "23003",  // PIAZZA TRA I RIVI 3 (ROIANO)
+            "23006",  // VIA TOR SAN PIERO 20
+            "23002",  // VIA BARBARIGA 5
+            "11003",  // VIA UDINE 63 (ANGOLO VIA TOR SAN PIERO)
+            "11004",  // VIA UDINE 44/A (ANGOLO VIA TOR SAN PIERO)
+            "11005",  // CAMPO DEL BELVEDERE 6
+            "11002",  // CAMPO DEL BELVEDERE 3
+            "11001",  // VIA UDINE 7 (SEDE INPS)
+            "11006",  // VIA UDINE 6 (INPS)
+            "04003",  // VIA ROMA 28 (PIAZZA VITTORIO VENETO, POSTA CENTRALE)
+            "03008",  // VIA FILZI 23
+            "01002",  // VIA ROMA 18/B (PONTE ROSSO)
+            "01001",  // VIA FILZI 3 (PIAZZA SANT'ANTONIO NUOVO, PONTE ROSSO)
+            "03007",  // PIAZZA DELLA REPUBBLICA 2
+            "02001",  // PIAZZA DELLA REPUBBLICA
+            "03006",  // PIAZZA GOLDONI
+            "08003",  // PONTE DELLA FABRA
+            "08004",  // PIAZZA DELL'OSPITALE 3/D (OSPEDALE MAGGIORE)
+            "08002",  // PIAZZA DELL'OSPITALE 1 (OSPEDALE MAGGIORE)
+            "08001",  // VIA D'AZEGLIO (ANGOLO VIA VASARI)
+            "17002",  // VIA D'AZEGLIO (ANGOLO VIA FOSCOLO)
+            "18001",  // VIA PASCOLI 28 (ISTITUTO ITIS)
+            "17003",  // VIA PASCOLI 31/A (ISTITUTO ITIS)
+            "17001",  // VIA DEI CONTI (ANGOLO VIA PIO RIEGO GAMBINI)
+            "17004",  // VIA DEI CONTI (ANGOLO VIA PIO RIEGO GAMBINI)
+            "33001",  // PIAZZA PERUGINO
+            "33006",  // PIAZZA DEL PERUGINO 7/A
+            "33002",  // PIAZZA DEL PERUGINO 6
+            "33003",  // VIALE D'ANNUNZIO 48 (ANGOLO VIA LIMITANEA, TEATRO BOBBIO)
+            "34003",  // VIALE D'ANNUNZIO 51 (ANGOLO VIA LIMITANEA, TEATRO BOBBIO)
+            "34004",  // VIALE GABRIELE D'ANNUNZIO 79 (PIAZZA DEI FORAGGI)
+            "34002",  // PIAZZA DEI FORAGGI 7
+            "34005",  // VIALE DELL'IPPODROMO 12 (IPPODROME, EX FIERA)
+            "44007",  // VIALE DELL'IPPODROMO 16 (EX FIERA)
+            "44006",  // VIA COSTANTINO CUMANO 2 (ANGOLO VIA EUGENIO SCOMPARINI)
+            "44008",  // VIA COSTANTINO CUMANO 2 (ANGOLO VIA EUGENIO SCOMPARINI)
+            "44004",  // VIA FITTKE 5
+            "44005",  // VIA DEI TOMINZ (MUSEO DI STORIA NATURALE)
+            "44009",  // VIA COSTANTINO CUMANO 20 (MUSEI)
+            "44017",  // VIA COSTANTINO CUMANO 22 (MUSEI)
+            "44010",  // VIA COSTANTINO CUMANO 9 (ANGOLO VIA RIETTI)
+            "44003"  // VIA CUMANO
+        ],
+        "directions": [
+            "ROIANO",
+            "PIAZZA PERUGINO"
+        ]
     },
     {
-        "code":  "6",
-        "label":  "6",
-        "stops":  [
-                      "46015",
-                      "09001",
-                      "50001",
-                      "D5010",
-                      "50003",
-                      "D5004",
-                      "10009",
-                      "50014",
-                      "38002",
-                      "10005",
-                      "03002",
-                      "19002",
-                      "D5013",
-                      "50002",
-                      "46010",
-                      "38001",
-                      "50015",
-                      "24003",
-                      "38004"
-                  ],
-        "directions":  [
-                           "PIAZZALE GIOBERTI",
-                           "GRIGNANO",
-                           "BARCOLA",
-                           "PIAZZA OBERDAN"
-                       ]
+        "code": "6",
+        "label": "6",
+        "terminals": ["46015", "D5010"],
+        "stops": [
+            "46015",  // PIAZZALE GIOBERTI
+            "46010",  // PIAZZALE GIOBERTI 1
+            "46014",  // VIALE SANZIO 17
+            "46011",  // VIALE RAFFAELLO SANZIO 30 (ANGOLO VIA BRUNELLESCHI)
+            "46013",  // VIALE RAFFAELLO SANZIO 1 (ROTONDA DEL BOSCHETTO)
+            "46012",  // VIALE RAFFAELLO SANZIO (ROTONDA DEL BOSCHETTO)
+            "38006",  // VIA GIULIA 77 (CENTRO COMMERCIALE IL GIULIA)
+            "38001",  // VIA GIULIA 80 (CENTRO COMMERCIALE IL GIULIA)
+            "38005",  // VIA GIULIA 55 (SCUOLA)
+            "38002",  // VIA GIULIA 48 (SCUOLA)
+            "38003",  // VIA GIULIA 22 (PIAZZA DEI VOLONTARI GIULIANI)
+            "38004",  // VIA GIULIA 37 (PIAZZA DEI VOLONTARI GIULIANI)
+            "19004",  // VIA GIULIA 21 (LARGO TOMIZZA)
+            "19002",  // LARGO TOMIZZA
+            "19003",  // VIA GIULIA 3/C (GIARDINO PUBBLICO, TEATRO ROSSETTI)
+            "19008",  // VIA BATTISTI 22 (ANGOLO VIA GIUSEPPE LORENZO GATTERI)
+            "09002",  // VIA BATTISTI (GALLERIA FENICE)
+            "09001",  // VIA BATTISTI (GALLERIA FENICE)
+            "03002",  // VIA CARDUCCI (LUMINOSA)
+            "10005",  // VIA CARDUCCI (REGIONE)
+            "03001",  // PIAZZA OBERDAN
+            "10009",  // TRIESTE PIAZZA GUGLIELMO OBERDAN 7 (ANGOLO VIA XXIV MAGGIO)
+            "11009",  // VIA GHEGA 6 (CONSERVATORIO TARTINI)
+            "04002",  // VIA GHEGA 9 (CONSERVATORIO TARTINI)
+            "11007",  // VIALE MIRAMARE 5 (PIAZZA LIBERT�, STAZIONE FERROVIARIA)
+            "12004",  // VIALE MIRAMARE 5 (STAZIONE FERROVIARIA)
+            "11008",  // VIALE MIRAMARE 19 (ANGOLO VIA ARIOSTO)
+            "12003",  // VIALE MIRAMARE 19 (VIA ARIOSTO)
+            "12002",  // TRIESTE VIALE MIRAMARE 12 (LARGO ROIANO)
+            "23007",  // TRIESTE VIALE MIRAMARE (FRONTE CIVICO 14, LARGO ROIANO)
+            "24051",  // VIALE MIRAMARE 61 (POLIZIA LOCALE)
+            "12005",  // VIALE MIRAMARE 67 (POLIZIA LOCALE)
+            "12001",  // VIALE MIRAMARE 77 (SALITA MADONNA DI GRETTA, CAVALCAVIA)
+            "24001",  // VIALE MIRAMARE 77 (CAVALCAVIA)
+            "24055",  // PORTO VECCHIO
+            "24053",  // VIALE MIRAMARE (PORTO VECCHIO)
+            "24002",  // VIALE MIRAMARE 30 (FERROVIARIO E CRAL)
+            "24003",  // VIALE MIRAMARE 30 (BAGNI FERROVIARIO E CRAL)
+            "50015",  // VIALE MIRAMARE (PARCHEGGIO BOVEDO)
+            "50016",  // VIALE MIRAMARE (PARCHEGGIO BOVEDO)
+            "50001",  // VIALE MIRAMARE 36 (PARCHEGGIO BOVEDO)
+            "50005",  // VIALE MIRAMARE 36 (CIRCOLO SPORTIVO SATURNIA, BOVEDO)
+            "50004",  // VIALE MIRAMARE 52 (ISTITUTO RITTMEYER)
+            "50002",  // VIALE MIRAMARE 113 (ISTITUTO RITTMEYER)
+            "50013",  // TRIESTE VIALE MIRAMARE 64 (CHIOSCO IN PIETRA, BARCOLA)
+            "50014",  // TRIESTE VIALE MIRAMARE 127 (GELATERIA PIPOLO, BARCOLA)
+            "50003",  // BARCOLA
+            "50012",  // VIALE MIRAMARE 201 (FONTANA)
+            "50007",  // VIALE MIRAMARE 211 (PIAZZALE BIAGIO MARIN, FONTANA)
+            "50011",  // VIALE MIRAMARE 271 (BARCOLA)
+            "50008",  // VIALE MIRAMARE 271/1
+            "50009",  // VIALE MIRAMARE (EX DAZIO)
+            "50010",  // VIALE MIRAMARE (EX DAZIO)
+            "D5019",  // VIALE MIRAMARE 285 (GELATERIA)
+            "D5001",  // VIALE MIRAMARE 279 (GELATERIA)
+            "D5017",  // VIALE MIRAMARE 293 (PORTICCIOLO)
+            "D5003",  // VIALE MIRAMARE 293 (PORTICCIOLO)
+            "D5016",  // VIALE MIRAMARE 303 (CALIFORNIA INN)
+            "D5004",  // VIALE MIRAMARE 303 (CALIFORNIA INN)
+            "D5015",  // VIALE MIRAMARE 323
+            "D5005",  // VIALE MIRAMARE 323 (MARINELLA)
+            "D5014",  // VIALE MIRAMARE (PALO ELETTRICO 20)
+            "D5007",  // STRADA STATALE 14 DELLA VENEZIA GIULIA (CASTELLO MIRAMARE)
+            "D5013",  // CASTELLO DI MIRAMARE (BIVIO)
+            "D5006",  // STRADA STATALE 14 DELLA VENEZIA GIULIA 2 (HOTEL)
+            "D5023",  // STRADA STATALE 14 (VIA BEIRUT, CASTELLO DI MIRAMARE, ICTP)
+            "D5022",  // STRADA STATALE 14 DELLA VENEZIA GIULIA 9
+            "D5008",  // GRIGNANO/MIRAMARE SS 14 (STRADA COSTIERA 17)
+            "D5011",  // GRIGNANO/MIRAMARE SS 14 (STRADA COSTIERA)
+            "D5010"  // GRIGNANO
+        ],
+        "directions": [
+            "PIAZZALE GIOBERTI",
+            "GRIGNANO"
+        ]
     },
     {
-        "code":  "7",
-        "label":  "7",
-        "stops":  [
-                      "E0135",
-                      "E0136",
-                      "E0145",
-                      "E0013",
-                      "E0014",
-                      "E0015"
-                  ],
-        "directions":  [
-                           "MUGGIA",
-                           "LAZZARETTO"
-                       ]
+        "code": "7",
+        "label": "7",
+        "terminals": ["E0145", "E0014"],
+        "stops": [
+            "E0145",  // MUGGIA
+            "E0026",  // VIA ROMA 9/C (ANGOLO VIA MAZZINI)
+            "E0136",  // VIA ROMA 9 (MUSEO D'ARTE MODERNA CAR�)
+            "E0025",  // LUNGOMARE VENEZIA 1/B (INCROCIO BORGO SAN CRISTOFORO)
+            "E0003",  // LUNGOMARE VENEZIA (CHIOSCO)
+            "E0024",  // LUNGOMARE VENEZIA (IMPIANTO BALNEARE SAN ROCCO)
+            "E0004",  // LUNGOMARE VENEZIA (IMPIANTO BALNEARE SAN ROCCO)
+            "E0023",  // STRADA PER LAZZARETTO 1 (MARINA DI PORTO SAN ROCCO)
+            "E0005",  // STRADA PER LAZZARETTO 3/A
+            "E0022",  // STRADA PER LAZZARETTO 7 (MARINA DI PORTO SAN ROCCO)
+            "E0006",  // STRADA PER LAZZARETTO 7 (MARINA DI PORTO SAN ROCCO)
+            "E0021",  // STRADA PER LAZZARETTO 31 (MARINA DI PORTO SAN ROCCO)
+            "E0007",  // STRADA PER LAZZARETTO 31
+            "E0054",  // STRADA PROVINCIALE 17 DI CHIAMPORE 3/A (LOCALIT� ZINDIS)
+            "E0053",  // STRADA PROVINCIALE 17 DI CHIAMPORE 21 (LOCALIT� ZINDIS)
+            "E0052",  // STRADA PROVINCIALE 17 DI CHIAMPORE 27/C (LOCALIT� ZINDIS)
+            "E0051",  // STRADA PROVINCIALE 17 DI CHIAMPORE (BIVIO FONTANELLA)
+            "E0020",  // STRADA PER LAZZARETTO (MOLO T)
+            "E0008",  // STRADA PER LAZZARETTO (MOLO T)
+            "E0030",  // VIA DARSELLA 1 (STRADA PROVINCIALE 17, SAN FLORIANO)
+            "E0019",  // STRADA PER LAZZARETTO (PUNTA OLMI, LATO MARE)
+            "E0009",  // STRADA PER LAZZARETTO (PUNTA OLMI)
+            "E0018",  // STRADA PER LAZZARETTO 53
+            "E0010",  // STRADA PER LAZZARETTO 57
+            "E0029",  // VIA DARSELLA DI SAN BARTOLOMEO 18
+            "E0164",  // STRADA PER LAZZARETTO 47(ACQUARIO)
+            "E0017",  // STRADA PER LAZZARETTO (BIVIO PUNTA SOTTILE)
+            "E0011",  // STRADA PER LAZZARETTO (BIVIO PUNTA SOTTILE)
+            "E0014",  // LAZZARETTO
+            "E0160",  // STRADA PER LAZZARETTO 99 (CAMPEGGIO DI SAN BAROLOMEO)
+            "E0159",  // STRADA PER LAZZARETTO 99 (CAMPEGGIO SAN BARTOLOMEO)
+            "E0015",  // STRADA PER LAZZARETTO 91 (BASE LOGISTICA MILITARE)
+            "E0013",  // STRADA PER LAZZARETTO 91 (BASE LOGISTICA MILITARE)
+            "E0135",  // STRADA PER LAZZARETTO (PUNTA SOTTILE)
+            "E0134",  // STRADA PER LAZZARETTO (PUNTA SOTTILE)
+            "E0016",  // STRADA PER LAZZARETTO (STABILIMENTO BALNEARE, OBELISCO)
+            "E0012"  // STRADA PER LAZZARETTO (STABILIMENTO BALNEARE, OBELISCO)
+        ],
+        "directions": [
+            "MUGGIA",
+            "LAZZARETTO"
+        ]
     },
     {
-        "code":  "8",
-        "label":  "8",
-        "stops":  [
-                      "23004",
-                      "41009",
-                      "42001",
-                      "28003",
-                      "27009",
-                      "29021",
-                      "23005",
-                      "23009",
-                      "27007",
-                      "41026",
-                      "23008"
-                  ],
-        "directions":  [
-                           "ROIANO",
-                           "PIAZZALE VALMAURA"
-                       ]
+        "code": "8",
+        "label": "8",
+        "terminals": ["41009", "23004"],
+        "stops": [
+            "41009",  // PIAZZALE VALMAURA
+            "42001",  // VIA DELL'ISTRIA 206 (CIMITERO)
+            "41026",  // VIA BAIAMONTI 68 (ANGOLO VIA DELL'ISTRIA)
+            "31002",  // VIA BAIAMONTI 52 (ANGOLO VIA PIRANO)
+            "31005",  // VIA BAIAMONTI 38 (BANCA)
+            "31006",  // VIA BAIAMONTI 14 (ANGOLO VIA SVEVO)
+            "29021",  // VIA SVEVO 36 (ANGOLO VIA CAPODISTRIA, CENTRO EMMAUS)
+            "29022",  // VIA SVEVO 14 (CENTRO COMMERCIALE TORRI D'EUROPA)
+            "29019",  // VIA SVEVO (ACEGAS)
+            "29020",  // VIA CADUTI SUL LAVORO (TRIESTE TRASPORTI)
+            "28003",  // VIALE CAMPI ELISI
+            "26001",  // VIALE DEI CAMPI ELISI 95 (PONTE FERROVIA)
+            "28004",  // VIALE CAMPI ELISI 16
+            "27008",  // PASSEGGIO SANT'ANDREA 12 (VIA DELLE FIAMME GIALLE 6)
+            "27009",  // TRIESTE LARGO IRNERI (LLOYD)
+            "27010",  // PASSEGGIO SANT'ANDREA
+            "27011",  // PASSEGGIO SANT'ANDREA (PASSERELLA AREA FERROVIARIA)
+            "27014",  // VIA DI CAMPO MARZIO 20
+            "13004",  // RIVA GRUMULA 12/A
+            "13005",  // RIVA SAURO 24 (ACQUARIO, MUSEO REVOLTELLA)
+            "13006",  // RIVA DEL MANDRACCHIO 4 (HOTEL EXCELSIOR)
+            "05002",  // RIVA CADUTI PER L'ITALIANIT� DI TRIESTE (TEATRO VERDI)
+            "01001",  // VIA FILZI 3 (PIAZZA SANT'ANTONIO NUOVO, PONTE ROSSO)
+            "11009",  // VIA GHEGA 6 (CONSERVATORIO TARTINI)
+            "11007",  // VIALE MIRAMARE 5 (PIAZZA LIBERT�, STAZIONE FERROVIARIA)
+            "11008",  // VIALE MIRAMARE 19 (ANGOLO VIA ARIOSTO)
+            "23009",  // VIA SANTA TERESA 1 (LARGO ROIANO, AGENZIA DELLE ENTRATE)
+            "23003",  // PIAZZA TRA I RIVI 3 (ROIANO)
+            "23004",  // ROIANO
+            "23005",  // VIA STOCK (LARGO DEI PETAZZI, AGENZIA DELLE ENTRATE)
+            "23008",  // VIA SANTA TERESA 4 (LARGO ROIANO)
+            "12003",  // VIALE MIRAMARE 19 (VIA ARIOSTO)
+            "12004",  // VIALE MIRAMARE 5 (STAZIONE FERROVIARIA)
+            "01002",  // VIA ROMA 18/B (PONTE ROSSO)
+            "02002",  // VIA MAZZINI 4
+            "05001",  // RIVA TRE NOVEMBRE (PREFETTURA, TEATRO VERDI, MUNICIPIO)
+            "13001",  // RIVA DEL MANDRACCHIO (PALACONGRESSI)
+            "13002",  // RIVA SAURO 1 (SALONE DEGLI INCANTI)
+            "13003",  // RIVA GRUMULA (STAZIONE ROGERS)
+            "27002",  // VIA AUGUSTO 12 (MERCATO ORTOFRUTTICOLO)
+            "27003",  // VIA GIULIO CESARE (VIA DI CAMPO MARZIO, MUSEO FERROVIARIO)
+            "27005",  // PASSEGGIO SANT'ANDREA (PALO 394)
+            "27006",  // TRIESTE PASSEGGIO SANT'ANDREA (FRONTE 6/A)
+            "27007",  // PASSEGGIO SANT'ANDREA (GUARDIA DI FINANZA)
+            "28001",  // VIALE DEI CAMPI ELISI 32 (ANGOLO VIA DE COLETTI)
+            "28002",  // VIALE DEI CAMPI ELISI 59 (PONTE FERROVIA)
+            "28011",  // VIALE CAMPI ELISI (EX PAM)
+            "41023",  // VIA DEL CARPINETO 12
+            "40007",  // VIA DI SERVOLA 125 (CIMITERO)
+            "40012",  // VIA DEI GIARDINI 59 (MUSEO DEL PRESEPIO)
+            "40011",  // VIA GIORGIO PITACCO 41
+            "40010",  // VIA GIORGIO PITACCO 12
+            "40009",  // VIA GIORGIO PITACCO 4
+            "40013",  // VIA DI SERVOLA 22
+            "29011",  // VIA SVEVO 38 (CASA EMMAUS)
+            "29017",  // VIA SVEVO 22 (CENTRO COMMERCIALE TORRI D'EUROPA)
+            "28012",  // VIA SVEVO (CANTIERI)
+            "28010"  // VIA CADUTI SUL LAVORO (TRIESTE TRASPORTI)
+        ],
+        "directions": [
+            "VALMAURA",
+            "ROIANO"
+        ]
     },
     {
-        "code":  "9",
-        "label":  "9",
-        "stops":  [
-                      "46028",
-                      "27009",
-                      "38002",
-                      "09001",
-                      "19002",
-                      "46010",
-                      "38001",
-                      "03017",
-                      "03007",
-                      "38004",
-                      "02003"
-                  ],
-        "directions":  [
-                           "PIAZZALE GIOBERTI",
-                           "LARGO IRNERI"
-                       ]
+        "code": "9",
+        "label": "9",
+        "terminals": ["27009", "46028"],
+        "stops": [
+            "27011",  // PASSEGGIO SANT'ANDREA (PASSERELLA AREA FERROVIARIA)
+            "27003",  // VIA GIULIO CESARE (VIA DI CAMPO MARZIO, MUSEO FERROVIARIO)
+            "27005",  // PASSEGGIO SANT'ANDREA (PALO 394)
+            "27010",  // PASSEGGIO SANT'ANDREA
+            "27014",  // VIA DI CAMPO MARZIO 20
+            "27002",  // VIA AUGUSTO 12 (MERCATO ORTOFRUTTICOLO)
+            "27009",  // TRIESTE LARGO IRNERI (LLOYD)
+            "27006",  // TRIESTE PASSEGGIO SANT'ANDREA (FRONTE 6/A)
+            "13003",  // RIVA GRUMULA (STAZIONE ROGERS)
+            "13004",  // RIVA GRUMULA 12/A
+            "13002",  // RIVA SAURO 1 (SALONE DEGLI INCANTI)
+            "13005",  // RIVA SAURO 24 (ACQUARIO, MUSEO REVOLTELLA)
+            "13001",  // RIVA DEL MANDRACCHIO (PALACONGRESSI)
+            "13006",  // RIVA DEL MANDRACCHIO 4 (HOTEL EXCELSIOR)
+            "05001",  // RIVA TRE NOVEMBRE (PREFETTURA, TEATRO VERDI, MUNICIPIO)
+            "05002",  // RIVA CADUTI PER L'ITALIANIT� DI TRIESTE (TEATRO VERDI)
+            "02002",  // VIA MAZZINI 4
+            "02003",  // VIA MAZZINI (ANGOLO CASSA DI RISPARMIO)
+            "02001",  // PIAZZA DELLA REPUBBLICA
+            "03007",  // PIAZZA DELLA REPUBBLICA 2
+            "03017",  // VIA IMBRIANI 2
+            "03006",  // PIAZZA GOLDONI
+            "09001",  // VIA BATTISTI (GALLERIA FENICE)
+            "09002",  // VIA BATTISTI (GALLERIA FENICE)
+            "19008",  // VIA BATTISTI 22 (ANGOLO VIA GIUSEPPE LORENZO GATTERI)
+            "19003",  // VIA GIULIA 3/C (GIARDINO PUBBLICO, TEATRO ROSSETTI)
+            "19002",  // LARGO TOMIZZA
+            "19004",  // VIA GIULIA 21 (LARGO TOMIZZA)
+            "38004",  // VIA GIULIA 37 (PIAZZA DEI VOLONTARI GIULIANI)
+            "38003",  // VIA GIULIA 22 (PIAZZA DEI VOLONTARI GIULIANI)
+            "38002",  // VIA GIULIA 48 (SCUOLA)
+            "38005",  // VIA GIULIA 55 (SCUOLA)
+            "38001",  // VIA GIULIA 80 (CENTRO COMMERCIALE IL GIULIA)
+            "38006",  // VIA GIULIA 77 (CENTRO COMMERCIALE IL GIULIA)
+            "46012",  // VIALE RAFFAELLO SANZIO (ROTONDA DEL BOSCHETTO)
+            "46013",  // VIALE RAFFAELLO SANZIO 1 (ROTONDA DEL BOSCHETTO)
+            "46011",  // VIALE RAFFAELLO SANZIO 30 (ANGOLO VIA BRUNELLESCHI)
+            "46014",  // VIALE SANZIO 17
+            "46010",  // PIAZZALE GIOBERTI 1
+            "46028"  // PIAZZALE GIOBERTI
+        ],
+        "directions": [
+            "LARGO IRNERI",
+            "PIAZZALE GIOBERTI"
+        ]
     },
     {
-        "code":  "10",
-        "label":  "10",
-        "stops":  [
-                      "41024",
-                      "02005",
-                      "42001",
-                      "03007",
-                      "42004",
-                      "42003",
-                      "02003",
-                      "05009"
-                  ],
-        "directions":  [
-                           "VALMAURA",
-                           "PIAZZA TOMMASEO"
-                       ]
+        "code": "10",
+        "label": "10",
+        "terminals": ["02005", "41004"],
+        "stops": [
+            "02005",  // PIAZZA TOMMASEO
+            "02002",  // VIA MAZZINI 4
+            "02003",  // VIA MAZZINI (ANGOLO CASSA DI RISPARMIO)
+            "03007",  // PIAZZA DELLA REPUBBLICA 2
+            "02001",  // PIAZZA DELLA REPUBBLICA
+            "03006",  // PIAZZA GOLDONI
+            "05009",  // PIAZZA GOLDONI
+            "06001",  // PIAZZA DEL SANSOVINO (CROCE ROSSA)
+            "06002",  // PIAZZA DEL SANSOVINO 6 (CROCE ROSSA)
+            "07002",  // PIAZZA VICO 9 (ANGOLO VIA DEL BOSCO)
+            "15001",  // VIA SAN GIACOMO IN MONTE 2 (ANGOLO VIA DEL BOSCO)
+            "07001",  // VIA SAN GIACOMO IN MONTE 12 (GIARDINO BASEVI)
+            "15002",  // VIA SAN GIACOMO IN MONTE 9
+            "15003",  // CAMPO SAN GIACOMO 3
+            "15004",  // CAMPO SAN GIACOMO 1/B
+            "16003",  // VIA DELL'ISTRIA 15 (ANGOLO VIA RIVALTO)
+            "16005",  // VIA DELL'ISTRIA 24/C (ANGOLO VIA DI RIVALTO)
+            "16004",  // VIA DELL'ISTRIA 56 (ANGOLO VIA DELLA BASTIA)
+            "30005",  // VIA DELL'ISTRIA 43 (LARGO DEL PESTALOZZI, SCUOLA)
+            "32002",  // VIA DELL'ISTRIA 102 (ANGOLO VIA MARENZI)
+            "30006",  // VIA DELL'ISTRIA 57 (ANGOLO VIA MARENZI)
+            "30007",  // VIA DELL'ISTRIA 67 (OSPEDALE BURLO GAROFOLO)
+            "32001",  // VIA DELL'ISTRIA 69 (OSPEDALE BURLO GAROFOLO)
+            "42004",  // VIA DELL'ISTRIA 138 (ANGOLO VIA ORSERA)
+            "31001",  // VIA DELL'ISTRIA 142 (ANGOLO VIA ORSERA)
+            "41001",  // VIA DELL'ISTRIA 99
+            "42003",  // VIA DELL'ISTRIA 101 (ANGOLO VIA BAIAMONTI)
+            "41002",  // VIA DELL'ISTRIA 127
+            "42001",  // VIA DELL'ISTRIA 206 (CIMITERO)
+            "41003",  // VIA DELL'ISTRIA (CIMITERO)
+            "40006",  // VIA VALMAURA 69
+            "40005",  // VIA VALMAURA 43
+            "41006",  // VIA VALMAURA 37 (ANGOLO VIA DE JENNER, RISIERA SAN SABBA)
+            "41007",  // VIA VALMAURA 35 (RISIERA DI SAN SABBA)
+            "41005",  // VIA VALMAURA (STADIO ROCCO E GREZAR)
+            "41024",  // VALMAURA
+            "41004"  // PIAZZALE VALMAURA
+        ],
+        "directions": [
+            "PIAZZA TOMMASEO",
+            "PIAZZALE VALMAURA"
+        ]
     },
     {
-        "code":  "11",
-        "label":  "11",
-        "stops":  [
-                      "45010",
-                      "05011",
-                      "08003",
-                      "45009",
-                      "05005",
-                      "44001",
-                      "08002",
-                      "45020",
-                      "45015"
-                  ],
-        "directions":  [
-                           "FERDINANDEO",
-                           "CORSO ITALIA"
-                       ]
+        "code": "11",
+        "label": "11",
+        "terminals": ["05011", "45010"],
+        "stops": [
+            "02002",  // VIA MAZZINI 4
+            "05011",  // CORSO ITALIA
+            "05005",  // CORSO ITALIA (GALLERIA ROSSONI)
+            "03016",  // PIAZZA DELLA REPUBBLICA 2
+            "03006",  // PIAZZA GOLDONI
+            "08003",  // PONTE DELLA FABRA
+            "08004",  // PIAZZA DELL'OSPITALE 3/D (OSPEDALE MAGGIORE)
+            "08002",  // PIAZZA DELL'OSPITALE 1 (OSPEDALE MAGGIORE)
+            "08001",  // VIA D'AZEGLIO (ANGOLO VIA VASARI)
+            "17002",  // VIA D'AZEGLIO (ANGOLO VIA FOSCOLO)
+            "18001",  // VIA PASCOLI 28 (ISTITUTO ITIS)
+            "18002",  // VIA FOSCOLO (ANGOLO VIA GIUSEPPE LORENZO GATTERI)
+            "18013",  // VIA PASCOLI 42 (ANGOLO VIA DEI PICCARDI)
+            "18003",  // VIA ROSSETTI 53 (CHIESA)
+            "18005",  // VIA DEI PICCARDI 20 (ANGOLO VIA DEI PORTA)
+            "18004",  // VIA ROSSETTI 67 (OSPEDALE SANATORIO TRIESTINO)
+            "35007",  // VIA DEI PICCARDI 40/B (ANGOLO VIA DELL'EREMO)
+            "34001",  // VIA ROSSETTI 93 (ANGOLO ANANIAN, TEATRO PELLICO)
+            "35006",  // VIA DEI PICCARDI 66 (ANGOLO VIA REVOLTELLA, TEATRO PELLICO)
+            "35001",  // VIA ROSSETTI 113 (ANGOLO VIA REVOLTELLA, FIERA)
+            "35005",  // VIA REVOLTELLA 29 (POLIZIA LOCALE)
+            "44018",  // VIA REVOLTELLA 29
+            "35004",  // VIA REVOLTELLA 38/A (ANGOLO VIA LONZA)
+            "44001",  // VIA REVOLTELLA 41 (FARMACIA)
+            "45020",  // VIA REVOLTELLA 75 (SCALA BONGHI)
+            "44002",  // VIA REVOLTELLA 83 (SCALA BONGHI)
+            "36001",  // VIA SAN PASQUALE 89 (CHIESA)
+            "36012",  // VIA SAN PASQUALE 87 (CHIESA)
+            "36003",  // VIA SAN PASQUALE 101 (SCUOLA)
+            "36013",  // VIA SAN PASQUALE 40 (ANGOLO VIA DELL'EREMO)
+            "45007",  // VIA SAN PASQUALE 40 (ANGOLO VIA DELL'EREMO)
+            "36002",  // VIA SAN PASQUALE 111 (SCUOLA)
+            "45019",  // VIA REVOLTELLA 126 (ANGOLO VIA D'ANGELI)
+            "45001",  // VIA REVOLTELLA 126 (ANGOLO VIA D'ANGELI)
+            "45013",  // VIA SAN PASQUALE 76
+            "45008",  // VIA SAN PASQUALE 113
+            "45018",  // VIA REVOLTELLA 130 (CHIESA, SCUOLA)
+            "45006",  // VIA SAN PASQUALE
+            "45014",  // VIA SAN PASQUALE
+            "45002",  // VIA REVOLTELLA (SCUOLA, CHIESA)
+            "45009",  // VIA SAN PASQUALE 133
+            "45012",  // VIA SAN PASQUALE 84
+            "45017",  // VIA REVOLTELLA 138 (ANGOLO VIA FRANCESCO BEDA)
+            "45005",  // VIA SAN PASQUALE 23
+            "45015",  // VIA SAN PASQUALE 17
+            "45003",  // VIA REVOLTELLA 138 (ANGOLO VIA BEDA)
+            "45010",  // FERDINANDEO
+            "45016",  // VIA REVOLTELLA 148 (ROZZOL)
+            "45004",  // VIA REVOLTELLA (ROZZOL)
+            "45034",  // VIA DE MARCHESETTI 25 (ANGOLO VIA DELL'EREMO)
+            "45026",  // VIA FORLANINI 9
+            "45035",  // VIA DE MARCHESETTI 39 (VILLA REVOLTELLA)
+            "45025",  // VIA FORLANINI 21
+            "45036",  // VIA DE MARCHESETTI 49 (ANGOLO MELARA)
+            "45024",  // VIA FORLANINI 37
+            "45037",  // VIA DE MARCHESETTI 57/1 (ANGOLO KOCH)
+            "53013",  // VIA FORLANINI (ANGOLO VIA KOCH, CHIESA)
+            "53012",  // VIA FORLANINI 77
+            "53011",  // VIA FORLANINI 117
+            "45038",  // VIA DE MARCHESETTI 12/1
+            "53010",  // VIA FORLANINI (SCUOLA)
+            "53005",  // VIA DE MARCHESETTI (ROZZOL MELARA)
+            "53018",  // VIA FORLANINI 40 (ANGOLO VIA DE MARCHESETTI)
+            "53006"  // VIA DE MARCHESETTI 12/14
+        ],
+        "directions": [
+            "CORSO ITALIA",
+            "FERDINANDEO"
+        ]
     },
     {
-        "code":  "12",
-        "label":  "12",
-        "stops":  [
-                      "46035",
-                      "46015",
-                      "46010",
-                      "46034",
-                      "46040",
-                      "46017",
-                      "46025",
-                      "46022",
-                      "46016",
-                      "46037"
-                  ],
-        "directions":  [
-                           "PARCO SAN GIOVANNI",
-                           "PIAZZALE GIOBERTI",
-                           "BORGO SAN PELAGIO"
-                       ]
+        "code": "12",
+        "label": "12",
+        "terminals": ["46015", "46016", "46017", "46019", "46021", "46025", "46035"],
+        "stops": [
+            "46019",  // BORGO SAN PELAGIO
+            "46020",  // VIA DEL CAPOFONTE 13
+            "46018",  // VIA DEL CAPOFONTE 13
+            "46021",  // VIA ALLE CAVE 55 (ANGOLO VIA SAN PELAGIO)
+            "46017",  // VIA ALLE CAVE 53 (ANGOLO VIA SAN PELAGIO)
+            "46025",  // VIA SAN PELAGIO 27 (ANGOLO VIA DELLE CAVE)
+            "46022",  // VIA ALLE CAVE 35 (VIA DELLA FRANCESCA)
+            "46016",  // VIA SAN PELAGIO 15 (ANGOLO VIA DELLE DOCCE)
+            "46041",  // VIA DELLE DOCCE 18
+            "46030",  // VIA ALLE CAVE 1/1 (ANGOLO VIA SAN CILINO)
+            "46015",  // PIAZZALE GIOBERTI
+            "46010",  // PIAZZALE GIOBERTI 1
+            "46014",  // VIALE SANZIO 17
+            "46011",  // VIALE RAFFAELLO SANZIO 30 (ANGOLO VIA BRUNELLESCHI)
+            "46035",  // PARCO SAN GIOVANNI
+            "46034",  // VIA WEISS 5
+            "46037",  // VIA WEISS 4
+            "46033",  // PIAZZALE CANESTRINI 6
+            "46031",  // VIA DEL DONATELLO 4
+            "46040",  // VIA DEL DONATELLO 3
+            "46038"  // PIAZZALE CANESTRINI 1
+        ],
+        "directions": [
+            "PIAZZALE GIOBERTI",
+            "SAN PELAGIO",
+            "SAN GIOVANNI"
+        ]
     },
     {
-        "code":  "13",
-        "label":  "13",
-        "stops":  [
-                      "52016",
-                      "52008",
-                      "52009",
-                      "52010",
-                      "52021",
-                      "52006"
-                  ],
-        "directions":  [
-                           "CATTINARA (OSPEDALE)",
-                           "RAUTE"
-                       ]
+        "code": "13",
+        "label": "13",
+        "terminals": ["52008", "52016"],
+        "stops": [
+            "52008",  // RAUTE
+            "52007",  // VIA DEL CASTELLIERE 47
+            "52009",  // VIA DEL CASTELLIERE 47
+            "52006",  // VIA DEL CASTELLIERE 67
+            "52010",  // VIA DEL CASTELLIERE 67
+            "52005",  // VIA DEL CASTELLIERE 12 (ANGOLO VIA DEL BOTRO)
+            "52011",  // VIA DEL CASTELLIERE 12 (ANGOLO VIA DEL BOTRO)
+            "53019",  // STRADA DI FIUME 300 (ANGOLO VIA DEL CASTELLIERE)
+            "52021",  // STRADA DI FIUME 302
+            "52016"  // CATTINARA (OSPEDALE)
+        ],
+        "directions": [
+            "RAUTE",
+            "CATTINARA OSPEDALE"
+        ]
     },
     {
-        "code":  "14",
-        "label":  "14",
-        "stops":  [
-                      "47013",
-                      "03018",
-                      "10008",
-                      "20001",
-                      "20003",
-                      "10004",
-                      "10003",
-                      "47012",
-                      "10007",
-                      "20002",
-                      "47011",
-                      "47017"
-                  ],
-        "directions":  [
-                           "VIA CANTU\u0027",
-                           "PIAZZA OBERDAN"
-                       ]
+        "code": "14",
+        "label": "14",
+        "terminals": ["03018", "47013"],
+        "stops": [
+            "04014",  // STAZIONE FERROVIARIA
+            "10008",  // VIA DEL CORONEO (REGIONE)
+            "03018",  // PIAZZA OBERDAN
+            "10004",  // VIA FABIO SEVERO 4 (TRIBUNALE)
+            "10003",  // VIA DEL CORONEO 27 (TRIBUNALE)
+            "20004",  // VIA DEL CORONEO 41 (ANGOLO VIA SEVERO)
+            "10007",  // VIA FABIO SEVERO 30 (ANGOLO VIA CATULLO)
+            "20001",  // VIA FABIO SEVERO 53 (CAMPUS DELL'EX OSPEDALE MILITARE)
+            "20003",  // VIA FABIO SEVERO 40 (CAMPUS DELL'EX OSPEDALE MILITARE)
+            "47013",  // VIA CANTU'
+            "21001",  // VIA CANT� 34 (ANGOLO VIA GUICCIARDINI)
+            "47012",  // VIA CESARE CANT� 34 (ANGOLO VIA GUICCIARDINI)
+            "20005",  // VIA FABIO SEVERO 88/A (ANGOLO VIA VERO)
+            "39003",  // VIA FABIO SEVERO 85 (ANGOLO VIA VERO)
+            "21005",  // VIA CANT� 12 (ANGOLO VIA DEL MONTELLO)
+            "47019",  // VIA CESARE CANT� 12 (ANGOLO VIA DEL MONTELLO)
+            "21002",  // VIA CANT� 10 (SCUOLA)
+            "47011",  // VIA CESARE CANT� 43 (SCUOLA)
+            "47010",  // VIA CESARE CANT� 39 (ANGOLO VIA MONTE SAN GABRIELE)
+            "20002",  // VIA FABIO SEVERO 107 (ANGOLO VIA SOTTORIPA)
+            "47016",  // VIA CESARE CANT� 39 (SCUOLE)
+            "39001",  // VIA FABIO SEVERO 107 (ANGOLO VIA SOTTORIPA)
+            "47009",  // VIA CESARE CANT� 1 (ANGOLO VICOLO DEL CASTAGNETO)
+            "47017"  // VIA CESARE CANT� 1 (ANGOLO VICOLO DEL CASTAGNETO)
+        ],
+        "directions": [
+            "PIAZZA OBERDAN",
+            "VIA CANTU'"
+        ]
     },
     {
-        "code":  "15",
-        "label":  "15",
-        "stops":  [
-                      "10010",
-                      "27017",
-                      "03002",
-                      "03004",
-                      "27016",
-                      "27020",
-                      "14003",
-                      "27019",
-                      "03003"
-                  ],
-        "directions":  [
-                           "PIAZZA OBERDAN",
-                           "VIA MURAT"
-                       ]
+        "code": "15",
+        "label": "15",
+        "terminals": ["10010", "03003"],
+        "stops": [
+            "10010",  // PIAZZA OBERDAN
+            "03002",  // VIA CARDUCCI (LUMINOSA)
+            "03004",  // PIAZZA GOLDONI
+            "03003",  // PIAZZA GOLDONI
+            "27017",  // VIA MURAT
+            "06001",  // PIAZZA DEL SANSOVINO (CROCE ROSSA)
+            "14005",  // VIA TIEPOLO (LARGO CANAL)
+            "06002",  // PIAZZA DEL SANSOVINO 6 (CROCE ROSSA)
+            "27018",  // VIA HERMET (PIAZZA CARLO ALBERTO)
+            "14001",  // VIA TIEPOLO (LARGO CANAL)
+            "27016",  // VIA HERMET (PIAZZA CARLO ALBERTO)
+            "27015",  // VIA FRANCA 15 (ANGOLO VIA BELPOGGIO)
+            "27019",  // VIA FRANCA 14 (ANGOLO VIA BELPOGGIO)
+            "14002",  // VIA SEGANTINI 4 (ANGOLO VIA DEI NAVALI)
+            "14004",  // VIA SEGANTINI 3 (ANGOLO VIA DEI NAVALI)
+            "25002",  // LARGO DEL PROMONTORIO 1
+            "27020",  // VIA FRANCA 1 (LARGO DEL PROMONTORIO)
+            "25001",  // VIA COLAUTTI 2 (ANGOLO VIA DE AMICIS)
+            "26004",  // VIA BESENGHI 12 (SEMINARIO)
+            "14003",  // VIA BESENGHI 37 (SEMINARIO VESCOVILE)
+            "25003",  // VIA COLAUTTI 6 (ANGOLO VIA DE AMICIS)
+            "26002",  // VIA BESENGHI 53 (ANGOLO VIA NICOL� DE RIN)
+            "26003",  // VIA BESENGHI 46 (ANGOLO VIA NICOL� DE RIN)
+            "28009",  // VIA COLAUTTI 14/A (PIAZZALE DELLA RESISTENZA)
+            "28006",  // VIA COLAUTTI (PIAZZALE DELLA RESISTENZA)
+            "28007",  // VIA SCHIAPARELLI 9 (PIAZZALE DELLA RESISTENZA)
+            "26005",  // VIA SCHIAPARELLI 20 (PIAZZALE DELLA RESISTENZA)
+            "28003",  // VIALE CAMPI ELISI
+            "28005",  // VIA SCHIAPARELLI 3 (ANGOLO VIALE DEI CAMPI ELISI)
+            "26001",  // VIALE DEI CAMPI ELISI 95 (PONTE FERROVIA)
+            "28002"  // VIALE DEI CAMPI ELISI 59 (PONTE FERROVIA)
+        ],
+        "directions": [
+            "PIAZZA OBERDAN",
+            "CAMPO MARZIO"
+        ]
     },
     {
-        "code":  "16",
-        "label":  "16",
-        "stops":  [
-                      "10010",
-                      "28003",
-                      "03002",
-                      "03004",
-                      "28008",
-                      "14003",
-                      "03003",
-                      "28005"
-                  ],
-        "directions":  [
-                           "PIAZZA OBERDAN",
-                           "VIALE CAMPI ELISI",
-                           "VIA VON BRUCK 30 (GIRONE)"
-                       ]
+        "code": "16",
+        "label": "16",
+        "terminals": ["10010", "26001", "28002", "28003", "28005", "28011"],
+        "stops": [
+            "10010",  // PIAZZA OBERDAN
+            "03002",  // VIA CARDUCCI (LUMINOSA)
+            "03004",  // PIAZZA GOLDONI
+            "03003",  // PIAZZA GOLDONI
+            "06001",  // PIAZZA DEL SANSOVINO (CROCE ROSSA)
+            "06002",  // PIAZZA DEL SANSOVINO 6 (CROCE ROSSA)
+            "14005",  // VIA TIEPOLO (LARGO CANAL)
+            "14001",  // VIA TIEPOLO (LARGO CANAL)
+            "14004",  // VIA SEGANTINI 3 (ANGOLO VIA DEI NAVALI)
+            "14002",  // VIA SEGANTINI 4 (ANGOLO VIA DEI NAVALI)
+            "26004",  // VIA BESENGHI 12 (SEMINARIO)
+            "14003",  // VIA BESENGHI 37 (SEMINARIO VESCOVILE)
+            "28003",  // VIALE CAMPI ELISI
+            "28011",  // VIALE CAMPI ELISI (EX PAM)
+            "26002",  // VIA BESENGHI 53 (ANGOLO VIA NICOL� DE RIN)
+            "26003",  // VIA BESENGHI 46 (ANGOLO VIA NICOL� DE RIN)
+            "26001",  // VIALE DEI CAMPI ELISI 95 (PONTE FERROVIA)
+            "28014",  // VIA SAN MARCO 52
+            "25001",  // VIA COLAUTTI 2 (ANGOLO VIA DE AMICIS)
+            "28015",  // VIA SAN MARCO 52
+            "28002",  // VIALE DEI CAMPI ELISI 59 (PONTE FERROVIA)
+            "25003",  // VIA COLAUTTI 6 (ANGOLO VIA DE AMICIS)
+            "28005",  // VIA SCHIAPARELLI 3 (ANGOLO VIALE DEI CAMPI ELISI)
+            "26005",  // VIA SCHIAPARELLI 20 (PIAZZALE DELLA RESISTENZA)
+            "28017",  // VIA VON BRUCK 30 (GIRONE)
+            "28009",  // VIA COLAUTTI 14/A (PIAZZALE DELLA RESISTENZA)
+            "28006",  // VIA COLAUTTI (PIAZZALE DELLA RESISTENZA)
+            "28007",  // VIA SCHIAPARELLI 9 (PIAZZALE DELLA RESISTENZA)
+            "28016",  // VIA VON BRUCK 12
+            "28008"  // TORRE DEL LLOYD
+        ],
+        "directions": [
+            "PIAZZA OBERDAN",
+            "CAMPI ELISI"
+        ]
     },
     {
-        "code":  "17/",
-        "label":  "17/",
-        "stops":  [
-                      "04022",
-                      "46023",
-                      "10008",
-                      "20001",
-                      "47001",
-                      "47007",
-                      "20003",
-                      "10004",
-                      "47006",
-                      "10003",
-                      "47015",
-                      "47018",
-                      "46024"
-                  ],
-        "directions":  [
-                           "SAN CILINO",
-                           "STAZIONE FERROVIARIA"
-                       ]
+        "code": "17/",
+        "label": "17/",
+        "terminals": ["04022", "46023"],
+        "stops": [
+            "04022",  // STAZIONE FERROVIARIA
+            "10008",  // VIA DEL CORONEO (REGIONE)
+            "10004",  // VIA FABIO SEVERO 4 (TRIBUNALE)
+            "10003",  // VIA DEL CORONEO 27 (TRIBUNALE)
+            "10007",  // VIA FABIO SEVERO 30 (ANGOLO VIA CATULLO)
+            "20004",  // VIA DEL CORONEO 41 (ANGOLO VIA SEVERO)
+            "20001",  // VIA FABIO SEVERO 53 (CAMPUS DELL'EX OSPEDALE MILITARE)
+            "20003",  // VIA FABIO SEVERO 40 (CAMPUS DELL'EX OSPEDALE MILITARE)
+            "20005",  // VIA FABIO SEVERO 88/A (ANGOLO VIA VERO)
+            "39003",  // VIA FABIO SEVERO 85 (ANGOLO VIA VERO)
+            "20002",  // VIA FABIO SEVERO 107 (ANGOLO VIA SOTTORIPA)
+            "39001",  // VIA FABIO SEVERO 107 (ANGOLO VIA SOTTORIPA)
+            "39004",  // VIA FABIO SEVERO (UNIVERSIT�, PIAZZALE EUROPA)
+            "47015",  // VIA FABIO SEVERO (UNIVERSIT�, PIAZZALE EUROPA)
+            "39002",  // VIA FABIO SEVERO 143 (CURVA MAS�)
+            "47008",  // VIA FABIO SEVERO 143 (CURVA MAS�)
+            "47007",  // VIA ALFONSO VALERIO 2 (UNIVERSIT�)
+            "47001",  // VIA ALFONSO VALERIO 2
+            "47014",  // VIA ALFONSO VALERIO 10 (UNIVERSIT�)
+            "47006",  // VIA ALFONSO VALERIO 20 (VIA DELLO SCOGLIO)
+            "46001",  // VIA VALERIO 20
+            "46024",  // VIA VALERIO 38 (ANGOLO CLIVO ARTEMISIO)
+            "47018",  // VIA ALFONSO VALERIO 38 (ANGOLO CLIVO ARTEMISIO)
+            "46023"  // SAN CILINO
+        ],
+        "directions": [
+            "STAZIONE FERROVIARIA",
+            "SAN CILINO"
+        ]
     },
     {
-        "code":  "17",
-        "label":  "17",
-        "stops":  [
-                      "46023",
-                      "13008",
-                      "10008",
-                      "20001",
-                      "47001",
-                      "47007",
-                      "20003",
-                      "10004",
-                      "05012",
-                      "47006",
-                      "10003",
-                      "47015",
-                      "47018",
-                      "46024",
-                      "05002"
-                  ],
-        "directions":  [
-                           "SAN CILINO",
-                           "VIA DI CAMPO MARZIO"
-                       ]
+        "code": "17",
+        "label": "17",
+        "terminals": ["13008", "46023"],
+        "stops": [
+            "27002",  // VIA AUGUSTO 12 (MERCATO ORTOFRUTTICOLO)
+            "13008",  // VIA DI CAMPO MARZIO
+            "13003",  // RIVA GRUMULA (STAZIONE ROGERS)
+            "13004",  // RIVA GRUMULA 12/A
+            "13002",  // RIVA SAURO 1 (SALONE DEGLI INCANTI)
+            "13005",  // RIVA SAURO 24 (ACQUARIO, MUSEO REVOLTELLA)
+            "13001",  // RIVA DEL MANDRACCHIO (PALACONGRESSI)
+            "13006",  // RIVA DEL MANDRACCHIO 4 (HOTEL EXCELSIOR)
+            "05001",  // RIVA TRE NOVEMBRE (PREFETTURA, TEATRO VERDI, MUNICIPIO)
+            "05002",  // RIVA CADUTI PER L'ITALIANIT� DI TRIESTE (TEATRO VERDI)
+            "05012",  // PIAZZA TOMMASEO
+            "02002",  // VIA MAZZINI 4
+            "01002",  // VIA ROMA 18/B (PONTE ROSSO)
+            "01001",  // VIA FILZI 3 (PIAZZA SANT'ANTONIO NUOVO, PONTE ROSSO)
+            "04003",  // VIA ROMA 28 (PIAZZA VITTORIO VENETO, POSTA CENTRALE)
+            "10008",  // VIA DEL CORONEO (REGIONE)
+            "10004",  // VIA FABIO SEVERO 4 (TRIBUNALE)
+            "10003",  // VIA DEL CORONEO 27 (TRIBUNALE)
+            "10007",  // VIA FABIO SEVERO 30 (ANGOLO VIA CATULLO)
+            "20004",  // VIA DEL CORONEO 41 (ANGOLO VIA SEVERO)
+            "20001",  // VIA FABIO SEVERO 53 (CAMPUS DELL'EX OSPEDALE MILITARE)
+            "20003",  // VIA FABIO SEVERO 40 (CAMPUS DELL'EX OSPEDALE MILITARE)
+            "20005",  // VIA FABIO SEVERO 88/A (ANGOLO VIA VERO)
+            "39003",  // VIA FABIO SEVERO 85 (ANGOLO VIA VERO)
+            "20002",  // VIA FABIO SEVERO 107 (ANGOLO VIA SOTTORIPA)
+            "39001",  // VIA FABIO SEVERO 107 (ANGOLO VIA SOTTORIPA)
+            "39004",  // VIA FABIO SEVERO (UNIVERSIT�, PIAZZALE EUROPA)
+            "47015",  // VIA FABIO SEVERO (UNIVERSIT�, PIAZZALE EUROPA)
+            "47007",  // VIA ALFONSO VALERIO 2 (UNIVERSIT�)
+            "39002",  // VIA FABIO SEVERO 143 (CURVA MAS�)
+            "47008",  // VIA FABIO SEVERO 143 (CURVA MAS�)
+            "47001",  // VIA ALFONSO VALERIO 2
+            "47014",  // VIA ALFONSO VALERIO 10 (UNIVERSIT�)
+            "47006",  // VIA ALFONSO VALERIO 20 (VIA DELLO SCOGLIO)
+            "46001",  // VIA VALERIO 20
+            "46024",  // VIA VALERIO 38 (ANGOLO CLIVO ARTEMISIO)
+            "47018",  // VIA ALFONSO VALERIO 38 (ANGOLO CLIVO ARTEMISIO)
+            "46023"  // SAN CILINO
+        ],
+        "directions": [
+            "VIA DI CAMPO MARZIO",
+            "SAN CILINO"
+        ]
     },
     {
-        "code":  "18",
-        "label":  "18",
-        "stops":  [
-                      "44003",
-                      "05010",
-                      "33003",
-                      "44005",
-                      "44008",
-                      "44004"
-                  ],
-        "directions":  [
-                           "VIA CUMANO",
-                           "CORSO ITALIA"
-                       ]
+        "code": "18",
+        "label": "18",
+        "terminals": ["05010", "44003"],
+        "stops": [
+            "02006",  // VIA ROMA 8 (ANGOLO VIA SAN NICOL�)
+            "05010",  // CORSO ITALIA
+            "03016",  // PIAZZA DELLA REPUBBLICA 2
+            "03006",  // PIAZZA GOLDONI
+            "07003",  // CORSO SABA
+            "08008",  // LARGO BARRIERA
+            "17006",  // PIAZZA GARIBALDI 3
+            "17009",  // PIAZZA GARIBALDI 12
+            "17007",  // VIALE GABRIELE D'ANNUNZIO 12 (LARGO SONNINO)
+            "17005",  // VIALE GABRIELE D'ANNUNZIO 14 (LARGO SONNINO)
+            "33005",  // VIALE GABRIELE D'ANNUNZIO 27 (PIAZZA DEL PERUGINO)
+            "33004",  // VIALE GABRIELE D'ANNUNZIO 38/A (PIAZZA DEL PERUGINO)
+            "33003",  // VIALE D'ANNUNZIO 48 (ANGOLO VIA LIMITANEA, TEATRO BOBBIO)
+            "34003",  // VIALE D'ANNUNZIO 51 (ANGOLO VIA LIMITANEA, TEATRO BOBBIO)
+            "34004",  // VIALE GABRIELE D'ANNUNZIO 79 (PIAZZA DEI FORAGGI)
+            "34002",  // PIAZZA DEI FORAGGI 7
+            "34005",  // VIALE DELL'IPPODROMO 12 (IPPODROME, EX FIERA)
+            "44007",  // VIALE DELL'IPPODROMO 16 (EX FIERA)
+            "44006",  // VIA COSTANTINO CUMANO 2 (ANGOLO VIA EUGENIO SCOMPARINI)
+            "44008",  // VIA COSTANTINO CUMANO 2 (ANGOLO VIA EUGENIO SCOMPARINI)
+            "44004",  // VIA FITTKE 5
+            "44009",  // VIA COSTANTINO CUMANO 20 (MUSEI)
+            "44005",  // VIA DEI TOMINZ (MUSEO DI STORIA NATURALE)
+            "44017",  // VIA COSTANTINO CUMANO 22 (MUSEI)
+            "44010",  // VIA COSTANTINO CUMANO 9 (ANGOLO VIA RIETTI)
+            "44003"  // VIA CUMANO
+        ],
+        "directions": [
+            "CORSO ITALIA",
+            "VIA CUMANO"
+        ]
     },
     {
-        "code":  "19",
-        "label":  "19",
-        "stops":  [
-                      "42002",
-                      "50003",
-                      "42001",
-                      "50001",
-                      "03002",
-                      "33002",
-                      "08003",
-                      "03004",
-                      "50002",
-                      "33003",
-                      "50015",
-                      "24003",
-                      "08002",
-                      "42013"
-                  ],
-        "directions":  [
-                           "VIA PUCCINI",
-                           "BARCOLA"
-                       ]
+        "code": "19",
+        "label": "19",
+        "terminals": ["04019", "42002"],
+        "stops": [
+            "50003",  // BARCOLA
+            "50002",  // VIALE MIRAMARE 113 (ISTITUTO RITTMEYER)
+            "50004",  // VIALE MIRAMARE 52 (ISTITUTO RITTMEYER)
+            "50005",  // VIALE MIRAMARE 36 (CIRCOLO SPORTIVO SATURNIA, BOVEDO)
+            "50001",  // VIALE MIRAMARE 36 (PARCHEGGIO BOVEDO)
+            "50016",  // VIALE MIRAMARE (PARCHEGGIO BOVEDO)
+            "50015",  // VIALE MIRAMARE (PARCHEGGIO BOVEDO)
+            "24003",  // VIALE MIRAMARE 30 (BAGNI FERROVIARIO E CRAL)
+            "24002",  // VIALE MIRAMARE 30 (FERROVIARIO E CRAL)
+            "24053",  // VIALE MIRAMARE (PORTO VECCHIO)
+            "24054",  // PORTO VECCHIO TCC
+            "24055",  // PORTO VECCHIO
+            "04023",  // STAZIONE FERROVIARIA (VARCO PORTO VECCHIO)
+            "04019",  // STAZIONE FERROVIARIA
+            "04002",  // VIA GHEGA 9 (CONSERVATORIO TARTINI)
+            "10001",  // PIAZZA OBERDAN
+            "03001",  // PIAZZA OBERDAN
+            "03002",  // VIA CARDUCCI (LUMINOSA)
+            "03013",  // PIAZZA SAN GIOVANNI 5/D
+            "09003",  // VIA CARDUCCI 14 (GUIDA LUMINOSA)
+            "03004",  // PIAZZA GOLDONI
+            "08013",  // VIA CARDUCCI 22 (ANGOLO VIA FRANCESCO CRISPI)
+            "08003",  // PONTE DELLA FABRA
+            "08010",  // LARGO DELLA BARRIERA VECCHIA 17
+            "08004",  // PIAZZA DELL'OSPITALE 3/D (OSPEDALE MAGGIORE)
+            "08002",  // PIAZZA DELL'OSPITALE 1 (OSPEDALE MAGGIORE)
+            "08007",  // LARGO BARRIERA
+            "08001",  // VIA D'AZEGLIO (ANGOLO VIA VASARI)
+            "17006",  // PIAZZA GARIBALDI 3
+            "17009",  // PIAZZA GARIBALDI 12
+            "17002",  // VIA D'AZEGLIO (ANGOLO VIA FOSCOLO)
+            "18001",  // VIA PASCOLI 28 (ISTITUTO ITIS)
+            "17003",  // VIA PASCOLI 31/A (ISTITUTO ITIS)
+            "17001",  // VIA DEI CONTI (ANGOLO VIA PIO RIEGO GAMBINI)
+            "17004",  // VIA DEI CONTI (ANGOLO VIA PIO RIEGO GAMBINI)
+            "33006",  // PIAZZA DEL PERUGINO 7/A
+            "33002",  // PIAZZA DEL PERUGINO 6
+            "33003",  // VIALE D'ANNUNZIO 48 (ANGOLO VIA LIMITANEA, TEATRO BOBBIO)
+            "34003",  // VIALE D'ANNUNZIO 51 (ANGOLO VIA LIMITANEA, TEATRO BOBBIO)
+            "34004",  // VIALE GABRIELE D'ANNUNZIO 79 (PIAZZA DEI FORAGGI)
+            "34002",  // PIAZZA DEI FORAGGI 7
+            "41013",  // VIA SALATA 3 (SUPERMERCATO)
+            "41012",  // VIA SALATA 6 (CHIOSCO MURATURA)
+            "41002",  // VIA DELL'ISTRIA 127
+            "42001",  // VIA DELL'ISTRIA 206 (CIMITERO)
+            "41003",  // VIA DELL'ISTRIA (CIMITERO)
+            "41014",  // VIA FLAVIA 1 (VALMAURA, STADIO GREZAR, STADIO ROCCO)
+            "41011",  // VIA FLAVIA 1 (VALMAURA, STADIO GREZAR, STADIO ROCCO)
+            "41015",  // VIA FLAVIA 3 (PALATRIESTE ALLIANZ DOME)
+            "41010",  // VIA FLAVIA 10 (PALATRIESTE)
+            "42013",  // VIA PUCCINI 24 (ANGOLO VIA PIETRO MASCAGNI)
+            "42012",  // VIA MASCAGNI (PIAZZALE CAGNI)
+            "42005",  // PIAZZALE CAGNI 2
+            "42014",  // VIA PUCCINI 50 (DISTRETTO SANITARIO)
+            "42002",  // VIA PUCCINI
+            "42006"  // VIA FLAVIA 23/1 (INCUBATORE BIC)
+        ],
+        "directions": [
+            "STAZIONE FERROVIARIA",
+            "VIA PUCCINI"
+        ]
     },
     {
-        "code":  "20",
-        "label":  "20",
-        "stops":  [
-                      "E0001",
-                      "04017",
-                      "42001",
-                      "03002",
-                      "09003",
-                      "33003",
-                      "08010",
-                      "03001",
-                      "42006",
-                      "56023"
-                  ],
-        "directions":  [
-                           "MUGGIA",
-                           "STAZIONE FERROVIARIA"
-                       ]
+        "code": "20",
+        "label": "20",
+        "terminals": ["04015", "04017", "E0001", "E0145"],
+        "stops": [
+            "04017",  // STAZIONE FERROVIARIA
+            "04002",  // VIA GHEGA 9 (CONSERVATORIO TARTINI)
+            "03001",  // PIAZZA OBERDAN
+            "03002",  // VIA CARDUCCI (LUMINOSA)
+            "08010",  // LARGO DELLA BARRIERA VECCHIA 17
+            "17006",  // PIAZZA GARIBALDI 3
+            "17007",  // VIALE GABRIELE D'ANNUNZIO 12 (LARGO SONNINO)
+            "33005",  // VIALE GABRIELE D'ANNUNZIO 27 (PIAZZA DEL PERUGINO)
+            "34003",  // VIALE D'ANNUNZIO 51 (ANGOLO VIA LIMITANEA, TEATRO BOBBIO)
+            "34004",  // VIALE GABRIELE D'ANNUNZIO 79 (PIAZZA DEI FORAGGI)
+            "41013",  // VIA SALATA 3 (SUPERMERCATO)
+            "41002",  // VIA DELL'ISTRIA 127
+            "41003",  // VIA DELL'ISTRIA (CIMITERO)
+            "41014",  // VIA FLAVIA 1 (VALMAURA, STADIO GREZAR, STADIO ROCCO)
+            "41015",  // VIA FLAVIA 3 (PALATRIESTE ALLIANZ DOME)
+            "56001",  // VIA FLAVIA (PIAZZALE CAGNI)
+            "51001",  // VIA FLAVIA 23/1 (INCUBATORE BIC)
+            "51002",  // VIA FLAVIA 27
+            "51003",  // VIA FLAVIA 45 (ANGOLO VIA DEI GRAVISI)
+            "51004",  // VIA FLAVIA 55 (ANGOLO VIA BRIGATA CASALE)
+            "56002",  // VIA FLAVIA 59
+            "56003",  // STRADA PROVINCIALE 12 DELLA ROSANDRA (MAGAZZINO OBI)
+            "57010",  // STRADA PROVINCIALE 12 DELLA ROSANDRA 56 (DOMIO)
+            "57001",  // VIA PETRACCO 10 (SCUOLA, ANGOLO VIA CURIEL)
+            "57002",  // VIA CURIEL (ANGOLO VIA ROSANI)
+            "57003",  // BORGO SAN SERGIO
+            "57004",  // VIA VINCENZO GIGANTE (PIAZZALE SARTORI)
+            "57005",  // VIA MAOVAZ 36 (ANGOLO VIA SALA)
+            "57006",  // VIA MAOVAZ 6/B (ANGOLO VIA DI PECO)
+            "57007",  // VIA FORTI 70
+            "57008",  // VIA FORTI 54 (PARCO GIOCHI)
+            "57009",  // VIA FORTI 30 (SCUOLA)
+            "56030",  // VIA MORPURGO 12 (ANGOLO VIA PETRACCO)
+            "56027",  // STRADA PROVINCIALE 12 DELLA ROSANDRA 50 (PANE QUOTIDIANO)
+            "56004",  // STRADA PROVINCIALE 12 DELLA ROSANDRA 2 (MAGAZZINO OBI)
+            "56023",  // VIA FLAVIA 118 (ILLYCAFF�)
+            "56024",  // VIA FLAVIA 126 (DIACO)
+            "E0038",  // VIA FLAVIA DI AQUILINIA 12
+            "E0039",  // VIA FLAVIA DI AQUILINIA (EX RAFFINERIA)
+            "E0040",  // STRADA PROVINCIALE 14 DI MUGGIA (EX RAFFINERIA)
+            "E0152",  // VIA FLAVIA DI STRAMARE (ANGOLO SP 14 DI MUGGIA)
+            "E0063",  // VIA FLAVIA DI STRAMARE (CASA CANTONIERA)
+            "E0064",  // VIA FLAVIA DI STRAMARE 12
+            "E0065",  // VIA FLAVIA DI STRAMARE 99
+            "E0163",  // STRADA PROVINCIALE 15 DELLE NOGHERE (MONTEDORO)
+            "E0140",  // VIA CADUTI SUL LAVORO 10 (ANGOLO VIA FLAVIA DI STRAMARE)
+            "E0149",  // STRADA DELLE SALINE 7 (DIREZIONE MUGGIA)
+            "E0041",  // STRADA DELLE SALINE 40 (CONFARTIGIANATO)
+            "E0042",  // VIA DI TRIESTE 15 (MOLO BALOTA)
+            "E0129",  // VIA DEI FONDITORI (CAVALCAVIA, DIREZIONE MUGGIA)
+            "E0125",  // STRADA PROVINCIALE 16 DI SANTA BARBARA 29 (CIMITERO)
+            "E0131",  // VIA FRAUSIN 13 (ANGOLO VIA GIACOMO MATTEOTTI)
+            "E0001",  // MUGGIA
+            "E0126",  // VIA FRAUSIN 10 (ANGOLO VIA GIACOMO MATTEOTTI)
+            "E0088",  // STRADA PROVINCIALE 16 DI SANTA BARBARA 29 (CIMITERO)
+            "E0128",  // VIA DEI FONDITORI (CAVALCAVIA, DIREZIONE AQUILINIA)
+            "E0034",  // VIA DI TRIESTE 15 (MOLO BALOTA)
+            "E0066",  // STRADA DELLE SALINE 30 (CONFARTIGIANATO)
+            "E0150",  // STRADA DELLE SALINE 7 (DIREZIONE AQUILINIA)
+            "E0139",  // VIA CADUTI SUL LAVORO 2
+            "E0059",  // STRADA PROVINCIALE 15 DELLE NOGHERE (MONTEDORO)
+            "E0060",  // VIA FLAVIA DI STRAMARE 99
+            "E0061",  // VIA FLAVIA DI STRAMARE 12
+            "E0062",  // VIA FLAVIA DI STRAMARE 31 (CASA CANTONIERA)
+            "E0151",  // VIA FLAVIA DI STRAMARE (ANGOLO SP 14 DI MUGGIA)
+            "E0036",  // STRADA PROVINCIALE 14 DI MUGGIA (EX RAFFINERIA)
+            "E0037",  // AQUILINIA
+            "56019",  // VIA FLAVIA (PONTE FERROVIARIO)
+            "56020",  // VIA FLAVIA 126 (DIACO)
+            "56021",  // VIA FLAVIA 114 (ILLYCAFF�)
+            "56005",  // VIA FLAVIA 102 (ENEL)
+            "56006",  // VIA FLAVIA 84
+            "51005",  // VIA FLAVIA 70 (ANGOLO VIA BRIGATA CASALE)
+            "51006",  // VIA FLAVIA 58 (ANGOLO VIA DEI GRAVISI)
+            "51007",  // VIA FLAVIA 27
+            "42006",  // VIA FLAVIA 23/1 (INCUBATORE BIC)
+            "42005",  // PIAZZALE CAGNI 2
+            "41010",  // VIA FLAVIA 10 (PALATRIESTE)
+            "41011",  // VIA FLAVIA 1 (VALMAURA, STADIO GREZAR, STADIO ROCCO)
+            "42001",  // VIA DELL'ISTRIA 206 (CIMITERO)
+            "41012",  // VIA SALATA 6 (CHIOSCO MURATURA)
+            "34002",  // PIAZZA DEI FORAGGI 7
+            "33003",  // VIALE D'ANNUNZIO 48 (ANGOLO VIA LIMITANEA, TEATRO BOBBIO)
+            "33004",  // VIALE GABRIELE D'ANNUNZIO 38/A (PIAZZA DEL PERUGINO)
+            "17005",  // VIALE GABRIELE D'ANNUNZIO 14 (LARGO SONNINO)
+            "17009",  // PIAZZA GARIBALDI 12
+            "08008",  // LARGO BARRIERA
+            "03003",  // PIAZZA GOLDONI
+            "09003",  // VIA CARDUCCI 14 (GUIDA LUMINOSA)
+            "10001",  // PIAZZA OBERDAN
+            "E1001",  // TRIESTE PIAZZALE WARTSILA (DOLINA)
+            "E1010",  // STRADA PROVINCIALE 12 DELLA ROSANDRA 137 (VIA TRAVNIK)
+            "D9001",  // STRADA PROVINCIALE 12 DELLA ROSANDRA 137 (LACOTISCE)
+            "E1004",  // VIA RESSEL 1 (ZONA INDUSTRIALE)
+            "E1006",  // VIA RESSEL 1 (ZONA INDUSTRIALE)
+            "E1003",  // VIA RESSEL 5 (ZONA INDUSTRIALE)
+            "D9002",  // STRADA PROVINCIALE 12 DELLA ROSANDRA 269 (DOMIO)
+            "E1002",  // VIA RESSEL 6 (ZONA INDUSTRIALE)
+            "E0058",  // VIA FLAVIA DI STRAMARE 131 (PONTE)
+            "E1007",  // VIA RESSEL 6 (ZONA INDUSTRIALE)
+            "E0161",  // STRADA PROVINCIALE 15 DELLE NOGHERE 44 (FAMILA)
+            "56007",  // STRADA DI MONTE D'ORO 14 (ZONA INDUSTRIALE EST)
+            "E0162",  // STRADA PROVINCIALE 15 DELLE NOGHERE 48 (BRICOCENTER)
+            "56022",  // VIA FLAVIA 104
+            "E0155",  // LOCALIT� FARNEI 14 (STRADA PROVINCIALE 15 DIREZIONE TRIESTE
+            "E0156",  // LOCALIT� FARNEI 14 (STRADA PROVINCIALE 15 DIREZIONE MUGGIA)
+            "E0153",  // STRADA PROVINCIALE 15 DELLE NOGHERE 1
+            "E0154",  // STRADA PROVINCIALE 15 DELLE NOGHERE 1
+            "E0055",  // STRADA PROVINCIALE 15 DELLE NOGHERE 6
+            "E0148",  // STRADA PROVINCIALE 15 DELLE NOGHERE 2
+            "41004",  // PIAZZALE VALMAURA
+            "41024",  // VALMAURA
+            "41005",  // VIA VALMAURA (STADIO ROCCO E GREZAR)
+            "41007",  // VIA VALMAURA 35 (RISIERA DI SAN SABBA)
+            "41006",  // VIA VALMAURA 37 (ANGOLO VIA DE JENNER, RISIERA SAN SABBA)
+            "40005",  // VIA VALMAURA 43
+            "40006",  // VIA VALMAURA 69
+            "E0145",  // MUGGIA
+            "41018",  // VIA BAIAMONTI 103 (ANGOLO VIA DELL'ISTRIA)
+            "41026",  // VIA BAIAMONTI 68 (ANGOLO VIA DELL'ISTRIA)
+            "41017",  // VIA BAIAMONTI 93 (ANGOLO VIA PIRANO)
+            "31002",  // VIA BAIAMONTI 52 (ANGOLO VIA PIRANO)
+            "31005",  // VIA BAIAMONTI 38 (BANCA)
+            "41016",  // VIA BAIAMONTI 61
+            "40003",  // VIA DI SERVOLA (CHIESA)
+            "40004",  // VIA DI SERVOLA 2 (ANGOLO VIA DELLA CALCARA)
+            "40001",  // VIA BAIAMONTI 47 (ANGOLO VIA SVEVO)
+            "31006",  // VIA BAIAMONTI 14 (ANGOLO VIA SVEVO)
+            "29011",  // VIA SVEVO 38 (CASA EMMAUS)
+            "29016",  // VIA SVEVO
+            "29017",  // VIA SVEVO 22 (CENTRO COMMERCIALE TORRI D'EUROPA)
+            "29022",  // VIA SVEVO 14 (CENTRO COMMERCIALE TORRI D'EUROPA)
+            "29019",  // VIA SVEVO (ACEGAS)
+            "28012",  // VIA SVEVO (CANTIERI)
+            "29020",  // VIA CADUTI SUL LAVORO (TRIESTE TRASPORTI)
+            "28003",  // VIALE CAMPI ELISI
+            "26007",  // VIA ALBERTI
+            "07005",  // VIA BERNINI 6 (ANGOLO VIA DEL BOSCO)
+            "03004",  // PIAZZA GOLDONI
+            "27008",  // PASSEGGIO SANT'ANDREA 12 (VIA DELLE FIAMME GIALLE 6)
+            "10010",  // PIAZZA OBERDAN
+            "01001",  // VIA FILZI 3 (PIAZZA SANT'ANTONIO NUOVO, PONTE ROSSO)
+            "05012",  // PIAZZA TOMMASEO
+            "04015",  // STAZIONE FERROVIARIA
+            "13005",  // RIVA SAURO 24 (ACQUARIO, MUSEO REVOLTELLA)
+            "27014"  // VIA DI CAMPO MARZIO 20
+        ],
+        "directions": [
+            "STAZIONE FERROVIARIA",
+            "MUGGIA"
+        ]
     },
     {
-        "code":  "21",
-        "label":  "21",
-        "stops":  [
-                      "57003",
-                      "04015",
-                      "42001",
-                      "03002",
-                      "09003",
-                      "33003",
-                      "57005",
-                      "08010",
-                      "03001",
-                      "41014"
-                  ],
-        "directions":  [
-                           "BORGO SAN SERGIO",
-                           "STAZIONE FERROVIARIA"
-                       ]
+        "code": "21",
+        "label": "21",
+        "terminals": ["04015", "57003"],
+        "stops": [
+            "04015",  // STAZIONE FERROVIARIA
+            "04002",  // VIA GHEGA 9 (CONSERVATORIO TARTINI)
+            "10001",  // PIAZZA OBERDAN
+            "03001",  // PIAZZA OBERDAN
+            "03002",  // VIA CARDUCCI (LUMINOSA)
+            "09003",  // VIA CARDUCCI 14 (GUIDA LUMINOSA)
+            "08008",  // LARGO BARRIERA
+            "08010",  // LARGO DELLA BARRIERA VECCHIA 17
+            "17006",  // PIAZZA GARIBALDI 3
+            "17009",  // PIAZZA GARIBALDI 12
+            "17007",  // VIALE GABRIELE D'ANNUNZIO 12 (LARGO SONNINO)
+            "17005",  // VIALE GABRIELE D'ANNUNZIO 14 (LARGO SONNINO)
+            "33005",  // VIALE GABRIELE D'ANNUNZIO 27 (PIAZZA DEL PERUGINO)
+            "33004",  // VIALE GABRIELE D'ANNUNZIO 38/A (PIAZZA DEL PERUGINO)
+            "33003",  // VIALE D'ANNUNZIO 48 (ANGOLO VIA LIMITANEA, TEATRO BOBBIO)
+            "34003",  // VIALE D'ANNUNZIO 51 (ANGOLO VIA LIMITANEA, TEATRO BOBBIO)
+            "34004",  // VIALE GABRIELE D'ANNUNZIO 79 (PIAZZA DEI FORAGGI)
+            "34002",  // PIAZZA DEI FORAGGI 7
+            "41013",  // VIA SALATA 3 (SUPERMERCATO)
+            "41012",  // VIA SALATA 6 (CHIOSCO MURATURA)
+            "41002",  // VIA DELL'ISTRIA 127
+            "42001",  // VIA DELL'ISTRIA 206 (CIMITERO)
+            "41003",  // VIA DELL'ISTRIA (CIMITERO)
+            "41014",  // VIA FLAVIA 1 (VALMAURA, STADIO GREZAR, STADIO ROCCO)
+            "41011",  // VIA FLAVIA 1 (VALMAURA, STADIO GREZAR, STADIO ROCCO)
+            "41015",  // VIA FLAVIA 3 (PALATRIESTE ALLIANZ DOME)
+            "41010",  // VIA FLAVIA 10 (PALATRIESTE)
+            "56001",  // VIA FLAVIA (PIAZZALE CAGNI)
+            "42005",  // PIAZZALE CAGNI 2
+            "42006",  // VIA FLAVIA 23/1 (INCUBATORE BIC)
+            "51001",  // VIA FLAVIA 23/1 (INCUBATORE BIC)
+            "51007",  // VIA FLAVIA 27
+            "51002",  // VIA FLAVIA 27
+            "51006",  // VIA FLAVIA 58 (ANGOLO VIA DEI GRAVISI)
+            "51003",  // VIA FLAVIA 45 (ANGOLO VIA DEI GRAVISI)
+            "51005",  // VIA FLAVIA 70 (ANGOLO VIA BRIGATA CASALE)
+            "51004",  // VIA FLAVIA 55 (ANGOLO VIA BRIGATA CASALE)
+            "56006",  // VIA FLAVIA 84
+            "56002",  // VIA FLAVIA 59
+            "56005",  // VIA FLAVIA 102 (ENEL)
+            "57009",  // VIA FORTI 30 (SCUOLA)
+            "56003",  // STRADA PROVINCIALE 12 DELLA ROSANDRA (MAGAZZINO OBI)
+            "57007",  // VIA FORTI 70
+            "57008",  // VIA FORTI 54 (PARCO GIOCHI)
+            "56004",  // STRADA PROVINCIALE 12 DELLA ROSANDRA 2 (MAGAZZINO OBI)
+            "57006",  // VIA MAOVAZ 6/B (ANGOLO VIA DI PECO)
+            "56030",  // VIA MORPURGO 12 (ANGOLO VIA PETRACCO)
+            "57001",  // VIA PETRACCO 10 (SCUOLA, ANGOLO VIA CURIEL)
+            "56027",  // STRADA PROVINCIALE 12 DELLA ROSANDRA 50 (PANE QUOTIDIANO)
+            "57003",  // BORGO SAN SERGIO
+            "57004",  // VIA VINCENZO GIGANTE (PIAZZALE SARTORI)
+            "57002",  // VIA CURIEL (ANGOLO VIA ROSANI)
+            "57005",  // VIA MAOVAZ 36 (ANGOLO VIA SALA)
+            "57010"  // STRADA PROVINCIALE 12 DELLA ROSANDRA 56 (DOMIO)
+        ],
+        "directions": [
+            "STAZIONE FERROVIARIA",
+            "BORGO SAN SERGIO"
+        ]
     },
     {
-        "code":  "22",
-        "label":  "22",
-        "stops":  [
-                      "52012",
-                      "04015",
-                      "09001",
-                      "03002",
-                      "19007",
-                      "44001",
-                      "45020",
-                      "03001",
-                      "10001"
-                  ],
-        "directions":  [
-                           "CATTINARA (OSPEDALE)",
-                           "STAZIONE FERROVIARIA"
-                       ]
+        "code": "22",
+        "label": "22",
+        "terminals": ["04015", "52012"],
+        "stops": [
+            "04015",  // STAZIONE FERROVIARIA
+            "04010",  // VIA GHEGA 9 (CONSERVATORIO TARTINI)
+            "10001",  // PIAZZA OBERDAN
+            "03001",  // PIAZZA OBERDAN
+            "03002",  // VIA CARDUCCI (LUMINOSA)
+            "09005",  // VIA BATTISTI (PORTICI DI CHIOZZA)
+            "09001",  // VIA BATTISTI (GALLERIA FENICE)
+            "19011",  // VIA POLONIO (ANGOLO VIA BATTISTI)
+            "19007",  // VIA GATTERI (ISTITUTO SCOLASTICO FOSCOLO)
+            "18011",  // VIA BRUNNER (OSPEDALE MAGGIORE)
+            "18009",  // VIA GATTERI (ANGOLO VIA DELLA GINNASTICA)
+            "18012",  // VIA ROSSETTI 25 (ANGOLO VIA STUPARICH)
+            "18007",  // VIA CANOVA (ANGOLO VIA BUONARROTI)
+            "18006",  // VIA CANOVA (ANGOLO VIA PASCOLI)
+            "18003",  // VIA ROSSETTI 53 (CHIESA)
+            "18005",  // VIA DEI PICCARDI 20 (ANGOLO VIA DEI PORTA)
+            "18004",  // VIA ROSSETTI 67 (OSPEDALE SANATORIO TRIESTINO)
+            "35007",  // VIA DEI PICCARDI 40/B (ANGOLO VIA DELL'EREMO)
+            "34001",  // VIA ROSSETTI 93 (ANGOLO ANANIAN, TEATRO PELLICO)
+            "35006",  // VIA DEI PICCARDI 66 (ANGOLO VIA REVOLTELLA, TEATRO PELLICO)
+            "35001",  // VIA ROSSETTI 113 (ANGOLO VIA REVOLTELLA, FIERA)
+            "35005",  // VIA REVOLTELLA 29 (POLIZIA LOCALE)
+            "44018",  // VIA REVOLTELLA 29
+            "35004",  // VIA REVOLTELLA 38/A (ANGOLO VIA LONZA)
+            "44001",  // VIA REVOLTELLA 41 (FARMACIA)
+            "45020",  // VIA REVOLTELLA 75 (SCALA BONGHI)
+            "44002",  // VIA REVOLTELLA 83 (SCALA BONGHI)
+            "36001",  // VIA SAN PASQUALE 89 (CHIESA)
+            "36002",  // VIA SAN PASQUALE 111 (SCUOLA)
+            "45007",  // VIA SAN PASQUALE 40 (ANGOLO VIA DELL'EREMO)
+            "45019",  // VIA REVOLTELLA 126 (ANGOLO VIA D'ANGELI)
+            "45001",  // VIA REVOLTELLA 126 (ANGOLO VIA D'ANGELI)
+            "45008",  // VIA SAN PASQUALE 113
+            "45006",  // VIA SAN PASQUALE
+            "45018",  // VIA REVOLTELLA 130 (CHIESA, SCUOLA)
+            "45009",  // VIA SAN PASQUALE 133
+            "45002",  // VIA REVOLTELLA (SCUOLA, CHIESA)
+            "45017",  // VIA REVOLTELLA 138 (ANGOLO VIA FRANCESCO BEDA)
+            "45005",  // VIA SAN PASQUALE 23
+            "45010",  // FERDINANDEO
+            "45003",  // VIA REVOLTELLA 138 (ANGOLO VIA BEDA)
+            "45016",  // VIA REVOLTELLA 148 (ROZZOL)
+            "45004",  // VIA REVOLTELLA (ROZZOL)
+            "45034",  // VIA DE MARCHESETTI 25 (ANGOLO VIA DELL'EREMO)
+            "45026",  // VIA FORLANINI 9
+            "45021",  // VIA FORLANINI 9 (ANGOLO STRADA DI ROZZOL)
+            "45035",  // VIA DE MARCHESETTI 39 (VILLA REVOLTELLA)
+            "45022",  // VIA FORLANINI (ANGOLO VIA SOFIANOPULO)
+            "52008",  // RAUTE
+            "45025",  // VIA FORLANINI 21
+            "45036",  // VIA DE MARCHESETTI 49 (ANGOLO MELARA)
+            "45024",  // VIA FORLANINI 37
+            "45023",  // VIA FORLANINI 37 (ANGOLO VIA GORTAN)
+            "52007",  // VIA DEL CASTELLIERE 47
+            "52009",  // VIA DEL CASTELLIERE 47
+            "45037",  // VIA DE MARCHESETTI 57/1 (ANGOLO KOCH)
+            "53013",  // VIA FORLANINI (ANGOLO VIA KOCH, CHIESA)
+            "53014",  // VIA FORLANINI (ANGOLO VIA KOCH, CHIESA)
+            "52006",  // VIA DEL CASTELLIERE 67
+            "52010",  // VIA DEL CASTELLIERE 67
+            "53012",  // VIA FORLANINI 77
+            "53001",  // VIA FORLANINI 77
+            "52005",  // VIA DEL CASTELLIERE 12 (ANGOLO VIA DEL BOTRO)
+            "52011",  // VIA DEL CASTELLIERE 12 (ANGOLO VIA DEL BOTRO)
+            "45038",  // VIA DE MARCHESETTI 12/1
+            "53011",  // VIA FORLANINI 117
+            "53019",  // STRADA DI FIUME 300 (ANGOLO VIA DEL CASTELLIERE)
+            "52021",  // STRADA DI FIUME 302
+            "53007",  // VIA FORLANINI 117 (ROZZOL MELARA)
+            "52018",  // STRADA DI FIUME 320 (OSPEDALE DI CATTINARA)
+            "53010",  // VIA FORLANINI (SCUOLA)
+            "53008",  // VIA FORLANINI 131/145 (SCUOLA)
+            "53005",  // VIA DE MARCHESETTI (ROZZOL MELARA)
+            "52012",  // CATTINARA (OSPEDALE)
+            "53018",  // VIA FORLANINI 40 (ANGOLO VIA DE MARCHESETTI)
+            "53002",  // VIA FORLANINI 40 (ANGOLO VIA DE MARCHESETTI)
+            "53006",  // VIA DE MARCHESETTI 12/14
+            "53017",  // STRADA DI FIUME 525 (OSPEDALE DI CATTINARA)
+            "53009"  // STRADA DI FIUME (SUPERMERCATO ZAZZERON)
+        ],
+        "directions": [
+            "STAZIONE FERROVIARIA",
+            "CATTINARA OSPEDALE"
+        ]
     },
     {
-        "code":  "23",
-        "label":  "23",
-        "stops":  [
-                      "E1001",
-                      "04016",
-                      "42001",
-                      "56026",
-                      "09003",
-                      "33003",
-                      "05005",
-                      "56027",
-                      "56023"
-                  ],
-        "directions":  [
-                           "WARTSILA",
-                           "STAZIONE FERROVIARIA"
-                       ]
+        "code": "23",
+        "label": "23",
+        "terminals": ["04016", "E1001"],
+        "stops": [
+            "04016",  // STAZIONE FERROVIARIA
+            "01002",  // VIA ROMA 18/B (PONTE ROSSO)
+            "02006",  // VIA ROMA 8 (ANGOLO VIA SAN NICOL�)
+            "10001",  // PIAZZA OBERDAN
+            "05005",  // CORSO ITALIA (GALLERIA ROSSONI)
+            "09003",  // VIA CARDUCCI 14 (GUIDA LUMINOSA)
+            "03003",  // PIAZZA GOLDONI
+            "08013",  // VIA CARDUCCI 22 (ANGOLO VIA FRANCESCO CRISPI)
+            "07003",  // CORSO SABA
+            "08008",  // LARGO BARRIERA
+            "17006",  // PIAZZA GARIBALDI 3
+            "17009",  // PIAZZA GARIBALDI 12
+            "17007",  // VIALE GABRIELE D'ANNUNZIO 12 (LARGO SONNINO)
+            "17005",  // VIALE GABRIELE D'ANNUNZIO 14 (LARGO SONNINO)
+            "33005",  // VIALE GABRIELE D'ANNUNZIO 27 (PIAZZA DEL PERUGINO)
+            "33004",  // VIALE GABRIELE D'ANNUNZIO 38/A (PIAZZA DEL PERUGINO)
+            "33003",  // VIALE D'ANNUNZIO 48 (ANGOLO VIA LIMITANEA, TEATRO BOBBIO)
+            "34003",  // VIALE D'ANNUNZIO 51 (ANGOLO VIA LIMITANEA, TEATRO BOBBIO)
+            "34004",  // VIALE GABRIELE D'ANNUNZIO 79 (PIAZZA DEI FORAGGI)
+            "34002",  // PIAZZA DEI FORAGGI 7
+            "41013",  // VIA SALATA 3 (SUPERMERCATO)
+            "41012",  // VIA SALATA 6 (CHIOSCO MURATURA)
+            "41002",  // VIA DELL'ISTRIA 127
+            "42001",  // VIA DELL'ISTRIA 206 (CIMITERO)
+            "41003",  // VIA DELL'ISTRIA (CIMITERO)
+            "41014",  // VIA FLAVIA 1 (VALMAURA, STADIO GREZAR, STADIO ROCCO)
+            "41011",  // VIA FLAVIA 1 (VALMAURA, STADIO GREZAR, STADIO ROCCO)
+            "41015",  // VIA FLAVIA 3 (PALATRIESTE ALLIANZ DOME)
+            "41010",  // VIA FLAVIA 10 (PALATRIESTE)
+            "56026",  // VIA MAFALDA DI SAVOIA (IMBOCCO VIA CABOTO)
+            "56018",  // VIA CABOTO (PIAZZALE CAGNI)
+            "42007",  // VIA FLAVIA 14 (PIAZZALE CAGNI)
+            "56008",  // VIA CABOTO 10 (ORION, UFFICIO POSTALE)
+            "56017",  // VIA CABOTO 10 (ORION, UFFICIO POSTALE)
+            "42006",  // VIA FLAVIA 23/1 (INCUBATORE BIC)
+            "56009",  // VIA CABOTO 17 (ITALCEMENTI)
+            "56016",  // VIA CABOTO 16
+            "51007",  // VIA FLAVIA 27
+            "51006",  // VIA FLAVIA 58 (ANGOLO VIA DEI GRAVISI)
+            "56015",  // VIA CABOTO 20/2
+            "56010",  // VIA CABOTO 20/2
+            "56011",  // VIA CABOTO 29 (ANGOLO VIA QUERINI)
+            "51005",  // VIA FLAVIA 70 (ANGOLO VIA BRIGATA CASALE)
+            "56014",  // VIA CABOTO 28 (ANGOLO VIA QUERINI)
+            "56006",  // VIA FLAVIA 84
+            "56012",  // VIA CABOTO (ANGOLO VIA MALASPINA)
+            "56901",  // VIA ALESSANDRO MALASPINA 20
+            "56005",  // VIA FLAVIA 102 (ENEL)
+            "56024",  // VIA FLAVIA 126 (DIACO)
+            "56004",  // STRADA PROVINCIALE 12 DELLA ROSANDRA 2 (MAGAZZINO OBI)
+            "56023",  // VIA FLAVIA 118 (ILLYCAFF�)
+            "56027",  // STRADA PROVINCIALE 12 DELLA ROSANDRA 50 (PANE QUOTIDIANO)
+            "D9003",  // STRADA DI MONTE D'ORO 345 (LOCALIT� FRANCOVEC)
+            "E1002",  // VIA RESSEL 6 (ZONA INDUSTRIALE)
+            "E1003",  // VIA RESSEL 5 (ZONA INDUSTRIALE)
+            "D9002",  // STRADA PROVINCIALE 12 DELLA ROSANDRA 269 (DOMIO)
+            "E1004",  // VIA RESSEL 1 (ZONA INDUSTRIALE)
+            "D9001",  // STRADA PROVINCIALE 12 DELLA ROSANDRA 137 (LACOTISCE)
+            "E1010",  // STRADA PROVINCIALE 12 DELLA ROSANDRA 137 (VIA TRAVNIK)
+            "D9063",  // STRADA PROVINCIALE 12 DELLA ROSANDRA (MATTONAIA 396)
+            "D9004",  // STRADA PROVINCIALE 12 DELLA ROSANDRA 306 (MATTONAIA)
+            "D9020",  // STRADA PROVINCIALE 12 DELLA ROSANDRA (MATTONAIA 542)
+            "D9007",  // STRADA PROVINCIALE 12 DELLA ROSANDRA 574 (MATTONAIA)
+            "E1001",  // TRIESTE PIAZZALE WARTSILA (DOLINA)
+            "D9019",  // STRADA PROVINCIALE 12 DELLA ROSANDRA 355 (LOCALIT� DOLINA)
+            "D9005"  // STRADA PROVINCIALE 12 DELLA ROSANDRA 355 (ROTATORIA)
+        ],
+        "directions": [
+            "STAZIONE FERROVIARIA",
+            "WARTSILA"
+        ]
     },
     {
-        "code":  "24",
-        "label":  "24",
-        "stops":  [
-                      "14008",
-                      "04007",
-                      "14007",
-                      "05006",
-                      "02003",
-                      "14009"
-                  ],
-        "directions":  [
-                           "SAN GIUSTO",
-                           "STAZIONE FERROVIARIA"
-                       ]
+        "code": "24",
+        "label": "24",
+        "terminals": ["04007", "14008"],
+        "stops": [
+            "04007",  // STAZIONE FERROVIARIA
+            "11009",  // VIA GHEGA 6 (CONSERVATORIO TARTINI)
+            "04002",  // VIA GHEGA 9 (CONSERVATORIO TARTINI)
+            "01002",  // VIA ROMA 18/B (PONTE ROSSO)
+            "01001",  // VIA FILZI 3 (PIAZZA SANT'ANTONIO NUOVO, PONTE ROSSO)
+            "02002",  // VIA MAZZINI 4
+            "02003",  // VIA MAZZINI (ANGOLO CASSA DI RISPARMIO)
+            "05001",  // RIVA TRE NOVEMBRE (PREFETTURA, TEATRO VERDI, MUNICIPIO)
+            "05002",  // RIVA CADUTI PER L'ITALIANIT� DI TRIESTE (TEATRO VERDI)
+            "13017",  // VIA DIAZ 1/D
+            "13006",  // RIVA DEL MANDRACCHIO 4 (HOTEL EXCELSIOR)
+            "13013",  // VIA VENEZIAN 8
+            "06005",  // VIA ROTA 7
+            "06004",  // VIA GROSSI 10
+            "13011",  // VIA DI CAVANA (ANGOLO VIA VENEZIAN)
+            "13012",  // VIA DELLA ROTONDA (ARCO DI RICCARDO)
+            "14008",  // SAN GIUSTO
+            "05006",  // VIA SAN MICHELE 10 (PARCO GIOCHI)
+            "14006",  // VIA SAN MICHELE 15 (PARCO GIOCHI)
+            "06003",  // VIA SAN GIUSTO 9
+            "14009",  // VIA SAN GIUSTO 18
+            "14010",  // VIA SAN MICHELE 28 (ANGOLO VIA TESTI)
+            "14007"  // VIA SAN MICHELE 35 (ANGOLO VIA TESTI)
+        ],
+        "directions": [
+            "STAZIONE FERROVIARIA",
+            "SAN GIUSTO"
+        ]
     },
     {
-        "code":  "25",
-        "label":  "25",
-        "stops":  [
-                      "52015",
-                      "05011",
-                      "19007",
-                      "45011",
-                      "03009",
-                      "05005",
-                      "37003",
-                      "03016"
-                  ],
-        "directions":  [
-                           "CATTINARA (OSPEDALE)",
-                           "CORSO ITALIA"
-                       ]
+        "code": "25",
+        "label": "25",
+        "terminals": ["05011", "52015"],
+        "stops": [
+            "02002",  // VIA MAZZINI 4
+            "05011",  // CORSO ITALIA
+            "03016",  // PIAZZA DELLA REPUBBLICA 2
+            "05005",  // CORSO ITALIA (GALLERIA ROSSONI)
+            "03009",  // VIA IMBRIANI 5
+            "03006",  // PIAZZA GOLDONI
+            "09005",  // VIA BATTISTI (PORTICI DI CHIOZZA)
+            "09004",  // VIA DELLA GINNASTICA (LARGO SANTORIO)
+            "19007",  // VIA GATTERI (ISTITUTO SCOLASTICO FOSCOLO)
+            "18008",  // VIA DELLA GINNASTICA 40 (ANGOLO VIA GATTERI)
+            "18009",  // VIA GATTERI (ANGOLO VIA DELLA GINNASTICA)
+            "18010",  // VIA DELLA GINNASTICA 47 (ANGOLO VIA ROSSETTI)
+            "36005",  // VIA GINNASTICA (AZIENDA SANITARIA)
+            "19006",  // VIA DEL FARNETO 6 (AZIENDA SANITARIA)
+            "36006",  // VIA DEL FARNETO 2 (CAMPO SAN LUIGI)
+            "19005",  // VIA DEL FARNETO 2 (CAMPO SAN LUIGI)
+            "37005",  // VIA DE MARCHESETTI (ORTO BOTANICO)
+            "37006",  // VIA DE MARCHESETTI (ORTO BOTANICO)
+            "36007",  // VIA ARCHI 4 (SAN LUIGI)
+            "36004",  // VIA ARCHI 4 (SAN LUIGI)
+            "37004",  // VIA DE MARCHESETTI 26 (ANGOLO VIA BIASOLETTO)
+            "36008",  // VIA DE MARCHESETTI 13 (ANGOLO VIA BIASOLETTO)
+            "44018",  // VIA REVOLTELLA 29
+            "36009",  // VIA DE MARCHESETTI (ANGOLO VIA FELLUGA)
+            "37003",  // VIA DE MARCHESETTI (ANGOLO VIA FELLUGA)
+            "44001",  // VIA REVOLTELLA 41 (FARMACIA)
+            "36010",  // VIA DE MARCHESETTI (ANGOLO VIA DEI MILLE)
+            "37002",  // VIA DE MARCHESETTI (ANGOLO VIA DEI MILLE)
+            "44002",  // VIA REVOLTELLA 83 (SCALA BONGHI)
+            "36011",  // VIA DE MARCHESETTI (ANGOLO VIA BARZILAI)
+            "37001",  // VIA DE MARCHESETTI (ANGOLO VIA GASSER)
+            "45001",  // VIA REVOLTELLA 126 (ANGOLO VIA D'ANGELI)
+            "45031",  // VIA DE MARCHESETTI 21/2
+            "45032",  // VIA DE MARCHESETTI 21/4 (LARGO BATTAGLIA)
+            "45003",  // VIA REVOLTELLA 138 (ANGOLO VIA BEDA)
+            "45033",  // VIA DE MARCHESETTI 2 (FERDINANDEO)
+            "45030",  // FERDINANDEO
+            "45004",  // VIA REVOLTELLA (ROZZOL)
+            "45034",  // VIA DE MARCHESETTI 25 (ANGOLO VIA DELL'EREMO)
+            "45021",  // VIA FORLANINI 9 (ANGOLO STRADA DI ROZZOL)
+            "45035",  // VIA DE MARCHESETTI 39 (VILLA REVOLTELLA)
+            "45022",  // VIA FORLANINI (ANGOLO VIA SOFIANOPULO)
+            "54001",  // VIA DE MARCHESETTI 8/1 (CASA SERENA)
+            "45011",  // VIA DE MARCHESETTI 8/2 (CASA SERENA)
+            "45036",  // VIA DE MARCHESETTI 49 (ANGOLO MELARA)
+            "45023",  // VIA FORLANINI 37 (ANGOLO VIA GORTAN)
+            "45028",  // VIA DE MARCHESETTI 10
+            "45027",  // VIA DE MARCHESETTI 10/2 (ANGOLO VIA KOCH)
+            "45037",  // VIA DE MARCHESETTI 57/1 (ANGOLO KOCH)
+            "53014",  // VIA FORLANINI (ANGOLO VIA KOCH, CHIESA)
+            "53001",  // VIA FORLANINI 77
+            "53015",  // VIA DE MARCHESETTI 12/1 (ROZZOL MELARA)
+            "45038",  // VIA DE MARCHESETTI 12/1
+            "53007",  // VIA FORLANINI 117 (ROZZOL MELARA)
+            "52018",  // STRADA DI FIUME 320 (OSPEDALE DI CATTINARA)
+            "53004",  // VIA DE MARCHESETTI (ROZZOL MELARA)
+            "53008",  // VIA FORLANINI 131/145 (SCUOLA)
+            "53005",  // VIA DE MARCHESETTI (ROZZOL MELARA)
+            "52015",  // CATTINARA (OSPEDALE)
+            "53002",  // VIA FORLANINI 40 (ANGOLO VIA DE MARCHESETTI)
+            "53006",  // VIA DE MARCHESETTI 12/14
+            "53017",  // STRADA DI FIUME 525 (OSPEDALE DI CATTINARA)
+            "53009"  // STRADA DI FIUME (SUPERMERCATO ZAZZERON)
+        ],
+        "directions": [
+            "CORSO ITALIA",
+            "CATTINARA OSPEDALE"
+        ]
     },
     {
-        "code":  "26",
-        "label":  "26",
-        "stops":  [
-                      "36017",
-                      "24008",
-                      "03002",
-                      "19007",
-                      "24006",
-                      "09003",
-                      "24009",
-                      "36019",
-                      "23011"
-                  ],
-        "directions":  [
-                           "CHIADINO",
-                           "LARGO OSOPPO"
-                       ]
+        "code": "26",
+        "label": "26",
+        "terminals": ["24008", "36017"],
+        "stops": [
+            "24009",  // VIA AQUILEIA 2 (CHIESA)
+            "24007",  // VIA AQUILEIA 2 (SCALETTE, CHIESA)
+            "24006",  // STRADA DEL FRIULI 10 (ANGOLO VIA AQUILEIA)
+            "24010",  // STRADA DEL FRIULI 6 (ANGOLO VIA AQUILEIA)
+            "24008",  // LARGO OSOPPO
+            "24005",  // SALITA DI GRETTA 27 (ANGOLO VIA DEL CISTERNONE)
+            "24011",  // SALITA DI GRETTA 34 (ANGOLO VIA DEL CISTERNONE)
+            "24004",  // SALITA DI GRETTA 1/1 (ANGOLO VIA DEI GIACINTI)
+            "23011",  // SALITA DI GRETTA 1/1 (ANGOLO VIA DEI GIACINTI)
+            "23010",  // VIA UDINE 87 (ANGOLO VIA DEI BARBARIGA)
+            "23012",  // VIA UDINE 83 (ANGOLO VIA DEI BARBARIGA)
+            "11003",  // VIA UDINE 63 (ANGOLO VIA TOR SAN PIERO)
+            "11004",  // VIA UDINE 44/A (ANGOLO VIA TOR SAN PIERO)
+            "11005",  // CAMPO DEL BELVEDERE 6
+            "11002",  // CAMPO DEL BELVEDERE 3
+            "11001",  // VIA UDINE 7 (SEDE INPS)
+            "11006",  // VIA UDINE 6 (INPS)
+            "10001",  // PIAZZA OBERDAN
+            "03001",  // PIAZZA OBERDAN
+            "03002",  // VIA CARDUCCI (LUMINOSA)
+            "09003",  // VIA CARDUCCI 14 (GUIDA LUMINOSA)
+            "09005",  // VIA BATTISTI (PORTICI DI CHIOZZA)
+            "09004",  // VIA DELLA GINNASTICA (LARGO SANTORIO)
+            "19007",  // VIA GATTERI (ISTITUTO SCOLASTICO FOSCOLO)
+            "18008",  // VIA DELLA GINNASTICA 40 (ANGOLO VIA GATTERI)
+            "18009",  // VIA GATTERI (ANGOLO VIA DELLA GINNASTICA)
+            "18010",  // VIA DELLA GINNASTICA 47 (ANGOLO VIA ROSSETTI)
+            "19006",  // VIA DEL FARNETO 6 (AZIENDA SANITARIA)
+            "36005",  // VIA GINNASTICA (AZIENDA SANITARIA)
+            "36006",  // VIA DEL FARNETO 2 (CAMPO SAN LUIGI)
+            "19005",  // VIA DEL FARNETO 2 (CAMPO SAN LUIGI)
+            "37005",  // VIA DE MARCHESETTI (ORTO BOTANICO)
+            "37006",  // VIA DE MARCHESETTI (ORTO BOTANICO)
+            "36007",  // VIA ARCHI 4 (SAN LUIGI)
+            "36004",  // VIA ARCHI 4 (SAN LUIGI)
+            "37004",  // VIA DE MARCHESETTI 26 (ANGOLO VIA BIASOLETTO)
+            "36008",  // VIA DE MARCHESETTI 13 (ANGOLO VIA BIASOLETTO)
+            "36014",  // VIA FELLUGA (ANGOLO VIA DE MARCHESETTI)
+            "36015",  // VIA FELLUGA 3
+            "36020",  // VIA FELLUGA (ANGOLO VIA DE MARCHESETTI)
+            "36019",  // VIA FELLUGA 20
+            "36016",  // VIA FELLUGA 5
+            "36018",  // VIA FELLUGA 46 (FARMACIA)
+            "36017",  // CHIADINO
+            "36021",  // VIA FELLUGA (CHIADINO, CAMPO SPORTIVO)
+            "36010",  // VIA DE MARCHESETTI (ANGOLO VIA DEI MILLE)
+            "37002",  // VIA DE MARCHESETTI (ANGOLO VIA DEI MILLE)
+            "36011",  // VIA DE MARCHESETTI (ANGOLO VIA BARZILAI)
+            "37001",  // VIA DE MARCHESETTI (ANGOLO VIA GASSER)
+            "45031",  // VIA DE MARCHESETTI 21/2
+            "45032",  // VIA DE MARCHESETTI 21/4 (LARGO BATTAGLIA)
+            "45033",  // VIA DE MARCHESETTI 2 (FERDINANDEO)
+            "45030",  // FERDINANDEO
+            "45034",  // VIA DE MARCHESETTI 25 (ANGOLO VIA DELL'EREMO)
+            "45035",  // VIA DE MARCHESETTI 39 (VILLA REVOLTELLA)
+            "54001",  // VIA DE MARCHESETTI 8/1 (CASA SERENA)
+            "45011",  // VIA DE MARCHESETTI 8/2 (CASA SERENA)
+            "45036",  // VIA DE MARCHESETTI 49 (ANGOLO MELARA)
+            "45028",  // VIA DE MARCHESETTI 10
+            "45027",  // VIA DE MARCHESETTI 10/2 (ANGOLO VIA KOCH)
+            "45037",  // VIA DE MARCHESETTI 57/1 (ANGOLO KOCH)
+            "53015",  // VIA DE MARCHESETTI 12/1 (ROZZOL MELARA)
+            "45038",  // VIA DE MARCHESETTI 12/1
+            "53004",  // VIA DE MARCHESETTI (ROZZOL MELARA)
+            "53005",  // VIA DE MARCHESETTI (ROZZOL MELARA)
+            "52018",  // STRADA DI FIUME 320 (OSPEDALE DI CATTINARA)
+            "52015",  // CATTINARA (OSPEDALE)
+            "53003",  // VIA DE MARCHESETTI 12/14
+            "53006",  // VIA DE MARCHESETTI 12/14
+            "53017",  // STRADA DI FIUME 525 (OSPEDALE DI CATTINARA)
+            "53009"  // STRADA DI FIUME (SUPERMERCATO ZAZZERON)
+        ],
+        "directions": [
+            "LARGO OSOPPO",
+            "CHIADINO"
+        ]
     },
     {
-        "code":  "26/",
-        "label":  "26/",
-        "stops":  [
-                      "03001",
-                      "03002",
-                      "24006",
-                      "24007",
-                      "24008",
-                      "24009",
-                      "24010",
-                      "24011"
-                  ],
-        "directions":  [
-                           "VIA CARDUCCI (LUMINOSA)",
-                           "LARGO OSOPPO"
-                       ]
+        "code": "26/",
+        "label": "26/",
+        "terminals": ["24008", "52015"],
+        "stops": [
+            "24009",  // VIA AQUILEIA 2 (CHIESA)
+            "24007",  // VIA AQUILEIA 2 (SCALETTE, CHIESA)
+            "24006",  // STRADA DEL FRIULI 10 (ANGOLO VIA AQUILEIA)
+            "24010",  // STRADA DEL FRIULI 6 (ANGOLO VIA AQUILEIA)
+            "24008",  // LARGO OSOPPO
+            "24005",  // SALITA DI GRETTA 27 (ANGOLO VIA DEL CISTERNONE)
+            "24011",  // SALITA DI GRETTA 34 (ANGOLO VIA DEL CISTERNONE)
+            "24004",  // SALITA DI GRETTA 1/1 (ANGOLO VIA DEI GIACINTI)
+            "23011",  // SALITA DI GRETTA 1/1 (ANGOLO VIA DEI GIACINTI)
+            "23010",  // VIA UDINE 87 (ANGOLO VIA DEI BARBARIGA)
+            "23012",  // VIA UDINE 83 (ANGOLO VIA DEI BARBARIGA)
+            "11003",  // VIA UDINE 63 (ANGOLO VIA TOR SAN PIERO)
+            "11004",  // VIA UDINE 44/A (ANGOLO VIA TOR SAN PIERO)
+            "11005",  // CAMPO DEL BELVEDERE 6
+            "11002",  // CAMPO DEL BELVEDERE 3
+            "11001",  // VIA UDINE 7 (SEDE INPS)
+            "11006",  // VIA UDINE 6 (INPS)
+            "10001",  // PIAZZA OBERDAN
+            "03001",  // PIAZZA OBERDAN
+            "03002",  // VIA CARDUCCI (LUMINOSA)
+            "09003",  // VIA CARDUCCI 14 (GUIDA LUMINOSA)
+            "09005",  // VIA BATTISTI (PORTICI DI CHIOZZA)
+            "09004",  // VIA DELLA GINNASTICA (LARGO SANTORIO)
+            "19007",  // VIA GATTERI (ISTITUTO SCOLASTICO FOSCOLO)
+            "18008",  // VIA DELLA GINNASTICA 40 (ANGOLO VIA GATTERI)
+            "18009",  // VIA GATTERI (ANGOLO VIA DELLA GINNASTICA)
+            "18010",  // VIA DELLA GINNASTICA 47 (ANGOLO VIA ROSSETTI)
+            "36005",  // VIA GINNASTICA (AZIENDA SANITARIA)
+            "19006",  // VIA DEL FARNETO 6 (AZIENDA SANITARIA)
+            "36006",  // VIA DEL FARNETO 2 (CAMPO SAN LUIGI)
+            "19005",  // VIA DEL FARNETO 2 (CAMPO SAN LUIGI)
+            "37005",  // VIA DE MARCHESETTI (ORTO BOTANICO)
+            "37006",  // VIA DE MARCHESETTI (ORTO BOTANICO)
+            "36007",  // VIA ARCHI 4 (SAN LUIGI)
+            "36004",  // VIA ARCHI 4 (SAN LUIGI)
+            "37004",  // VIA DE MARCHESETTI 26 (ANGOLO VIA BIASOLETTO)
+            "36008",  // VIA DE MARCHESETTI 13 (ANGOLO VIA BIASOLETTO)
+            "36015",  // VIA FELLUGA 3
+            "36014",  // VIA FELLUGA (ANGOLO VIA DE MARCHESETTI)
+            "36019",  // VIA FELLUGA 20
+            "36020",  // VIA FELLUGA (ANGOLO VIA DE MARCHESETTI)
+            "36016",  // VIA FELLUGA 5
+            "36018",  // VIA FELLUGA 46 (FARMACIA)
+            "36017",  // CHIADINO
+            "36021",  // VIA FELLUGA (CHIADINO, CAMPO SPORTIVO)
+            "36010",  // VIA DE MARCHESETTI (ANGOLO VIA DEI MILLE)
+            "37002",  // VIA DE MARCHESETTI (ANGOLO VIA DEI MILLE)
+            "36011",  // VIA DE MARCHESETTI (ANGOLO VIA BARZILAI)
+            "37001",  // VIA DE MARCHESETTI (ANGOLO VIA GASSER)
+            "45031",  // VIA DE MARCHESETTI 21/2
+            "45032",  // VIA DE MARCHESETTI 21/4 (LARGO BATTAGLIA)
+            "45033",  // VIA DE MARCHESETTI 2 (FERDINANDEO)
+            "45030",  // FERDINANDEO
+            "45034",  // VIA DE MARCHESETTI 25 (ANGOLO VIA DELL'EREMO)
+            "45035",  // VIA DE MARCHESETTI 39 (VILLA REVOLTELLA)
+            "54001",  // VIA DE MARCHESETTI 8/1 (CASA SERENA)
+            "45011",  // VIA DE MARCHESETTI 8/2 (CASA SERENA)
+            "45036",  // VIA DE MARCHESETTI 49 (ANGOLO MELARA)
+            "45028",  // VIA DE MARCHESETTI 10
+            "45027",  // VIA DE MARCHESETTI 10/2 (ANGOLO VIA KOCH)
+            "45037",  // VIA DE MARCHESETTI 57/1 (ANGOLO KOCH)
+            "53015",  // VIA DE MARCHESETTI 12/1 (ROZZOL MELARA)
+            "45038",  // VIA DE MARCHESETTI 12/1
+            "53004",  // VIA DE MARCHESETTI (ROZZOL MELARA)
+            "53005",  // VIA DE MARCHESETTI (ROZZOL MELARA)
+            "52018",  // STRADA DI FIUME 320 (OSPEDALE DI CATTINARA)
+            "52015",  // CATTINARA (OSPEDALE)
+            "53006",  // VIA DE MARCHESETTI 12/14
+            "53017",  // STRADA DI FIUME 525 (OSPEDALE DI CATTINARA)
+            "53009"  // STRADA DI FIUME (SUPERMERCATO ZAZZERON)
+        ],
+        "directions": [
+            "LARGO OSOPPO",
+            "CATTINARA OSPEDALE"
+        ]
     },
     {
-        "code":  "27",
-        "label":  "27",
-        "stops":  [
-                      "E0046",
-                      "E0047",
-                      "E0048",
-                      "E0049",
-                      "E0050",
-                      "E0145"
-                  ],
-        "directions":  [
-                           "MUGGIA VECCHIA",
-                           "MUGGIA"
-                       ]
+        "code": "27",
+        "label": "27",
+        "terminals": ["E0145", "E0046"],
+        "stops": [
+            "56005",  // VIA FLAVIA 102 (ENEL)
+            "56006",  // VIA FLAVIA 84
+            "56020",  // VIA FLAVIA 126 (DIACO)
+            "E0037",  // AQUILINIA
+            "E0110",  // VIA DI ZAULE 89 (SCUOLA)
+            "E0059",  // STRADA PROVINCIALE 15 DELLE NOGHERE (MONTEDORO)
+            "E0109",  // VIA DI NOGHERE 3 (VIA DI MONTE SAN GIOVANNI)
+            "E0057",  // VIA DI NOGHERE 96
+            "42007",  // VIA FLAVIA 14 (PIAZZALE CAGNI)
+            "E0060",  // VIA FLAVIA DI STRAMARE 99
+            "E0139",  // VIA CADUTI SUL LAVORO 2
+            "41011",  // VIA FLAVIA 1 (VALMAURA, STADIO GREZAR, STADIO ROCCO)
+            "41012",  // VIA SALATA 6 (CHIOSCO MURATURA)
+            "34002",  // PIAZZA DEI FORAGGI 7
+            "E0155",  // LOCALIT� FARNEI 14 (STRADA PROVINCIALE 15 DIREZIONE TRIESTE
+            "17005",  // VIALE GABRIELE D'ANNUNZIO 14 (LARGO SONNINO)
+            "E0153",  // STRADA PROVINCIALE 15 DELLE NOGHERE 1
+            "08008",  // LARGO BARRIERA
+            "E0055",  // STRADA PROVINCIALE 15 DELLE NOGHERE 6
+            "10005",  // VIA CARDUCCI (REGIONE)
+            "E0034",  // VIA DI TRIESTE 15 (MOLO BALOTA)
+            "04014",  // STAZIONE FERROVIARIA
+            "E0128",  // VIA DEI FONDITORI (CAVALCAVIA, DIREZIONE AQUILINIA)
+            "E0088",  // STRADA PROVINCIALE 16 DI SANTA BARBARA 29 (CIMITERO)
+            "E0126",  // VIA FRAUSIN 10 (ANGOLO VIA GIACOMO MATTEOTTI)
+            "E0145",  // MUGGIA
+            "E0026",  // VIA ROMA 9/C (ANGOLO VIA MAZZINI)
+            "E0136",  // VIA ROMA 9 (MUSEO D'ARTE MODERNA CAR�)
+            "E0025",  // LUNGOMARE VENEZIA 1/B (INCROCIO BORGO SAN CRISTOFORO)
+            "E0003",  // LUNGOMARE VENEZIA (CHIOSCO)
+            "E0024",  // LUNGOMARE VENEZIA (IMPIANTO BALNEARE SAN ROCCO)
+            "E0004",  // LUNGOMARE VENEZIA (IMPIANTO BALNEARE SAN ROCCO)
+            "E0023",  // STRADA PER LAZZARETTO 1 (MARINA DI PORTO SAN ROCCO)
+            "E0005",  // STRADA PER LAZZARETTO 3/A
+            "E0022",  // STRADA PER LAZZARETTO 7 (MARINA DI PORTO SAN ROCCO)
+            "E0006",  // STRADA PER LAZZARETTO 7 (MARINA DI PORTO SAN ROCCO)
+            "E0046",  // MUGGIA VECCHIA
+            "E0021",  // STRADA PER LAZZARETTO 31 (MARINA DI PORTO SAN ROCCO)
+            "E0007",  // STRADA PER LAZZARETTO 31
+            "E0054",  // STRADA PROVINCIALE 17 DI CHIAMPORE 3/A (LOCALIT� ZINDIS)
+            "E0076",  // VIA VIVODA 7
+            "E0070",  // STRADA PROVINCIALE 17 DI CHIAMPORE 16 (LOCALIT� ZINDIS)
+            "E0047",  // VIA VIVODA 6
+            "E0053",  // STRADA PROVINCIALE 17 DI CHIAMPORE 21 (LOCALIT� ZINDIS)
+            "E0071",  // STRADA PROVINCIALE 17 DI CHIAMPORE 42/B (LOCALIT� ZINDIS)
+            "E0052",  // STRADA PROVINCIALE 17 DI CHIAMPORE 27/C (LOCALIT� ZINDIS)
+            "E0051",  // STRADA PROVINCIALE 17 DI CHIAMPORE (BIVIO FONTANELLA)
+            "E0072",  // STRADA PROVINCIALE 17 DI CHIAMPORE 46/B (FONTANELLA)
+            "E0048",  // STRADA PROVINCIALE 17 DI CHIAMPORE 32/A
+            "E0075",  // STRADA PROVINCIALE 17 DI CHIAMPORE 4 (PAESE)
+            "E0020",  // STRADA PER LAZZARETTO (MOLO T)
+            "E0074",  // STRADA PROVINCIALE 17 DI CHIAMPORE 54/A (RIPETITORE)
+            "E0008",  // STRADA PER LAZZARETTO (MOLO T)
+            "E0049",  // STRADA PROVINCIALE 17 DI CHIAMPORE 54 (RIPETITORE)
+            "E0073",  // STRADA PROVINCIALE 17 DI CHIAMPORE (SAN FLORIANO)
+            "E0050",  // STRADA PROVINCIALE 17 DI CHIAMPORE (SAN FLORIANO)
+            "E0030",  // VIA DARSELLA 1 (STRADA PROVINCIALE 17, SAN FLORIANO)
+            "E0027",  // VIA DARSELLA 1 (STRADA PROVINCIALE 17, SAN FLORIANO)
+            "E0019",  // STRADA PER LAZZARETTO (PUNTA OLMI, LATO MARE)
+            "E0009",  // STRADA PER LAZZARETTO (PUNTA OLMI)
+            "E0018",  // STRADA PER LAZZARETTO 53
+            "E0010",  // STRADA PER LAZZARETTO 57
+            "E0029",  // VIA DARSELLA DI SAN BARTOLOMEO 18
+            "E0028",  // VIA DARSELLA DI SAN BARTOLOMEO 18
+            "E0164",  // STRADA PER LAZZARETTO 47(ACQUARIO)
+            "E0017",  // STRADA PER LAZZARETTO (BIVIO PUNTA SOTTILE)
+            "E0011",  // STRADA PER LAZZARETTO (BIVIO PUNTA SOTTILE)
+            "E0014",  // LAZZARETTO
+            "E0015",  // STRADA PER LAZZARETTO 91 (BASE LOGISTICA MILITARE)
+            "E0013",  // STRADA PER LAZZARETTO 91 (BASE LOGISTICA MILITARE)
+            "E0135",  // STRADA PER LAZZARETTO (PUNTA SOTTILE)
+            "E0134",  // STRADA PER LAZZARETTO (PUNTA SOTTILE)
+            "E0016",  // STRADA PER LAZZARETTO (STABILIMENTO BALNEARE, OBELISCO)
+            "E0012"  // STRADA PER LAZZARETTO (STABILIMENTO BALNEARE, OBELISCO)
+        ],
+        "directions": [
+            "MUGGIA",
+            "MUGGIA VECCHIA"
+        ]
     },
     {
-        "code":  "28",
-        "label":  "28",
-        "stops":  [
-                      "23013",
-                      "23014",
-                      "04012",
-                      "23015",
-                      "23016",
-                      "23017"
-                  ],
-        "directions":  [
-                           "COLOGNA",
-                           "VIA GALATTI"
-                       ]
+        "code": "28",
+        "label": "28",
+        "terminals": ["04012", "23013"],
+        "stops": [
+            "03004",  // PIAZZA GOLDONI
+            "03002",  // VIA CARDUCCI (LUMINOSA)
+            "03001",  // PIAZZA OBERDAN
+            "04012",  // VIA GALATTI
+            "11011",  // VIA DE RITTMEYER (ANGOLO VIA UDINE)
+            "11010",  // VIA COMMERCIALE 26 (TRENOVIA)
+            "21003",  // VIA COMMERCIALE 21
+            "23014",  // VIA COMMERCIALE 68
+            "22008",  // VIA COMMERCIALE 47
+            "22007",  // VIA COMMERCIALE 92 (ANGOLO VIA DAVIS)
+            "22009",  // VIA COMMERCIALE 67 (ANGOLO VIA DAVIS)
+            "22006",  // VIA COMMERCIALE 126 (ANGOLO VIA OVIDIO)
+            "22010",  // VIA COMMERCIALE 95 (ANGOLO VIA OVIDIO)
+            "22011",  // VIA COMMERCIALE 158 (SCALA DELL'ERICA)
+            "22005",  // VIA COMMERCIALE 160 (SCALA DELL'ERICA)
+            "22004",  // VIA COMMERCIALE 155
+            "23016",  // VIA DEI GIAGGIOLI (SCALA DEI GIAGGIOLI)
+            "23015",  // VIA DI VERNIELLIS (SCUOLA DELL'INFANZIA)
+            "23017",  // VIA DEI GIAGGIOLI 20
+            "23013"  // COLOGNA
+        ],
+        "directions": [
+            "VIA GALATTI",
+            "COLOGNA"
+        ]
     },
     {
-        "code":  "29",
-        "label":  "29",
-        "stops":  [
-                      "03011",
-                      "29016",
-                      "41019",
-                      "41022",
-                      "29014"
-                  ],
-        "directions":  [
-                           "PIAZZA GOLDONI",
-                           "VIA SVEVO"
-                       ]
+        "code": "29",
+        "label": "29",
+        "terminals": ["03011", "29016"],
+        "stops": [
+            "03011",  // PIAZZA GOLDONI
+            "07003",  // CORSO SABA
+            "17006",  // PIAZZA GARIBALDI 3
+            "07005",  // VIA BERNINI 6 (ANGOLO VIA DEL BOSCO)
+            "07004",  // VIA BERNINI 6 (ANGOLO VIA DEL BOSCO)
+            "17007",  // VIALE GABRIELE D'ANNUNZIO 12 (LARGO SONNINO)
+            "26006",  // VIA ALBERTI
+            "26007",  // VIA ALBERTI
+            "33005",  // VIALE GABRIELE D'ANNUNZIO 27 (PIAZZA DEL PERUGINO)
+            "29012",  // VIA D'ALVIANO 14 (DISTRIBUTORE CARBURANTE)
+            "29007",  // VIA D'ALVIANO 14 (GASOMETRO)
+            "34003",  // VIALE D'ANNUNZIO 51 (ANGOLO VIA LIMITANEA, TEATRO BOBBIO)
+            "28010",  // VIA CADUTI SUL LAVORO (TRIESTE TRASPORTI)
+            "34004",  // VIALE GABRIELE D'ANNUNZIO 79 (PIAZZA DEI FORAGGI)
+            "29015",  // VIA D'ALVIANO 66 (TRIESTE TRASPORTI, VIGILI DEL FUOCO)
+            "29008",  // VIA D'ALVIANO 15 (TRIESTE TRASPORTI, VIGILI DEL FUOCO)
+            "28012",  // VIA SVEVO (CANTIERI)
+            "29014",  // VIA D'ALVIANO 86 (CENTRO COMMERCIALE TORRI D'EUROPA)
+            "29009",  // VIA D'ALVIANO 27 (CENTRO COMMERCIALE TORRI D'EUROPA)
+            "29017",  // VIA SVEVO 22 (CENTRO COMMERCIALE TORRI D'EUROPA)
+            "29013",  // VIA D'ALVIANO 39 (UFFICIO POSTALE)
+            "29010",  // VIA D'ALVIANO 37 (UFFICIO POSTALE)
+            "29016",  // VIA SVEVO
+            "41013",  // VIA SALATA 3 (SUPERMERCATO)
+            "29011",  // VIA SVEVO 38 (CASA EMMAUS)
+            "41018",  // VIA BAIAMONTI 103 (ANGOLO VIA DELL'ISTRIA)
+            "41017",  // VIA BAIAMONTI 93 (ANGOLO VIA PIRANO)
+            "41016",  // VIA BAIAMONTI 61
+            "41019",  // VIA DEI SONCINI 3 (PONTE)
+            "40001",  // VIA BAIAMONTI 47 (ANGOLO VIA SVEVO)
+            "41002",  // VIA DELL'ISTRIA 127
+            "40004",  // VIA DI SERVOLA 2 (ANGOLO VIA DELLA CALCARA)
+            "41020",  // VIA DEI SONCINI 55 (ANGOLO VIA ZARA)
+            "41021",  // VIA DEI SONCINI 79 (ANGOLO VIA GIACOMETTI)
+            "40003",  // VIA DI SERVOLA (CHIESA)
+            "41003",  // VIA DELL'ISTRIA (CIMITERO)
+            "41022",  // VIA DEI SONCINI 107
+            "40002",  // VIA DEI SONCINI 179 (ANGOLO VIA DI SERVOLA)
+            "41004"  // PIAZZALE VALMAURA
+        ],
+        "directions": [
+            "PIAZZA GOLDONI",
+            "VIA SVEVO"
+        ]
     },
     {
-        "code":  "30",
-        "label":  "30",
-        "stops":  [
-                      "04007",
-                      "27022",
-                      "27021",
-                      "28005",
-                      "02003",
-                      "28004",
-                      "05002"
-                  ],
-        "directions":  [
-                           "STAZIONE FERROVIARIA",
-                           "VIA LOCCHI"
-                       ]
+        "code": "30",
+        "label": "30",
+        "terminals": ["04007", "27022"],
+        "stops": [
+            "27022",  // VIA LOCCHI
+            "28013",  // VIA LOCCHI (PIAZZALE DELLA RESISTENZA)
+            "28009",  // VIA COLAUTTI 14/A (PIAZZALE DELLA RESISTENZA)
+            "25003",  // VIA COLAUTTI 6 (ANGOLO VIA DE AMICIS)
+            "25007",  // VIA MUZIO 1
+            "25008",  // VIA TIGOR 20 (ANGOLO VIA DON MINZONI)
+            "25009",  // VIA PRINCIPE DI MONTFORT 1/G
+            "25010",  // LARGO PAPA GIOVANNI XXIII (CIVICO MUSEO SARTORIO)
+            "13016",  // VIA SANTI MARTIRI 8
+            "13006",  // RIVA DEL MANDRACCHIO 4 (HOTEL EXCELSIOR)
+            "05002",  // RIVA CADUTI PER L'ITALIANIT� DI TRIESTE (TEATRO VERDI)
+            "05012",  // PIAZZA TOMMASEO
+            "01001",  // VIA FILZI 3 (PIAZZA SANT'ANTONIO NUOVO, PONTE ROSSO)
+            "03008",  // VIA FILZI 23
+            "21003",  // VIA COMMERCIALE 21
+            "22008",  // VIA COMMERCIALE 47
+            "22009",  // VIA COMMERCIALE 67 (ANGOLO VIA DAVIS)
+            "22010",  // VIA COMMERCIALE 95 (ANGOLO VIA OVIDIO)
+            "22011",  // VIA COMMERCIALE 158 (SCALA DELL'ERICA)
+            "23015",  // VIA DI VERNIELLIS (SCUOLA DELL'INFANZIA)
+            "23016",  // VIA DEI GIAGGIOLI (SCALA DEI GIAGGIOLI)
+            "23017",  // VIA DEI GIAGGIOLI 20
+            "23013",  // COLOGNA
+            "22004",  // VIA COMMERCIALE 155
+            "22005",  // VIA COMMERCIALE 160 (SCALA DELL'ERICA)
+            "22006",  // VIA COMMERCIALE 126 (ANGOLO VIA OVIDIO)
+            "22007",  // VIA COMMERCIALE 92 (ANGOLO VIA DAVIS)
+            "23014",  // VIA COMMERCIALE 68
+            "11010",  // VIA COMMERCIALE 26 (TRENOVIA)
+            "11011",  // VIA DE RITTMEYER (ANGOLO VIA UDINE)
+            "11009",  // VIA GHEGA 6 (CONSERVATORIO TARTINI)
+            "04007",  // STAZIONE FERROVIARIA
+            "04002",  // VIA GHEGA 9 (CONSERVATORIO TARTINI)
+            "01002",  // VIA ROMA 18/B (PONTE ROSSO)
+            "02002",  // VIA MAZZINI 4
+            "05001",  // RIVA TRE NOVEMBRE (PREFETTURA, TEATRO VERDI, MUNICIPIO)
+            "13001",  // RIVA DEL MANDRACCHIO (PALACONGRESSI)
+            "13014",  // VIA SAN GIORGIO (BIBLIOTECA)
+            "13015",  // LARGO PAPA GIOVANNI XXIII (CIVICO MUSEO SARTORIO)
+            "25004",  // VIALE DELLA TERZA ARMATA 6
+            "25005",  // VIA CIAMICIAN (ANGOLO VIA TIGOR)
+            "25011",  // VIA DON MINZONI 5
+            "25006",  // VIA MUZIO 1
+            "25001",  // VIA COLAUTTI 2 (ANGOLO VIA DE AMICIS)
+            "28006",  // VIA COLAUTTI (PIAZZALE DELLA RESISTENZA)
+            "28007",  // VIA SCHIAPARELLI 9 (PIAZZALE DELLA RESISTENZA)
+            "28005",  // VIA SCHIAPARELLI 3 (ANGOLO VIALE DEI CAMPI ELISI)
+            "28004",  // VIALE CAMPI ELISI 16
+            "27008",  // PASSEGGIO SANT'ANDREA 12 (VIA DELLE FIAMME GIALLE 6)
+            "27021",  // VIA MAESTRI DEL LAVORO, (PALAZZO DELLA MARINERIA, PISCINA)
+            "02003",  // VIA MAZZINI (ANGOLO CASSA DI RISPARMIO)
+            "03001",  // PIAZZA OBERDAN
+            "10001",  // PIAZZA OBERDAN
+            "03002",  // VIA CARDUCCI (LUMINOSA)
+            "03004"  // PIAZZA GOLDONI
+        ],
+        "directions": [
+            "STAZIONE FERROVIARIA",
+            "VIA LOCCHI"
+        ]
     },
     {
-        "code":  "31",
-        "label":  "31",
-        "stops":  [
-                      "E0077",
-                      "E0078",
-                      "E0079",
-                      "E0080",
-                      "E0081",
-                      "E0145",
-                      "E0046"
-                  ],
-        "directions":  [
-                           "CEREI",
-                           "MUGGIA",
-                           "MUGGIA VECCHIA"
-                       ]
+        "code": "31",
+        "label": "31",
+        "terminals": ["E0145", "E0077", "E0046"],
+        "stops": [
+            "E0145",  // MUGGIA
+            "E0026",  // VIA ROMA 9/C (ANGOLO VIA MAZZINI)
+            "E0136",  // VIA ROMA 9 (MUSEO D'ARTE MODERNA CAR�)
+            "E0083",  // VIALE XXV APRILE 6/A (ANGOLO VIA COLARICH)
+            "E0084",  // VIALE XXV APRILE 16/A (VIA DEI MULINI)
+            "E0082",  // VIA D'ANNUNZIO 6 (SCUOLA ELEMENTARE)
+            "E0081",  // VIA D'ANNUNZIO 48 (SCUOLA MEDIA)
+            "E0158",  // SALITA MUGGIA VECCHIA 6
+            "E0025",  // LUNGOMARE VENEZIA 1/B (INCROCIO BORGO SAN CRISTOFORO)
+            "E0113",  // SALITA VECCHIA MUGGIA 8 (SALITA AI PIAI)
+            "E0085",  // VIA FORTI 38
+            "E0080",  // VIA DI CREVATINI 3/A
+            "E0114",  // SALITA VECCHIA MUGGIA 16 (BORGO SAN CRISTOFORO)
+            "E0124",  // BORGO SAN CRISTOFORO 1
+            "E0079",  // VIA DI CREVATINI 17
+            "E0122",  // BORGO SAN CRISTOFORO 72
+            "E0123",  // BORGO SAN CRISTOFORO 24
+            "E0086",  // VIA DI CREVATINI 12
+            "E0115",  // SALITA VECCHIA MUGGIA 20 (BORGO SAN PIETRO)
+            "E0078",  // VIA DI CREVATINI 25 (CARABINIERI)
+            "E0121",  // SALITA VECCHIA MUGGIA 15
+            "E0087",  // VIA DI CREVATINI 22 (CARABINIERI)
+            "E0116",  // SALITA VECCHIA MUGGIA 24
+            "E0077",  // CEREI
+            "E0117",  // SALITA VECCHIA MUGGIA 42
+            "E0120",  // SALITA VECCHIA MUGGIA 27
+            "E0119",  // SALITA VECCHIA MUGGIA 45
+            "E0118",  // SALITA VECCHIA MUGGIA 62
+            "E0046"  // MUGGIA VECCHIA
+        ],
+        "directions": [
+            "MUGGIA",
+            "CEREI",
+            "MUGGIA VECCHIA"
+        ]
     },
     {
-        "code":  "32",
-        "label":  "32",
-        "stops":  [
-                      "E0091",
-                      "E0093",
-                      "E0094",
-                      "E0095",
-                      "E0096",
-                      "E0145"
-                  ],
-        "directions":  [
-                           "SANTA BARBARA",
-                           "MUGGIA"
-                       ]
+        "code": "32",
+        "label": "32",
+        "terminals": ["E0145", "E0093"],
+        "stops": [
+            "E0026",  // VIA ROMA 9/C (ANGOLO VIA MAZZINI)
+            "E0082",  // VIA D'ANNUNZIO 6 (SCUOLA ELEMENTARE)
+            "E0126",  // VIA FRAUSIN 10 (ANGOLO VIA GIACOMO MATTEOTTI)
+            "E0145",  // MUGGIA
+            "E0131",  // VIA FRAUSIN 13 (ANGOLO VIA GIACOMO MATTEOTTI)
+            "E0083",  // VIALE XXV APRILE 6/A (ANGOLO VIA COLARICH)
+            "E0081",  // VIA D'ANNUNZIO 48 (SCUOLA MEDIA)
+            "E0125",  // STRADA PROVINCIALE 16 DI SANTA BARBARA 29 (CIMITERO)
+            "E0088",  // STRADA PROVINCIALE 16 DI SANTA BARBARA 29 (CIMITERO)
+            "E0084",  // VIALE XXV APRILE 16/A (VIA DEI MULINI)
+            "E0085",  // VIA FORTI 38
+            "E0089",  // STRADA PROVINCIALE 16 DI SANTA BARBARA 42
+            "E0146",  // STRADA PROVINCIALE 16 DI SANTA BARBARA 55
+            "E0099",  // STRADA PROVINCIALE 16 DI SANTA BARBARA 29/A
+            "E0090",  // VIA DI SANTA BARBARA, STRADELLO A 1/B
+            "E0147",  // STRADA PROVINCIALE 16 DI SANTA BARBARA 55
+            "E0098",  // VIA DI SANTA BARBARA, STRADELLO A 1/B
+            "E0138",  // STRADA PROVINCIALE 16 DI SANTA BARBARA 62/D
+            "E0127",  // VIA DI SANTA BARBARA, STRADELLO A 20/A
+            "E0097",  // VIA COLARICH 67
+            "E0100",  // VIA DI SANTA BARBARA, STRADELLO A 20/A
+            "E0132",  // PIAZZALE PRIMO MAGGIO
+            "E0133",  // VIA DEI MECCANICI 3 (CABINA ELETTRICA)
+            "E0130",  // VIA DEI MECCANICI 2/B (ANGOLO VIA DEI CALAFATI)
+            "E0091",  // STRADA PROVINCIALE 16 DI SANTA BARBARA 68
+            "E0096",  // VIA COLARICH 87/A
+            "E0035",  // VIA COLARICH 72
+            "E0095",  // VIA COLARICH 93
+            "E0094",  // VIA COLARICH 64
+            "E0093"  // SANTA BARBARA
+        ],
+        "directions": [
+            "MUGGIA",
+            "SANTA BARBARA"
+        ]
     },
     {
-        "code":  "33",
-        "label":  "33",
-        "stops":  [
-                      "52001",
-                      "08011",
-                      "52002",
-                      "52003"
-                  ],
-        "directions":  [
-                           "CAMPANELLE",
-                           "LARGO BARRIERA"
-                       ]
+        "code": "33",
+        "label": "33",
+        "terminals": ["08011", "52001"],
+        "stops": [
+            "08011",  // LARGO BARRIERA
+            "17006",  // PIAZZA GARIBALDI 3
+            "17009",  // PIAZZA GARIBALDI 12
+            "17008",  // VIA DEL MOLINO A VENTO 22 (ANGOLO VIA DEI MONTECCHI)
+            "16007",  // VIA DEL MOLINO A VENTO 51 (ANGOLO VIA DEI MONTECCHI)
+            "16006",  // VIA DEL MOLINO A VENTO 70 (LARGO DEL PESTALOZZI)
+            "16008",  // VIA DEL MOLINO A VENTO 72 (ANGOLO VIA DELLA BASTIA)
+            "32006",  // VIA DEL MOLINO A VENTO 88
+            "32007",  // VIA DEL MOLINO A VENTO 85
+            "32003",  // VIA MOLINO A VENTO 154 (CENTRO SALUTE MENTALE MADDALENA)
+            "32004",  // STRADA DI FIUME 7 (CENTRO SALUTE MENTALE DELLA MADDALENA)
+            "34006",  // STRADA DI FIUME 52 (ANGOLO VIA ZAMMATTIO)
+            "32005",  // STRADA DI FIUME 73 (ANGOLO VIA ZAMMATTIO)
+            "43008",  // VIA PATRIZIO (ANGOLO VIA DELLE CAMPANELLE)
+            "43007",  // VIA DELLE CAMPANELLE 108 (ANGOLO VIA PATRIZIO)
+            "43006",  // VIA DELLE CAMPANELLE 120 (ANGOLO VIA STANCOVICH)
+            "43009",  // VIA DELLE CAMPANELLE 143 (ANGOLO VIA STANCOVICH)
+            "43010",  // VIA DELLE CAMPANELLE 138 (PONTE)
+            "43005",  // VIA DELLE CAMPANELLE 138 (PONTE)
+            "43004",  // VIA DELLE CAMPANELLE 203 (ANGOLO VIA ANTICO)
+            "43011",  // VIA DELLE CAMPANELLE 203 (ANGOLO VIA ANTICO)
+            "43003",  // VIA DELLE CAMPANELLE (ANGOLO VIA VENTURA)
+            "43012",  // VIA DELLE CAMPANELLE (ANGOLO VIA VENTURA)
+            "43013",  // VIA DELLE CAMPANELLE 260 (ANGOLO VIA ZAROTTI)
+            "43002",  // VIA DELLE CAMPANELLE 260 (ANGOLO VIA ZAROTTI)
+            "43001",  // VIA DELLE CAMPANELLE 257 (SCUOLA)
+            "43014",  // VIA DELLE CAMPANELLE 257 (SCUOLA)
+            "52003",  // VIA DELLE CAMPANELLE (ANGOLO VIA DELL'ACQUA)
+            "52002",  // VIA DELLE CAMPANELLE (VIA DELL'ACQUA)
+            "52001",  // CAMPANELLE
+            "58019",  // VIA DELLE ALPI GIULIE 23 (SCUOLA DON MILANI)
+            "58006",  // VIA DELLE ALPI GIULIE 1
+            "58005",  // VIA DELLE ALPI GIULIE (ANGOLO VIA MONTE PERALBA)
+            "52019",  // VIA DEL BOTRO 21
+            "52021",  // STRADA DI FIUME 302
+            "58002",  // VIA DELLE ALPI GIULIE 2 (PISCINA)
+            "58007",  // VIA DELLE ALPI GIULIE 12 (ANGOLO VIA DEL MONTASIO)
+            "58003",  // VIA DELLE ALPI GIULIE 5 (GRATTACIELO)
+            "58004",  // VIA DELLE ALPI GIULIE (PALO ELETTRICO 226)
+            "58014",  // VIA RIO STORTO (ANGOLO VIA DEL MONTASIO)
+            "52014"  // CATTINARA (OSPEDALE)
+        ],
+        "directions": [
+            "LARGO BARRIERA",
+            "CAMPANELLE"
+        ]
     },
     {
-        "code":  "34",
-        "label":  "34",
-        "stops":  [
-                      "42008",
-                      "08007",
-                      "33003",
-                      "33004"
-                  ],
-        "directions":  [
-                           "VIA PAISIELLO",
-                           "LARGO BARRIERA"
-                       ]
+        "code": "34",
+        "label": "34",
+        "terminals": ["08007", "42008"],
+        "stops": [
+            "07003",  // CORSO SABA
+            "07005",  // VIA BERNINI 6 (ANGOLO VIA DEL BOSCO)
+            "08007",  // LARGO BARRIERA
+            "26007",  // VIA ALBERTI
+            "17006",  // PIAZZA GARIBALDI 3
+            "17009",  // PIAZZA GARIBALDI 12
+            "17007",  // VIALE GABRIELE D'ANNUNZIO 12 (LARGO SONNINO)
+            "17005",  // VIALE GABRIELE D'ANNUNZIO 14 (LARGO SONNINO)
+            "29020",  // VIA CADUTI SUL LAVORO (TRIESTE TRASPORTI)
+            "29019",  // VIA SVEVO (ACEGAS)
+            "33005",  // VIALE GABRIELE D'ANNUNZIO 27 (PIAZZA DEL PERUGINO)
+            "33004",  // VIALE GABRIELE D'ANNUNZIO 38/A (PIAZZA DEL PERUGINO)
+            "33003",  // VIALE D'ANNUNZIO 48 (ANGOLO VIA LIMITANEA, TEATRO BOBBIO)
+            "34003",  // VIALE D'ANNUNZIO 51 (ANGOLO VIA LIMITANEA, TEATRO BOBBIO)
+            "29022",  // VIA SVEVO 14 (CENTRO COMMERCIALE TORRI D'EUROPA)
+            "34004",  // VIALE GABRIELE D'ANNUNZIO 79 (PIAZZA DEI FORAGGI)
+            "34002",  // PIAZZA DEI FORAGGI 7
+            "29016",  // VIA SVEVO
+            "31006",  // VIA BAIAMONTI 14 (ANGOLO VIA SVEVO)
+            "31005",  // VIA BAIAMONTI 38 (BANCA)
+            "31002",  // VIA BAIAMONTI 52 (ANGOLO VIA PIRANO)
+            "41013",  // VIA SALATA 3 (SUPERMERCATO)
+            "41012",  // VIA SALATA 6 (CHIOSCO MURATURA)
+            "41026",  // VIA BAIAMONTI 68 (ANGOLO VIA DELL'ISTRIA)
+            "42021",  // VIA DELL'ISTRIA 190 (PONTE VIA SONCINI)
+            "42022",  // VIA DELLA PACE (PONTE DEI SONCINI)
+            "43015",  // VIA COSTALUNGA 230 (ANGOLO DELLA PACE)
+            "42023",  // VIA COSTALUNGA 232 (ANGOLO VIA DELLA PACE)
+            "42010",  // VIA COSTALUNGA 240 (CIMITERO SANT'ANNA, OBITORIO)
+            "42011",  // VIA COSTALUNGA 240 (CIMITERO)
+            "42024",  // VIA COSTALUNGA 272 (ANGOLO VIA SANTA MARIA MADDALENA)
+            "42029",  // VIA SANTA MARIA MADDALENA 2 (ANGOLO VIA COSTALUNGA)
+            "42030",  // VIA PAISIELLO (ANGOLO SALITA DI ZUGNANO)
+            "42025",  // VIA COSTALUNGA 125
+            "42009",  // VIA PAISIELLO 9 (ANGOLO VIA ZANDONAI)
+            "42008",  // VIA PAISIELLO
+            "42026",  // VIA COSTALUNGA 151
+            "42027",  // VIA COSTALUNGA 177 (PIAZZETTA)
+            "42028",  // VIA PAISIELLO 11 (SOTTOPASSO, TUNNEL)
+            "42017",  // VIA ERTA DI SANT'ANNA 10 (PIAZZETTA)
+            "42015",  // VIA ERTA DI SANT'ANNA 51
+            "42016"  // VIA ERTA DI SANT'ANNA 92 (ANGOLO VIA DEI VERGOTTINI)
+        ],
+        "directions": [
+            "LARGO BARRIERA",
+            "VIA PAISIELLO"
+        ]
     },
     {
-        "code":  "35",
-        "label":  "35",
-        "stops":  [
-                      "54007",
-                      "10005",
-                      "37013",
-                      "38002",
-                      "09001",
-                      "03002",
-                      "19002",
-                      "37011",
-                      "37008",
-                      "38004"
-                  ],
-        "directions":  [
-                           "LONGERA",
-                           "VIA CARDUCCI (REGIONE)",
-                           "SOTTOLONGERA"
-                       ]
+        "code": "35",
+        "label": "35",
+        "terminals": ["10005", "03002", "54007"],
+        "stops": [
+            "27003",  // VIA GIULIO CESARE (VIA DI CAMPO MARZIO, MUSEO FERROVIARIO)
+            "27002",  // VIA AUGUSTO 12 (MERCATO ORTOFRUTTICOLO)
+            "27005",  // PASSEGGIO SANT'ANDREA (PALO 394)
+            "13003",  // RIVA GRUMULA (STAZIONE ROGERS)
+            "27006",  // TRIESTE PASSEGGIO SANT'ANDREA (FRONTE 6/A)
+            "13002",  // RIVA SAURO 1 (SALONE DEGLI INCANTI)
+            "13001",  // RIVA DEL MANDRACCHIO (PALACONGRESSI)
+            "27007",  // PASSEGGIO SANT'ANDREA (GUARDIA DI FINANZA)
+            "05001",  // RIVA TRE NOVEMBRE (PREFETTURA, TEATRO VERDI, MUNICIPIO)
+            "02002",  // VIA MAZZINI 4
+            "28001",  // VIALE DEI CAMPI ELISI 32 (ANGOLO VIA DE COLETTI)
+            "03016",  // PIAZZA DELLA REPUBBLICA 2
+            "28002",  // VIALE DEI CAMPI ELISI 59 (PONTE FERROVIA)
+            "10005",  // VIA CARDUCCI (REGIONE)
+            "03002",  // VIA CARDUCCI (LUMINOSA)
+            "28011",  // VIALE CAMPI ELISI (EX PAM)
+            "03006",  // PIAZZA GOLDONI
+            "09005",  // VIA BATTISTI (PORTICI DI CHIOZZA)
+            "09001",  // VIA BATTISTI (GALLERIA FENICE)
+            "19008",  // VIA BATTISTI 22 (ANGOLO VIA GIUSEPPE LORENZO GATTERI)
+            "19003",  // VIA GIULIA 3/C (GIARDINO PUBBLICO, TEATRO ROSSETTI)
+            "19002",  // LARGO TOMIZZA
+            "19004",  // VIA GIULIA 21 (LARGO TOMIZZA)
+            "38004",  // VIA GIULIA 37 (PIAZZA DEI VOLONTARI GIULIANI)
+            "38003",  // VIA GIULIA 22 (PIAZZA DEI VOLONTARI GIULIANI)
+            "38002",  // VIA GIULIA 48 (SCUOLA)
+            "38005",  // VIA GIULIA 55 (SCUOLA)
+            "38001",  // VIA GIULIA 80 (CENTRO COMMERCIALE IL GIULIA)
+            "38006",  // VIA GIULIA 77 (CENTRO COMMERCIALE IL GIULIA)
+            "46026",  // STRADA DI GUARDIELLA 2 (ROTONDA DEL BOSCHETTO)
+            "46027",  // STRADA DI GUARDIELLA 4 (ROTONDA DEL BOSCHETTO)
+            "37007",  // STRADA DI GUARDIELLA 9 (ANGOLO STRADA PER LONGERA)
+            "37021",  // STRADA DI GUARDIELLA 18 (ANGOLO STRADA PER LONGERA)
+            "37008",  // STRADA PER LONGERA 1 (ANGOLO STRADA DI GUARDIELLA)
+            "37020",  // STRADA PER LONGERA 1
+            "37019",  // STRADA PER LONGERA 4 (ANGOLO VIA COZZI)
+            "37009",  // STRADA PER LONGERA 6 (ANGOLO VIA ANTONI)
+            "37018",  // STRADA PER LONGERA 37 (ANGOLO VIA TIMIGNANO)
+            "37010",  // STRADA PER LONGERA 39 (ANGOLO VIA TIMIGNANO)
+            "37011",  // STRADA PER LONGERA 127 (ANGOLO DEL FARNETELLO)
+            "37017",  // STRADA PER LONGERA 131 (ANGOLO DEL FARNETELLO)
+            "37016",  // STRADA PER LONGERA 66 (ANGOLO VIA LEVIER)
+            "37012",  // STRADA PER LONGERA 66 (ANGOLO VIA LEVIER)
+            "37013",  // SOTTOLONGERA
+            "37015",  // STRADA PER LONGERA 82 (SOTTOLONGERA)
+            "54002",  // STRADA PER LONGERA 207 (ANGOLO VIA MASACCIO)
+            "37014",  // STRADA PER LONGERA 207
+            "54011",  // STRADA PER LONGERA 210
+            "54003",  // STRADA PER LONGERA 212
+            "54010",  // STRADA PER LONGERA 224
+            "54004",  // STRADA PER LONGERA 224
+            "54009",  // STRADA PER LONGERA 228
+            "54005",  // STRADA PER LONGERA 232
+            "54008",  // STRADA PER LONGERA 238 (CHIESA)
+            "54006",  // STRADA PER LONGERA 251 (CHIESA)
+            "54007"  // LONGERA
+        ],
+        "directions": [
+            "VIA CARDUCCI",
+            "LONGERA"
+        ]
     },
     {
-        "code":  "36",
-        "label":  "36",
-        "stops":  [
-                      "D5013",
-                      "19002"
-                  ],
-        "directions":  [
-                           "BIVIO MIRAMARE",
-                           "LARGO TOMIZZA"
-                       ]
+        "code": "36",
+        "label": "36",
+        "terminals": ["D5013", "19002"],
+        "stops": [
+            "D5013",  // CASTELLO DI MIRAMARE (BIVIO)
+            "19002"  // LARGO TOMIZZA
+        ],
+        "directions": [
+            "VIA GIULIA",
+            "CASTELLO DI MIRAMARE"
+        ]
     },
     {
-        "code":  "37",
-        "label":  "37",
-        "stops":  [
-                      "08011",
-                      "52014",
-                      "42001",
-                      "52004",
-                      "42004",
-                      "42003",
-                      "42006",
-                      "52021"
-                  ],
-        "directions":  [
-                           "LARGO BARRIERA",
-                           "CATTINARA (OSPEDALE)"
-                       ]
+        "code": "37",
+        "label": "37",
+        "terminals": ["08011", "52014"],
+        "stops": [
+            "08011",  // LARGO BARRIERA
+            "17006",  // PIAZZA GARIBALDI 3
+            "17009",  // PIAZZA GARIBALDI 12
+            "16007",  // VIA DEL MOLINO A VENTO 51 (ANGOLO VIA DEI MONTECCHI)
+            "17008",  // VIA DEL MOLINO A VENTO 22 (ANGOLO VIA DEI MONTECCHI)
+            "16008",  // VIA DEL MOLINO A VENTO 72 (ANGOLO VIA DELLA BASTIA)
+            "16006",  // VIA DEL MOLINO A VENTO 70 (LARGO DEL PESTALOZZI)
+            "32002",  // VIA DELL'ISTRIA 102 (ANGOLO VIA MARENZI)
+            "32007",  // VIA DEL MOLINO A VENTO 85
+            "32001",  // VIA DELL'ISTRIA 69 (OSPEDALE BURLO GAROFOLO)
+            "32004",  // STRADA DI FIUME 7 (CENTRO SALUTE MENTALE DELLA MADDALENA)
+            "42004",  // VIA DELL'ISTRIA 138 (ANGOLO VIA ORSERA)
+            "32005",  // STRADA DI FIUME 73 (ANGOLO VIA ZAMMATTIO)
+            "42003",  // VIA DELL'ISTRIA 101 (ANGOLO VIA BAIAMONTI)
+            "43016",  // STRADA DI FIUME 131
+            "41002",  // VIA DELL'ISTRIA 127
+            "42001",  // VIA DELL'ISTRIA 206 (CIMITERO)
+            "41003",  // VIA DELL'ISTRIA (CIMITERO)
+            "43017",  // STRADA DI FIUME 155 (SCUOLA)
+            "41014",  // VIA FLAVIA 1 (VALMAURA, STADIO GREZAR, STADIO ROCCO)
+            "41011",  // VIA FLAVIA 1 (VALMAURA, STADIO GREZAR, STADIO ROCCO)
+            "43021",  // STRADA DI FIUME 181 (CHIESA DI SAN MARCO EVANGELISTA)
+            "41015",  // VIA FLAVIA 3 (PALATRIESTE ALLIANZ DOME)
+            "41010",  // VIA FLAVIA 10 (PALATRIESTE)
+            "43018",  // STRADA DI FIUME 223 (GIARDINO DI VILLA SARTORIO)
+            "56001",  // VIA FLAVIA (PIAZZALE CAGNI)
+            "56018",  // VIA CABOTO (PIAZZALE CAGNI)
+            "43019",  // STRADA DI FIUME 277
+            "42007",  // VIA FLAVIA 14 (PIAZZALE CAGNI)
+            "56017",  // VIA CABOTO 10 (ORION, UFFICIO POSTALE)
+            "42006",  // VIA FLAVIA 23/1 (INCUBATORE BIC)
+            "51001",  // VIA FLAVIA 23/1 (INCUBATORE BIC)
+            "56016",  // VIA CABOTO 16
+            "43020",  // STRADA DI FIUME 198 (ANGOLO VIA BRIGATA CASALE)
+            "51007",  // VIA FLAVIA 27
+            "51002",  // VIA FLAVIA 27
+            "56015",  // VIA CABOTO 20/2
+            "51006",  // VIA FLAVIA 58 (ANGOLO VIA DEI GRAVISI)
+            "51003",  // VIA FLAVIA 45 (ANGOLO VIA DEI GRAVISI)
+            "56014",  // VIA CABOTO 28 (ANGOLO VIA QUERINI)
+            "51005",  // VIA FLAVIA 70 (ANGOLO VIA BRIGATA CASALE)
+            "51004",  // VIA FLAVIA 55 (ANGOLO VIA BRIGATA CASALE)
+            "58019",  // VIA DELLE ALPI GIULIE 23 (SCUOLA DON MILANI)
+            "58018",  // VIA DELLE ALPI GIULIE 27 (SCUOLA)
+            "58010",  // VIA DELLE ALPI GIULIE 1 (CABINA ELETTRICA ACEGAS)
+            "56006",  // VIA FLAVIA 84
+            "58006",  // VIA DELLE ALPI GIULIE 1
+            "58002",  // VIA DELLE ALPI GIULIE 2 (PISCINA)
+            "58005",  // VIA DELLE ALPI GIULIE (ANGOLO VIA MONTE PERALBA)
+            "58011",  // VIA DELLE ALPI GIULIE (ANGOLO VIA MONTE PERALBA)
+            "58012",  // VIA DELLE ALPI GIULIE 2 (PISCINA)
+            "52004",  // STRADA DI FIUME 419 (ANGOLO VIA NICOLICH)
+            "58003",  // VIA DELLE ALPI GIULIE 5 (GRATTACIELO)
+            "58009",  // VIA DELLE ALPI GIULIE 12 (ANGOLO VIA DEL MONTASIO)
+            "58015",  // VIA GREGO 32/1 (ANGOLO VIA SILLANI)
+            "52020",  // VIA DEL BOTRO 32
+            "52019",  // VIA DEL BOTRO 21
+            "58007",  // VIA DELLE ALPI GIULIE 12 (ANGOLO VIA DEL MONTASIO)
+            "58004",  // VIA DELLE ALPI GIULIE (PALO ELETTRICO 226)
+            "53019",  // STRADA DI FIUME 300 (ANGOLO VIA DEL CASTELLIERE)
+            "58016",  // VIA GREGO (ANGOLO VIA SILLANI)
+            "52021",  // STRADA DI FIUME 302
+            "58017",  // VIA RIO STORTO (ANGOLO VIA DEL MONTASIO)
+            "58008",  // VIA DELLE ALPI GIULIE (CHIOSCO IN CEMENTO)
+            "58014",  // VIA RIO STORTO (ANGOLO VIA DEL MONTASIO)
+            "57009",  // VIA FORTI 30 (SCUOLA)
+            "56004",  // STRADA PROVINCIALE 12 DELLA ROSANDRA 2 (MAGAZZINO OBI)
+            "58013",  // VIA GREGO 38 (ANGOLO VIA SERGIO FORTI)
+            "57011",  // VIA GREGO 38 (ANGOLO VIA FORTI)
+            "57012",  // VIA FORTI 15 (SCUOLA)
+            "52014",  // CATTINARA (OSPEDALE)
+            "57008",  // VIA FORTI 54 (PARCO GIOCHI)
+            "56030",  // VIA MORPURGO 12 (ANGOLO VIA PETRACCO)
+            "57007",  // VIA FORTI 70
+            "57013",  // VIA FORTI 74
+            "56027"  // STRADA PROVINCIALE 12 DELLA ROSANDRA 50 (PANE QUOTIDIANO)
+        ],
+        "directions": [
+            "LARGO BARRIERA",
+            "CATTINARA OSPEDALE"
+        ]
     },
     {
-        "code":  "38",
-        "label":  "38",
-        "stops":  [
-                      "10009",
-                      "24025",
-                      "24026",
-                      "24030",
-                      "24027"
-                  ],
-        "directions":  [
-                           "PIAZZA OBERDAN",
-                           "VIA BONOMEA (SISSA)"
-                       ]
+        "code": "38",
+        "label": "38",
+        "terminals": ["03018", "24015", "24016", "24017", "24018", "24019", "24020", "24021", "24022", "24023", "24024", "24025", "24026", "24027", "24028", "24029", "24030", "24031", "24032", "24033", "24034"],
+        "stops": [
+            "10009",  // TRIESTE PIAZZA GUGLIELMO OBERDAN 7 (ANGOLO VIA XXIV MAGGIO)
+            "03018",  // PIAZZA OBERDAN
+            "11006",  // VIA UDINE 6 (INPS)
+            "11001",  // VIA UDINE 7 (SEDE INPS)
+            "11005",  // CAMPO DEL BELVEDERE 6
+            "11002",  // CAMPO DEL BELVEDERE 3
+            "11004",  // VIA UDINE 44/A (ANGOLO VIA TOR SAN PIERO)
+            "11003",  // VIA UDINE 63 (ANGOLO VIA TOR SAN PIERO)
+            "23012",  // VIA UDINE 83 (ANGOLO VIA DEI BARBARIGA)
+            "23010",  // VIA UDINE 87 (ANGOLO VIA DEI BARBARIGA)
+            "23011",  // SALITA DI GRETTA 1/1 (ANGOLO VIA DEI GIACINTI)
+            "24004",  // SALITA DI GRETTA 1/1 (ANGOLO VIA DEI GIACINTI)
+            "24012",  // VIA AL CISTERNONE 9
+            "24038",  // VIA AL CISTERNONE 2
+            "24037",  // VIA VENZONE 1 (ANGOLO VIA AL CISTERNONE)
+            "24013",  // VIA VENZONE 3 (ANGOLO VIA AL CISTERNONE)
+            "24036",  // VIA VENZONE 7 (LARGO OSOPPO)
+            "24014",  // VIA VENZONE 7 (LARGO OSOPPO)
+            "24035",  // VIA GEMONA 13
+            "24015",  // VIA BONOMEA 123 (UFFICIO POSTALE)
+            "24034",  // VIA BONOMEA 42 (ANGOLO VIA CIVIDALE)
+            "24016",  // VIA BONOMEA 177 (ANGOLO VIA CIVIDALE)
+            "24033",  // VIA BONOMEA 185 (ANGOLO VIA LUZZATTO)
+            "24017",  // VIA BONOMEA 189 (ANGOLO VIA LUZZATTO)
+            "24032",  // VIA BONOMEA 213 (ERTA DEI PRUNI)
+            "24018",  // VIA BONOMEA 213 (ERTA DEI PRUNI)
+            "24019",  // VIA BONOMEA 108 (ANGOLO VIA PIANI)
+            "24021",  // VIA BONOMEA 221 (ANGOLO VIA PIANI)
+            "24020",  // VIA BONOMEA 108/21
+            "24030",  // VIA BONOMEA 108/21
+            "24031",  // VIA BONOMEA 120 (ANGOLO VIA TERSTENICO)
+            "24029",  // VIA BONOMEA 120 (ANGOLO VIA TERSTENICO)
+            "24022",  // VIA BONOMEA 223/1 (ANGOLO VIA TOSCANINI)
+            "24028",  // VIA BONOMEA 174/3 (ANGOLO VIA STRADIVARI)
+            "24023",  // VIA BONOMEA 249
+            "24027",  // VIA BONOMEA 249
+            "24024",  // VIA BONOMEA 184 (SEMAFORO, PONTE FERROVIARIO)
+            "24026",  // VIA BONOMEA 184 (PONTE FERROVIARIO)
+            "24025"  // VIA BONOMEA (SISSA)
+        ],
+        "directions": [
+            "PIAZZA OBERDAN",
+            "VIA BONOMEA"
+        ]
     },
     {
-        "code":  "39/",
-        "label":  "39/",
-        "stops":  [
-                      "52016",
-                      "D6072",
-                      "D3020",
-                      "D3022",
-                      "D3023",
-                      "D3024",
-                      "D3025"
-                  ],
-        "directions":  [
-                           "CATTINARA (OSPEDALE)",
-                           "AURISINA MUNICIPIO"
-                       ]
+        "code": "39/",
+        "label": "39/",
+        "terminals": ["52016", "D6072"],
+        "stops": [
+            "59008",  // VIA GRUDEN 74 (LOCALIT� BASOVIZZA, CHIESA)
+            "59001",  // VIA GRUDEN 1 (LOCALIT� BASOVIZZA, CHIESA)
+            "59009",  // VIA GRUDEN 25 (LOCALIT� BASOVIZZA, SCUOLA)
+            "59010",  // VIA GRUDEN 32 (LOCALIT� BASOVIZZA, SCUOLA)
+            "59007",  // STRADA PROVINCIALE 1 DEL CARSO (PARCHEGGIO BASOVIZZA)
+            "59002",  // STRADA PROVINCIALE 1 DEL CARSO (PARCHEGGIO BASOVIZZA)
+            "59006",  // STRADA PROVINCIALE 1 DEL CARSO (CIMITERO)
+            "59003",  // STRADA PROVINCIALE 1 DEL CARSO (CIMITERO)
+            "59013",  // STRADA PROVINCIALE 1 DEL CARSO 173 (PADRICIANO)
+            "59012",  // STRADA PROVINCIALE 1 DEL CARSO 173 (PADRICIANO)
+            "59005",  // STRADA PROVINCIALE 1 DEL CARSO 228
+            "54014",  // STRADA STATALE 14 PER BASOVIZZA 112 (EX DAZIO)
+            "59004",  // STRADA PROVINCIALE 1 DEL CARSO 228
+            "54013",  // STRADA STATALE 14 PER BASOVIZZA 112
+            "53009",  // STRADA DI FIUME (SUPERMERCATO ZAZZERON)
+            "53017",  // STRADA DI FIUME 525 (OSPEDALE DI CATTINARA)
+            "D0002",  // STRADA PROVINCIALE 1 DEL CARSO 262 (EX CAMPO PROFUGHI)
+            "D0015",  // STRADA PROVINCIALE 1 DEL CARSO 262 (EX CAMPO PROFUGHI)
+            "52016",  // CATTINARA (OSPEDALE)
+            "D0003",  // STRADA PROVINCIALE 1 DEL CARSO 59 (CHIESA DI PADRICIANO)
+            "D0014",  // STRADA PROVINCIALE 1 DEL CARSO 62 (CHIESA DI PADRICIANO)
+            "D0013",  // STRADA PROVINCIALE 1 DEL CARSO 18
+            "D0011",  // STRADA PROVINCIALE 1 DEL CARSO 204
+            "D0012",  // STRADA PROVINCIALE 1 DEL CARSO 125 (CAMPI TENNIS)
+            "D1001",  // STRADA PROVINCIALE 1 DEL CARSO 124 (TREBICIANO, TENNIS)
+            "D1010",  // STRADA PROVINCIALE 1 DEL CARSO 239
+            "D1011",  // STRADA PROVINCIALE 1 DEL CARSO 239
+            "D1008",  // STRADA PROVINCIALE 1 DEL CARSO 178 (TREBICIANO)
+            "D1002",  // STRADA PROVINCIALE 1 DEL CARSO 226 (TREBICIANO)
+            "D1007",  // STRADA PROVINCIALE 1 DEL CARSO (MONUMENTO DI TREBICIANO)
+            "D1003",  // STRADA PROVINCIALE 1 DEL CARSO 29 (MONUMENTO DI TREBICIANO)
+            "D1006",  // STRADA PROVINCIALE 1 DEL CARSO 2 (TREBICIANO)
+            "D1009",  // STRADA PROVINCIALE 1 DEL CARSO 2 (TREBICIANO)
+            "D1004",  // STRADA PROVINCIALE 1 DEL CARSO (CIMITERO DI TREBICIANO)
+            "D1005",  // STRADA PROVINCIALE 1 DEL CARSO (CIMITERO DI TREBICIANO)
+            "D1013",  // STRADA PROVINCIALE 1 DEL CARSO 274 (BANNE)
+            "D1012",  // STRADA PROVINCIALE 1 DEL CARSO 274 (BANNE)
+            "D2005",  // VIA DI BASOVIZZA 60 (SCUOLA)
+            "D2001",  // VIA DI BASOVIZZA 60 (SCUOLA DI BANNE)
+            "D3019",  // VIA DI BASOVIZZA 40
+            "D3026",  // VIA DI BASOVIZZA 37
+            "D3025",  // VIA DI BASOVIZZA 29/13
+            "D3020",  // VIA DI BASOVIZZA 28/1
+            "D3044",  // VIA DI BASOVIZZA 24
+            "D3043",  // VIA DI BASOVIZZA 29
+            "D3024",  // VIA DI BASOVIZZA 7 (SCUOLA DI OPICINA)
+            "D3023",  // STRADA PER VIENNA 9 (BAR)
+            "D3022",  // STRADA PER VIENNA 14
+            "D3011",  // VIA DI PROSECCO 10 (ANGOLO VIA DOBERD�)
+            "D3058",  // VIA DI PROSECCO 37 (CHIESA)
+            "D3036",  // VIA DI PROSECCO 233 (ANGOLO STRADA PROVINCIALE 1 DEL CARSO)
+            "D3010",  // VIA DI PROSECCO 44 (ANGOLO STRADA PROVINCIALE 1 DEL CARSO)
+            "D3041",  // STRADA PROVINCIALE 1 DEL CARSO (CASERME)
+            "D3009",  // STRADA PROVINCIALE 1 DEL CARSO (CASERMA)
+            "D3047",  // STRADA PROVINCIALE 1 DEL CARSO (OPICINA 1249)
+            "D3046",  // STRADA PROVINCIALE 1 DEL CARSO 1249 (OPICINA)
+            "D4037",  // STRADA PROVINCIALE 35 DI OPICINA 29 (CENTRO COMMERCIALE)
+            "D4009",  // STRADA VICENTINA PER MONTE GRISA (DIREZIONE OPICINA)
+            "D4011",  // STRADA VICENTINA (PER MONTE GRISA, DIREZIONE PROSECCO)
+            "D4012",  // BORGO SAN NAZARIO
+            "D4008",  // BORGO SAN NAZARIO
+            "D4013",  // BORGO SAN NAZARIO 100/1
+            "D4007",  // BORGO SAN NAZARIO 70 (CENTRO PER ANZIANI)
+            "D4014",  // BORGO SAN NAZARIO 50 (SCUOLA DELL'INFANZIA)
+            "D4006",  // BORGO SAN NAZARIO 73 (SCUOLA DELL'INFANZIA)
+            "D4005",  // PROSECCO
+            "D4044",  // DEVINCINA
+            "D4034",  // DEVINCINA
+            "D4015",  // PROSECCO
+            "D4032",  // LOCALIT� PROSECCO 162 (FARMACIA)
+            "D4021",  // LOCALIT� PROSECCO 316 (FARMACIA)
+            "D4031",  // STRADA PROVINCIALE 1 DEL CARSO (MOBILIFICIO)
+            "D4022",  // STRADA PROVINCIALE 1 DEL CARSO (MOBILIFICIO)
+            "D4030",  // STRADA PROVINCIALE 1 DEL CARSO 16 (CAMPO SACRO)
+            "D4023",  // STRADA PROVINCIALE 1 DEL CARSO 16 (CAMPO SACRO)
+            "D7010",  // STRADA PROVINCIALE 1 DEL CARSO 9
+            "D7001",  // STRADA PROVINCIALE 1 DEL CARSO 8
+            "D7009",  // STRADA PROVINCIALE 1 DEL CARSO 14 (TRATTORIA AI PINI)
+            "D7002",  // STRADA PROVINCIALE 1 DEL CARSO 13
+            "D7008",  // STRADA PROVINCIALE 1 DEL CARSO 15
+            "D7003",  // STRADA PROVINCIALE 1 DEL CARSO 15
+            "D7056",  // STRADA PROVINCIALE 1 DEL CARSO 8
+            "D7057",  // STRADA PROVINCIALE 1 DEL CARSO 8
+            "D7007",  // STRADA PROVINCIALE 1 DEL CARSO 24
+            "D7004",  // STRADA PROVINCIALE 1 DEL CARSO 21
+            "D7006",  // STRADA PROVINCIALE 1 DEL CARSO 16 (CHIOSCO)
+            "D7005",  // STRADA PROVINCIALE 1 DEL CARSO 16 (CHIOSCO)
+            "D4029",  // SANTA CROCE
+            "D4024",  // LOCALIT� SANTA CROCE 10
+            "D4028",  // LOCALIT� SANTA CROCE 4
+            "D4025",  // LOCALIT� SANTA CROCE 4 (STRADA PROVINCIALE 1)
+            "D4027",  // STRADA PROVINCIALE 1 DEL CARSO 354 (SCUOLA DI SANTA CROCE)
+            "D4026",  // STRADA PROVINCIALE 1 DEL CARSO 354 (SCUOLA DI SANTA CROCE)
+            "D6104",  // STRADA PROVINCIALE 1 DEL CARSO 1/H
+            "D6102",  // STRADA PROVINCIALE 1 DEL CARSO 1/F
+            "D6080",  // STRADA PROVINCIALE 1 DEL CARSO 168 (AURISINA)
+            "D6022",  // STRADA PROVINCIALE 1 DEL CARSO 167 (PIZZERIA, AURISINA)
+            "D6079",  // STRADA PROVINCIALE 1 DEL CARSO 151 (AURISINA)
+            "D6023",  // STRADA PROVINCIALE 1 DEL CARSO 142 (AURISINA)
+            "D6077",  // STRADA PROVINCIALE 1 DEL CARSO 139 (AURISINA)
+            "D6025",  // STRADA PROVINCIALE 1 DEL CARSO 125 (AURISINA)
+            "D6076",  // STRADA PROVINCIALE 1 DEL CARSO 129 (AURISINA)
+            "D6075",  // STRADA PROVINCIALE 1 DEL CARSO 85 (SCUOLA DI AURISINA)
+            "D6026",  // STRADA PROVINCIALE 1 DEL CARSO 85 (SCUOLA DI AURISINA)
+            "D6074",  // STRADA PROVINCIALE 1 DEL CARSO 79/L (AURISINA CAVE)
+            "D6027",  // STRADA PROVINCIALE 1 DEL CARSO 82/M (STAZIONE CARABINIERI)
+            "D6073",  // LOCALIT� AURISINA CAVE 78
+            "D6028",  // LOCALIT� AURISINA CAVE 82
+            "D6072",  // AURISINA MUNICIPIO
+            "D6071",  // LOCALIT� AURISINA CAVE 28 (STAZIONE FERROVIARIA)
+            "D6070",  // STRADA PROVINCIALE 1 DEL CARSO 65
+            "D6069",  // STRADA PROVINCIALE 1 DEL CARSO 55
+            "D6068",  // STRADA PROVINCIALE 1 DEL CARSO 23/A
+            "D6067",  // STRADA PROVINCIALE 1 DEL CARSO (BIVIO BORGO SAN MAURO)
+            "D6106"  // BORGO SAN MAURO
+        ],
+        "directions": [
+            "CATTINARA OSPEDALE",
+            "AURISINA MUNICIPIO"
+        ]
     },
     {
-        "code":  "40",
-        "label":  "40",
-        "stops":  [
-                      "D9015",
-                      "04011",
-                      "10005",
-                      "42001",
-                      "56028",
-                      "D9009",
-                      "56026",
-                      "56027",
-                      "03001",
-                      "42006",
-                      "08013",
-                      "08009"
-                  ],
-        "directions":  [
-                           "DOLINA",
-                           "STAZIONE FERROVIARIA"
-                       ]
+        "code": "40",
+        "label": "40",
+        "terminals": ["04011", "D9015"],
+        "stops": [
+            "13005",  // RIVA SAURO 24 (ACQUARIO, MUSEO REVOLTELLA)
+            "27009",  // TRIESTE LARGO IRNERI (LLOYD)
+            "04011",  // STAZIONE FERROVIARIA
+            "05012",  // PIAZZA TOMMASEO
+            "27008",  // PASSEGGIO SANT'ANDREA 12 (VIA DELLE FIAMME GIALLE 6)
+            "01001",  // VIA FILZI 3 (PIAZZA SANT'ANTONIO NUOVO, PONTE ROSSO)
+            "03001",  // PIAZZA OBERDAN
+            "10005",  // VIA CARDUCCI (REGIONE)
+            "08013",  // VIA CARDUCCI 22 (ANGOLO VIA FRANCESCO CRISPI)
+            "08009",  // VIA CARDUCCI 39 (MERCATO COPERTO)
+            "08008",  // LARGO BARRIERA
+            "28003",  // VIALE CAMPI ELISI
+            "29020",  // VIA CADUTI SUL LAVORO (TRIESTE TRASPORTI)
+            "17007",  // VIALE GABRIELE D'ANNUNZIO 12 (LARGO SONNINO)
+            "17005",  // VIALE GABRIELE D'ANNUNZIO 14 (LARGO SONNINO)
+            "29016",  // VIA SVEVO
+            "34004",  // VIALE GABRIELE D'ANNUNZIO 79 (PIAZZA DEI FORAGGI)
+            "34002",  // PIAZZA DEI FORAGGI 7
+            "41013",  // VIA SALATA 3 (SUPERMERCATO)
+            "41026",  // VIA BAIAMONTI 68 (ANGOLO VIA DELL'ISTRIA)
+            "41012",  // VIA SALATA 6 (CHIOSCO MURATURA)
+            "42001",  // VIA DELL'ISTRIA 206 (CIMITERO)
+            "41003",  // VIA DELL'ISTRIA (CIMITERO)
+            "41004",  // PIAZZALE VALMAURA
+            "41014",  // VIA FLAVIA 1 (VALMAURA, STADIO GREZAR, STADIO ROCCO)
+            "41011",  // VIA FLAVIA 1 (VALMAURA, STADIO GREZAR, STADIO ROCCO)
+            "56001",  // VIA FLAVIA (PIAZZALE CAGNI)
+            "56026",  // VIA MAFALDA DI SAVOIA (IMBOCCO VIA CABOTO)
+            "56018",  // VIA CABOTO (PIAZZALE CAGNI)
+            "42007",  // VIA FLAVIA 14 (PIAZZALE CAGNI)
+            "56008",  // VIA CABOTO 10 (ORION, UFFICIO POSTALE)
+            "56017",  // VIA CABOTO 10 (ORION, UFFICIO POSTALE)
+            "42006",  // VIA FLAVIA 23/1 (INCUBATORE BIC)
+            "56009",  // VIA CABOTO 17 (ITALCEMENTI)
+            "56016",  // VIA CABOTO 16
+            "51006",  // VIA FLAVIA 58 (ANGOLO VIA DEI GRAVISI)
+            "56015",  // VIA CABOTO 20/2
+            "56010",  // VIA CABOTO 20/2
+            "51003",  // VIA FLAVIA 45 (ANGOLO VIA DEI GRAVISI)
+            "56011",  // VIA CABOTO 29 (ANGOLO VIA QUERINI)
+            "56014",  // VIA CABOTO 28 (ANGOLO VIA QUERINI)
+            "56006",  // VIA FLAVIA 84
+            "56012",  // VIA CABOTO (ANGOLO VIA MALASPINA)
+            "56002",  // VIA FLAVIA 59
+            "56024",  // VIA FLAVIA 126 (DIACO)
+            "56020",  // VIA FLAVIA 126 (DIACO)
+            "56023",  // VIA FLAVIA 118 (ILLYCAFF�)
+            "56021",  // VIA FLAVIA 114 (ILLYCAFF�)
+            "56007",  // STRADA DI MONTE D'ORO 14 (ZONA INDUSTRIALE EST)
+            "56027",  // STRADA PROVINCIALE 12 DELLA ROSANDRA 50 (PANE QUOTIDIANO)
+            "D9003",  // STRADA DI MONTE D'ORO 345 (LOCALIT� FRANCOVEC)
+            "56028",  // DOMIO
+            "E1007",  // VIA RESSEL 6 (ZONA INDUSTRIALE)
+            "E1015",  // VIA MUGGIA 19
+            "E1005",  // VIA MUGGIA 19
+            "E1002",  // VIA RESSEL 6 (ZONA INDUSTRIALE)
+            "E1003",  // VIA RESSEL 5 (ZONA INDUSTRIALE)
+            "D9002",  // STRADA PROVINCIALE 12 DELLA ROSANDRA 269 (DOMIO)
+            "E1006",  // VIA RESSEL 1 (ZONA INDUSTRIALE)
+            "E1004",  // VIA RESSEL 1 (ZONA INDUSTRIALE)
+            "E1014",  // VIA MUGGIA 4
+            "E1013",  // VIA MUGGIA 15 (ANGOLO VIA TRAVNIK)
+            "E1012",  // VIA TRAVNIK 18/4 (ZONA INDUSTRIALE)
+            "E1008",  // VIA TRAVNIK 21 (ZONA INDUSTRIALE)
+            "D9001",  // STRADA PROVINCIALE 12 DELLA ROSANDRA 137 (LACOTISCE)
+            "E1011",  // VIA TRAVNIK 12 (ZONA INDUSTRIALE)
+            "E1009",  // VIA TRAVNIK 3 (ZONA INDUSTRIALE, TERZA TRASVERSALE EST)
+            "E1010",  // STRADA PROVINCIALE 12 DELLA ROSANDRA 137 (VIA TRAVNIK)
+            "D9063",  // STRADA PROVINCIALE 12 DELLA ROSANDRA (MATTONAIA 396)
+            "D9004",  // STRADA PROVINCIALE 12 DELLA ROSANDRA 306 (MATTONAIA)
+            "D9020",  // STRADA PROVINCIALE 12 DELLA ROSANDRA (MATTONAIA 542)
+            "D9007",  // STRADA PROVINCIALE 12 DELLA ROSANDRA 574 (MATTONAIA)
+            "E1001",  // TRIESTE PIAZZALE WARTSILA (DOLINA)
+            "D9024",  // STRADA PROVINCIALE 13 DI CARESANA 106 (TRATTORIA TUL)
+            "D9019",  // STRADA PROVINCIALE 12 DELLA ROSANDRA 355 (LOCALIT� DOLINA)
+            "D9059",  // STRADA PROVINCIALE 13 DI CARESANA (SERBATOI)
+            "D9005",  // STRADA PROVINCIALE 12 DELLA ROSANDRA 355 (ROTATORIA)
+            "D9009",  // BAGNOLI
+            "D9010",  // STRADA PROVINCIALE 11 DI PREBENICO 373 (TEATRO SLOVENO)
+            "D9008",  // STRADA PROVINCIALE 11 DI PREBENICO 266 (TEATRO SLOVENO)
+            "D9006",  // STRADA PROVINCIALE 12 DELLA ROSANDRA 200
+            "D9011",  // LOCALIT� DOLINA 462 (MUNICIPIO DI DOLINA)
+            "D9040",  // LOCALIT� DOLINA 270 (CENTRO SPORTIVO)
+            "D9012",  // LOCALIT� DOLINA 200 (ANGOLO SP 12 DELLA ROSANDRA)
+            "D9018",  // STRADA PROVINCIALE 11 DI PREBENICO 220
+            "D9013",  // STRADA PROVINCIALE 11 DELLA ROSANDRA 216 (DOLINA)
+            "D9021",  // STRADA PROVINCIALE 11 DI PREBENICO 96 (PREBENEG)
+            "D9014",  // LOCALIT� DOLINA 230 (PIAZZA)
+            "D9016",  // DOLINA (CIMITERO DI DOLINA)
+            "D9015",  // DOLINA
+            "D9017"  // STRADA PROVINCIALE 11 DI PREBENICO (DOLINA, LAVATOIO)
+        ],
+        "directions": [
+            "STAZIONE FERROVIARIA",
+            "DOLINA"
+        ]
     },
     {
-        "code":  "41",
-        "label":  "41",
-        "stops":  [
-                      "D9009",
-                      "41024",
-                      "D9015",
-                      "42001",
-                      "04011",
-                      "57005",
-                      "56027",
-                      "42006",
-                      "41015"
-                  ],
-        "directions":  [
-                           "BAGNOLI",
-                           "VALMAURA",
-                           "DOLINA",
-                           "VIA DELL\u0027ISTRIA",
-                           "STAZIONE"
-                       ]
+        "code": "41",
+        "label": "41",
+        "terminals": ["41011", "41014", "D9022", "D9023", "D9025", "D9026", "D9027", "D9028", "D9029", "D9031", "D9035", "D9044", "D9045", "D9046", "D9047", "D9050", "D9070", "D9071", "D9009"],
+        "stops": [
+            "04011",  // STAZIONE FERROVIARIA
+            "03001",  // PIAZZA OBERDAN
+            "10005",  // VIA CARDUCCI (REGIONE)
+            "08009",  // VIA CARDUCCI 39 (MERCATO COPERTO)
+            "08008",  // LARGO BARRIERA
+            "17007",  // VIALE GABRIELE D'ANNUNZIO 12 (LARGO SONNINO)
+            "17005",  // VIALE GABRIELE D'ANNUNZIO 14 (LARGO SONNINO)
+            "34004",  // VIALE GABRIELE D'ANNUNZIO 79 (PIAZZA DEI FORAGGI)
+            "34002",  // PIAZZA DEI FORAGGI 7
+            "41013",  // VIA SALATA 3 (SUPERMERCATO)
+            "41012",  // VIA SALATA 6 (CHIOSCO MURATURA)
+            "42001",  // VIA DELL'ISTRIA 206 (CIMITERO)
+            "41003",  // VIA DELL'ISTRIA (CIMITERO)
+            "41014",  // VIA FLAVIA 1 (VALMAURA, STADIO GREZAR, STADIO ROCCO)
+            "41011",  // VIA FLAVIA 1 (VALMAURA, STADIO GREZAR, STADIO ROCCO)
+            "56001",  // VIA FLAVIA (PIAZZALE CAGNI)
+            "42007",  // VIA FLAVIA 14 (PIAZZALE CAGNI)
+            "42006",  // VIA FLAVIA 23/1 (INCUBATORE BIC)
+            "E0139",  // VIA CADUTI SUL LAVORO 2
+            "E0039",  // VIA FLAVIA DI AQUILINIA (EX RAFFINERIA)
+            "51006",  // VIA FLAVIA 58 (ANGOLO VIA DEI GRAVISI)
+            "51003",  // VIA FLAVIA 45 (ANGOLO VIA DEI GRAVISI)
+            "E0038",  // VIA FLAVIA DI AQUILINIA 12
+            "E0101",  // STRADA PROVINCIALE 13 DI CARESANA 2 (LOCALIT� NOGHERE)
+            "56006",  // VIA FLAVIA 84
+            "56002",  // VIA FLAVIA 59
+            "E0102",  // STRADA PROVINCIALE 13 DI CARESANA 7 (LOCALIT� NOGHERE)
+            "56024",  // VIA FLAVIA 126 (DIACO)
+            "56005",  // VIA FLAVIA 102 (ENEL)
+            "56023",  // VIA FLAVIA 118 (ILLYCAFF�)
+            "56003",  // STRADA PROVINCIALE 12 DELLA ROSANDRA (MAGAZZINO OBI)
+            "56007",  // STRADA DI MONTE D'ORO 14 (ZONA INDUSTRIALE EST)
+            "56004",  // STRADA PROVINCIALE 12 DELLA ROSANDRA 2 (MAGAZZINO OBI)
+            "E1007",  // VIA RESSEL 6 (ZONA INDUSTRIALE)
+            "56027",  // STRADA PROVINCIALE 12 DELLA ROSANDRA 50 (PANE QUOTIDIANO)
+            "56028",  // DOMIO
+            "57010",  // STRADA PROVINCIALE 12 DELLA ROSANDRA 56 (DOMIO)
+            "D9025",  // STRADA PROVINCIALE 20 DI SAN GIUSEPPE 157 (DOMIO)
+            "D9002",  // STRADA PROVINCIALE 12 DELLA ROSANDRA 269 (DOMIO)
+            "D9022",  // STRADA PROVINCIALE 20 DI SAN GIUSEPPE 174 (DOMIO, SCUOLA)
+            "D9023",  // STRADA PROVINCIALE 20 DI SAN GIUSEPPE 174 (SCUOLA)
+            "D9026",  // STRADA PROVINCIALE 20 DI SAN GIUSEPPE 219 (VIA GARDONI)
+            "D9001",  // STRADA PROVINCIALE 12 DELLA ROSANDRA 137 (LACOTISCE)
+            "E1010",  // STRADA PROVINCIALE 12 DELLA ROSANDRA 137 (VIA TRAVNIK)
+            "D9046",  // STRADA PROVINCIALE 20 DI SAN GIUSEPPE 161
+            "D9027",  // STRADA PROVINCIALE 20 DI SAN GIUSEPPE 161
+            "D9047",  // STRADA PROVINCIALE 20 DI SAN GIUSEPPE 192 (LOG)
+            "D9045",  // STRADA PROVINCIALE 20 DI SAN GIUSEPPE 174 (LOG)
+            "D9028",  // STRADA PROVINCIALE 20 DI SAN GIUSEPPE 204 (LOG)
+            "D9063",  // STRADA PROVINCIALE 12 DELLA ROSANDRA (MATTONAIA 396)
+            "D9029",  // STRADA PROVINCIALE 20 DI SAN GIUSEPPE 19 (LOG)
+            "D9044",  // STRADA PROVINCIALE 20 DI SAN GIUSEPPE 26 (LOG)
+            "D9004",  // STRADA PROVINCIALE 12 DELLA ROSANDRA 306 (MATTONAIA)
+            "D9050",  // STRADA PROVINCIALE 20 DI SAN GIUSEPPE (CAVALCAVIA LOG)
+            "D9020",  // STRADA PROVINCIALE 12 DELLA ROSANDRA (MATTONAIA 542)
+            "D9031",  // STRADA PROVINCIALE 20 DI SAN GIUSEPPE 1 (CIMITERO)
+            "D9007",  // STRADA PROVINCIALE 12 DELLA ROSANDRA 574 (MATTONAIA)
+            "D9024",  // STRADA PROVINCIALE 13 DI CARESANA 106 (TRATTORIA TUL)
+            "D9066",  // STRADA PROVINCIALE 11 DI PREBENICO 154/A (CHIUSA)
+            "D9061",  // STRADA PROVINCIALE 13 DI CARESANA 58 (CHIESA DI CARESANA)
+            "D9060",  // STRADA PROVINCIALE 13 DI CARESANA 152 (OSPO)
+            "D9062",  // STRADA PROVINCIALE 13 DI CARESANA (CARESANA, PIAZZA)
+            "D9075",  // STRADA PROVINCIALE 13 DI CARESANA 103
+            "D9049",  // STRADA PROVINCIALE 13 DI CARESANA 80 (CONFINE, OSPO)
+            "D9035",  // LOCALIT� SAN GIUSEPPE DELLA CHIUSA 167 (BARDE)
+            "D9059",  // STRADA PROVINCIALE 13 DI CARESANA (SERBATOI)
+            "D9070",  // STRADA PROVINCIALE 11 DI PREBENICO (BIVIO SAN GIUSEPPE)
+            "D9071",  // STRADA PROVINCIALE 11 DI PREBENICO (BIVIO SAN GIUSEPPE)
+            "D9019",  // STRADA PROVINCIALE 12 DELLA ROSANDRA 355 (LOCALIT� DOLINA)
+            "D9005",  // STRADA PROVINCIALE 12 DELLA ROSANDRA 355 (ROTATORIA)
+            "D9021",  // STRADA PROVINCIALE 11 DI PREBENICO 96 (PREBENEG)
+            "D9039",  // STRADA PROVINCIALE 11 DI PREBENICO (SANT'ANTONIO 1)
+            "D9032",  // STRADA PROVINCIALE 11 DI PREBENICO 1 (SANT'ANTONIO)
+            "D9038",  // STRADA PROVINCIALE 11 DI PREBENICO (SANT'ANTONIO 137)
+            "D9033",  // STRADA PROVINCIALE 11 DI PREBENICO  137 (SANT'ANTONIO)
+            "D9012",  // LOCALIT� DOLINA 200 (ANGOLO SP 12 DELLA ROSANDRA)
+            "D9006",  // STRADA PROVINCIALE 12 DELLA ROSANDRA 200
+            "D9011",  // LOCALIT� DOLINA 462 (MUNICIPIO DI DOLINA)
+            "D9040",  // LOCALIT� DOLINA 270 (CENTRO SPORTIVO)
+            "D9010",  // STRADA PROVINCIALE 11 DI PREBENICO 373 (TEATRO SLOVENO)
+            "D9013",  // STRADA PROVINCIALE 11 DELLA ROSANDRA 216 (DOLINA)
+            "D9036",  // STRADA PROVINCIALE 11 DI PREBENICO (BAGNOLI)
+            "D9008",  // STRADA PROVINCIALE 11 DI PREBENICO 266 (TEATRO SLOVENO)
+            "D9009",  // BAGNOLI
+            "D9034",  // STRADA PROVINCIALE 11 DI PREBENICO 62 (MOCC�)
+            "D9037",  // STRADA PROVINCIALE 11 DI PREBENICO 62 (MOCC�)
+            "D9018",  // STRADA PROVINCIALE 11 DI PREBENICO 220
+            "D9014",  // LOCALIT� DOLINA 230 (PIAZZA)
+            "D9016",  // DOLINA (CIMITERO DI DOLINA)
+            "D9015",  // DOLINA
+            "D9017"  // STRADA PROVINCIALE 11 DI PREBENICO (DOLINA, LAVATOIO)
+        ],
+        "directions": [
+            "VALMAURA",
+            "SAN GIUSEPPE",
+            "BAGNOLI"
+        ]
     },
     {
-        "code":  "42",
-        "label":  "42",
-        "stops":  [
-                      "10011",
-                      "D3045",
-                      "D3022",
-                      "24006",
-                      "23011",
-                      "23009",
-                      "23008",
-                      "24010"
-                  ],
-        "directions":  [
-                           "PIAZZA OBERDAN",
-                           "OPICINA"
-                       ]
+        "code": "42",
+        "label": "42",
+        "terminals": ["03018", "10011", "D3045"],
+        "stops": [
+            "10011",  // PIAZZA OBERDAN
+            "03018",  // PIAZZA OBERDAN
+            "04010",  // VIA GHEGA 9 (CONSERVATORIO TARTINI)
+            "11007",  // VIALE MIRAMARE 5 (PIAZZA LIBERT�, STAZIONE FERROVIARIA)
+            "12004",  // VIALE MIRAMARE 5 (STAZIONE FERROVIARIA)
+            "11008",  // VIALE MIRAMARE 19 (ANGOLO VIA ARIOSTO)
+            "12003",  // VIALE MIRAMARE 19 (VIA ARIOSTO)
+            "23009",  // VIA SANTA TERESA 1 (LARGO ROIANO, AGENZIA DELLE ENTRATE)
+            "23008",  // VIA SANTA TERESA 4 (LARGO ROIANO)
+            "47013",  // VIA CANTU'
+            "23011",  // SALITA DI GRETTA 1/1 (ANGOLO VIA DEI GIACINTI)
+            "24004",  // SALITA DI GRETTA 1/1 (ANGOLO VIA DEI GIACINTI)
+            "21001",  // VIA CANT� 34 (ANGOLO VIA GUICCIARDINI)
+            "24011",  // SALITA DI GRETTA 34 (ANGOLO VIA DEL CISTERNONE)
+            "24005",  // SALITA DI GRETTA 27 (ANGOLO VIA DEL CISTERNONE)
+            "21005",  // VIA CANT� 12 (ANGOLO VIA DEL MONTELLO)
+            "21002",  // VIA CANT� 10 (SCUOLA)
+            "47016",  // VIA CESARE CANT� 39 (SCUOLE)
+            "47001",  // VIA ALFONSO VALERIO 2
+            "39004",  // VIA FABIO SEVERO (UNIVERSIT�, PIAZZALE EUROPA)
+            "24010",  // STRADA DEL FRIULI 6 (ANGOLO VIA AQUILEIA)
+            "24006",  // STRADA DEL FRIULI 10 (ANGOLO VIA AQUILEIA)
+            "24049",  // STRADA DEL FRIULI 38
+            "24039",  // STRADA DEL FRIULI 51
+            "24048",  // STRADA DEL FRIULI 60
+            "24040",  // STRADA DEL FRIULI 101
+            "47017",  // VIA CESARE CANT� 1 (ANGOLO VICOLO DEL CASTAGNETO)
+            "39002",  // VIA FABIO SEVERO 143 (CURVA MAS�)
+            "24041",  // STRADA DEL FRIULI 107/B
+            "46001",  // VIA VALERIO 20
+            "24047",  // STRADA DEL FRIULI 86
+            "24042",  // STRADA DEL FRIULI 115/117 (FARO DELLA VITTORIA)
+            "24046",  // STRADA DEL FRIULI 119 (FARO DELLA VITTORIA)
+            "46024",  // VIA VALERIO 38 (ANGOLO CLIVO ARTEMISIO)
+            "49019",  // STRADA DEL FRIULI 106
+            "24043",  // STRADA DEL FRIULI 106
+            "46003",  // STRADA NUOVA PER OPICINA (CAVA FACCANONI)
+            "24044",  // STRADA DEL FRIULI 169
+            "46002",  // VIA VALERIO 113
+            "49018",  // STRADA DEL FRIULI 171
+            "46029",  // VIA ALFONSO VALERIO 73
+            "46004",  // STRADA NUOVA PER OPICINA 9
+            "22002",  // STRADA NUOVA PER OPICINA (CASA CANTONIERA)
+            "49017",  // STRADA DEL FRIULI 124
+            "49015",  // STRADA DEL FRIULI 150
+            "49001",  // STRADA DEL FRIULI 261 (ANGOLO VIA DEI RIGHETTI)
+            "49002",  // STRADA DEL FRIULI 293
+            "47002",  // STRADA NUOVA PER OPICINA 18
+            "46005",  // STRADA NUOVA PER OPICINA 2/1 (CASA LE BEATITUDINI)
+            "49003",  // STRADA DEL FRIULI 339 (ANGOLO VIA DELLA MANDRIA)
+            "49014",  // STRADA DEL FRIULI 166 (ANGOLO VIA DELLA MANDRIA)
+            "48001",  // STRADA NUOVA PER OPICINA 29 (ANGOLO VIA DEI BAIARDI)
+            "49013",  // STRADA DEL FRIULI 194 (ANGOLO VIA MONCOLANO)
+            "49004",  // STRADA DEL FRIULI 417 (ANGOLO VIA MONCOLANO)
+            "48007",  // STRADA NUOVA PER OPICINA 31 (DIREZIONE CONCONELLO)
+            "49006",  // STRADA DEL FRIULI 469
+            "49011",  // STRADA DEL FRIULI 216
+            "49012",  // STRADA DEL FRIULI 198
+            "49005",  // STRADA DEL FRIULI 431
+            "49021",  // STRADA DEL FRIULI 509
+            "49020",  // STRADA DEL FRIULI 505
+            "23001",  // STRADA NUOVA PER OPICINA 26 (ANGOLO VIA COMMERCIALE)
+            "49010",  // STRADA DEL FRIULI 230
+            "49007",  // STRADA DEL FRIULI 517
+            "49009",  // STRADA DEL FRIULI 236/2 (EX DAZIO)
+            "49008",  // STRADA DEL FRIULI 527 (EX DAZIO)
+            "D3001",  // STRADA NUOVA PER OPICINA 37 (CAMPEGGIO OBELISCO)
+            "D3002",  // VIA NAZIONALE 4 (SOTTOPASSO NAPOLEONICA)
+            "D5021",  // STRADA DEL FRIULI (DIREZIONE TRIESTE)
+            "D5020",  // STRADA DEL FRIULI (DIREZIONE PROSECCO)
+            "D4010",  // MONTE GRISA
+            "D4018",  // STRADA DEL FRIULI 453 (LOCALIT� CONTOVELLO)
+            "D4002",  // STRADA DEL FRIULI 453 (LOCALIT� CONTOVELLO)
+            "D4019",  // STRADA DEL FRIULI 81 (LOCALIT� CONTOVELLO)
+            "D4001",  // STRADA DEL FRIULI 83 (LOCALIT� CONTOVELLO)
+            "D4012",  // BORGO SAN NAZARIO
+            "D4008",  // BORGO SAN NAZARIO
+            "D4011",  // STRADA VICENTINA (PER MONTE GRISA, DIREZIONE PROSECCO)
+            "D4009",  // STRADA VICENTINA PER MONTE GRISA (DIREZIONE OPICINA)
+            "D4013",  // BORGO SAN NAZARIO 100/1
+            "D4017",  // LOCALIT� CONTOVELLO 201
+            "D3060",  // STRADA PROVINCIALE 35 DI OPICINA 52 (VILLAGGIO)
+            "D4003",  // STRADA DEL FRIULI 531 (LOCALIT� CONTOVELLO, SCUOLA)
+            "D4007",  // BORGO SAN NAZARIO 70 (CENTRO PER ANZIANI)
+            "D4004",  // STRADA DEL FRIULI 185 (LOCALIT� PROSECCO)
+            "D4014",  // BORGO SAN NAZARIO 50 (SCUOLA DELL'INFANZIA)
+            "D4006",  // BORGO SAN NAZARIO 73 (SCUOLA DELL'INFANZIA)
+            "D4016",  // LOCALIT� PROSECCO 186 (SCUOLA MEDIA)
+            "D3045",  // OPICINA
+            "D2005",  // VIA DI BASOVIZZA 60 (SCUOLA)
+            "D3026",  // VIA DI BASOVIZZA 37
+            "D3025",  // VIA DI BASOVIZZA 29/13
+            "D3043",  // VIA DI BASOVIZZA 29
+            "D4005",  // PROSECCO
+            "D4032",  // LOCALIT� PROSECCO 162 (FARMACIA)
+            "D4033",  // VIA SAN NAZARIO
+            "D3022",  // STRADA PER VIENNA 14
+            "D3023",  // STRADA PER VIENNA 9 (BAR)
+            "D4015",  // PROSECCO
+            "D3011",  // VIA DI PROSECCO 10 (ANGOLO VIA DOBERD�)
+            "D4044",  // DEVINCINA
+            "D3024",  // VIA DI BASOVIZZA 7 (SCUOLA DI OPICINA)
+            "D3058",  // VIA DI PROSECCO 37 (CHIESA)
+            "D3036",  // VIA DI PROSECCO 233 (ANGOLO STRADA PROVINCIALE 1 DEL CARSO)
+            "D3010",  // VIA DI PROSECCO 44 (ANGOLO STRADA PROVINCIALE 1 DEL CARSO)
+            "D4046",  // DEVINCINA
+            "D3009",  // STRADA PROVINCIALE 1 DEL CARSO (CASERMA)
+            "D4031",  // STRADA PROVINCIALE 1 DEL CARSO (MOBILIFICIO)
+            "D4036",  // DEVINCINA
+            "D3041",  // STRADA PROVINCIALE 1 DEL CARSO (CASERME)
+            "D4037",  // STRADA PROVINCIALE 35 DI OPICINA 29 (CENTRO COMMERCIALE)
+            "D4038",  // STRADA PROVINCIALE 35 DI OPICINA 29 (CENTRO COMMERCIALE)
+            "D3046",  // STRADA PROVINCIALE 1 DEL CARSO 1249 (OPICINA)
+            "D3047",  // STRADA PROVINCIALE 1 DEL CARSO (OPICINA 1249)
+            "D3034",  // VIA DI MONRUPINO 22
+            "D7063",  // STRADA PROVINCIALE 29 DI BORGO GROTTA GIGANTE (CAMPO SPORTIV
+            "D3035",  // STRADA PER VIENNA 85 (POLIGONO)
+            "D7015",  // STRADA PROVINCIALE DI BORGO GROTTA GIGANTE (CAMPO SPORTIVO)
+            "D3030",  // VIA DI MONRUPINO 27
+            "D3032",  // STRADA PER VIENNA 84
+            "D4030",  // STRADA PROVINCIALE 1 DEL CARSO 16 (CAMPO SACRO)
+            "D7010",  // STRADA PROVINCIALE 1 DEL CARSO 9
+            "D3039",  // VIA DI MONRUPINO 85
+            "D7058",  // LOCALIT� BORGO GROTTA GIGANTE (EX CASERMA DARDI)
+            "D7059",  // LOCALIT� BORGO GROTTA GIGANTE (EX CASERMA DARDI)
+            "D3040",  // VIA DI MONRUPINO 85
+            "D7009",  // STRADA PROVINCIALE 1 DEL CARSO 14 (TRATTORIA AI PINI)
+            "D7008",  // STRADA PROVINCIALE 1 DEL CARSO 15
+            "D7014",  // LOCALIT� BORGO GROTTA GIGANTE 34 (PIAZZA)
+            "D7011",  // BORGO GROTTA GIGANTE (PIAZZA)
+            "D7057",  // STRADA PROVINCIALE 1 DEL CARSO 8
+            "D7007",  // STRADA PROVINCIALE 1 DEL CARSO 24
+            "D7006",  // STRADA PROVINCIALE 1 DEL CARSO 16 (CHIOSCO)
+            "D4029",  // SANTA CROCE
+            "D3033",  // STRADA PROVINCIALE 9 DEL VIPACCO 916 (CAMPAGNA)
+            "D3031",  // STRADA PROVINCIALE 9 DEL VIPACCO 916
+            "D4028",  // LOCALIT� SANTA CROCE 4
+            "D4027",  // STRADA PROVINCIALE 1 DEL CARSO 354 (SCUOLA DI SANTA CROCE)
+            "D7016",  // STRADA PROVINCIALE 8 DI MONRUPINO (DIREZIONE TRIESTE)
+            "D7019",  // STRADA PROVINCIALE 8 DI MONRUPINO (DIREZIONE OPICINA)
+            "D6104",  // STRADA PROVINCIALE 1 DEL CARSO 1/H
+            "D6080",  // STRADA PROVINCIALE 1 DEL CARSO 168 (AURISINA)
+            "D6079",  // STRADA PROVINCIALE 1 DEL CARSO 151 (AURISINA)
+            "D6077",  // STRADA PROVINCIALE 1 DEL CARSO 139 (AURISINA)
+            "D6072",  // AURISINA MUNICIPIO
+            "D6076",  // STRADA PROVINCIALE 1 DEL CARSO 129 (AURISINA)
+            "D6073",  // LOCALIT� AURISINA CAVE 78
+            "D6074",  // STRADA PROVINCIALE 1 DEL CARSO 79/L (AURISINA CAVE)
+            "D8008",  // STRADA REGIONALE 58 DELLA CARNIOLA 20 (CAMPEGGIO EUROPA)
+            "D6075",  // STRADA PROVINCIALE 1 DEL CARSO 85 (SCUOLA DI AURISINA)
+            "D8018",  // LOCALIT� FERNETTI (CONFINE DI STATO)
+            "D8009",  // LOCALIT� FERNETTI (CONFINE DI STATO)
+            "D8016",  // STRADA PROVINCIALE 9 DEL VIPACCO 53 (MONRUPINO)
+            "D8001",  // STRADA PROVINCIALE 9 DEL VIPACCO 51 (MONRUPINO)
+            "D8017",  // STRADA PER FERNETTI (MONRUPINO, DIREZIONE OPICINA)
+            "D8010",  // STRADA PER FERNETTI (MONRUPINO, DIREZIONE PIAZZA OBERDAN)
+            "D8020",  // STRADA PROVINCIALE 8 DI MONRUPINO 146
+            "D8015",  // STRADA PROVINCIALE 8 DI MONRUPINO 42 (CAVA DI COL)
+            "D8003",  // STRADA PROVINCIALE 8 DI MONRUPINO 50 (CIMITERO DI COL)
+            "D8014",  // STRADA PROVINCIALE 8 DI MONRUPINO 40 (COL)
+            "D8004",  // STRADA PROVINCIALE 8 DI MONRUPINO 40 (MUNICIPIO DI COL)
+            "D8007",  // STRADA PROVINCIALE 8 DI MONRUPINO (BIVIO MONRUPINO)
+            "D8019",  // STRADA PROVINCIALE 8 DI MONRUPINO 103 (REPEN)
+            "D8006",  // STRADA PROVINCIALE 8 DI MONRUPINO (MONUMENTO DI REPEN)
+            "D8011",  // STRADA PROVINCIALE 8 DI MONRUPINO 95 (GIRASOLI)
+            "D8012",  // STRADA PROVINCIALE 8 DI MONRUPINO (MONUMENTO REPEN)
+            "D8013",  // STRADA PROVINCIALE 8 DI MONRUPINO 87
+            "D8005",  // STRADA PROVINCIALE 8 DI MONRUPINO 86 (CASA DELLA CULTURA)
+            "D8002"  // LOCALIT� MONRUPINO 78 (CHIOSCO)
+        ],
+        "directions": [
+            "PIAZZA OBERDAN",
+            "OPICINA"
+        ]
     },
     {
-        "code":  "43",
-        "label":  "43",
-        "stops":  [
-                      "D6001",
-                      "D6002",
-                      "D6003",
-                      "D6004",
-                      "D6008",
-                      "D6072"
-                  ],
-        "directions":  [
-                           "CEROGLIE",
-                           "AURISINA MUNICIPIO"
-                       ]
+        "code": "43",
+        "label": "43",
+        "terminals": ["D6072", "D6001"],
+        "stops": [
+            "D4044",  // DEVINCINA
+            "D4034",  // DEVINCINA
+            "D4032",  // LOCALIT� PROSECCO 162 (FARMACIA)
+            "D4021",  // LOCALIT� PROSECCO 316 (FARMACIA)
+            "D4031",  // STRADA PROVINCIALE 1 DEL CARSO (MOBILIFICIO)
+            "D4022",  // STRADA PROVINCIALE 1 DEL CARSO (MOBILIFICIO)
+            "D7051",  // STRADA PROVINCIALE 6 DI COMENO 1 (CAMPO SACRO)
+            "D4023",  // STRADA PROVINCIALE 1 DEL CARSO 16 (CAMPO SACRO)
+            "D7001",  // STRADA PROVINCIALE 1 DEL CARSO 8
+            "D7002",  // STRADA PROVINCIALE 1 DEL CARSO 13
+            "D7050",  // STRADA PROVINCIALE 6 DI COMENO 25 (GABROVIZZA)
+            "D7013",  // STRADA PROVINCIALE 6 DI COMENO 1 (GABROVIZZA)
+            "D7003",  // STRADA PROVINCIALE 1 DEL CARSO 15
+            "D7056",  // STRADA PROVINCIALE 1 DEL CARSO 8
+            "D7004",  // STRADA PROVINCIALE 1 DEL CARSO 21
+            "D7005",  // STRADA PROVINCIALE 1 DEL CARSO 16 (CHIOSCO)
+            "D4024",  // LOCALIT� SANTA CROCE 10
+            "D4025",  // LOCALIT� SANTA CROCE 4 (STRADA PROVINCIALE 1)
+            "D4026",  // STRADA PROVINCIALE 1 DEL CARSO 354 (SCUOLA DI SANTA CROCE)
+            "D6086",  // STRADA PROVINCIALE 5 DI SAN PELAGIO 63 (PASSAGGIO LIVELLO)
+            "D6016",  // STRADA PROVINCIALE 5 DI SAN PELAGIO 64 (PASSAGGIO LIVELLO)
+            "D6102",  // STRADA PROVINCIALE 1 DEL CARSO 1/F
+            "D6085",  // STRADA PROVINCIALE 5 DI SAN PELAGIO 54 (PASSAGGIO LIVELLO)
+            "D6083",  // STRADA PROVINCIALE 5 DI SAN PELAGIO 8
+            "D6017",  // STRADA PROVINCIALE 5 DI SAN PELAGIO 54 (PASSAGGIO LIVELLO)
+            "D6019",  // STRADA PROVINCIALE 5 DI SAN PELAGIO 10/B
+            "D6082",  // STRADA PROVINCIALE 5 DI SAN PELAGIO 181/A
+            "D6020",  // STRADA PROVINCIALE 5 DI SAN PELAGIO 181/A
+            "D6084",  // STRADA PROVINCIALE 5 DI SAN PELAGIO 26 (SANATORIO)
+            "D6018",  // STRADA PROVINCIALE 5 DI SAN PELAGIO 18 (SANATORIO)
+            "D6117",  // STRADA PROVINCIALE 6 DI COMENO 12 (TERNOVA)
+            "D6021",  // STRADA PROVINCIALE 5 DI SAN PELAGIO 173/A (SCUOLA)
+            "D6015",  // STRADA PROVINCIALE 5 DI SAN PELAGIO 76
+            "D6081",  // STRADA PROVINCIALE 5 DI SAN PELAGIO 173 (SCUOLA)
+            "D6103",  // LOCALIT� AURISINA 40 (STAZIONE FERROVIARIA)
+            "D6087",  // STRADA PROVINCIALE 5 DI SAN PELAGIO 76
+            "D6080",  // STRADA PROVINCIALE 1 DEL CARSO 168 (AURISINA)
+            "D6022",  // STRADA PROVINCIALE 1 DEL CARSO 167 (PIZZERIA, AURISINA)
+            "D6079",  // STRADA PROVINCIALE 1 DEL CARSO 151 (AURISINA)
+            "D6014",  // STRADA PROVINCIALE 5 DI SAN PELAGIO 79
+            "D6023",  // STRADA PROVINCIALE 1 DEL CARSO 142 (AURISINA)
+            "D6088",  // STRADA PROVINCIALE 5 DI SAN PELAGIO 79
+            "D6077",  // STRADA PROVINCIALE 1 DEL CARSO 139 (AURISINA)
+            "D6115",  // STRADA PROVINCIALE 6 DI COMENO 16 (TERNOVA)
+            "D6108",  // TERNOVA
+            "D6076",  // STRADA PROVINCIALE 1 DEL CARSO 129 (AURISINA)
+            "D6025",  // STRADA PROVINCIALE 1 DEL CARSO 125 (AURISINA)
+            "D6095",  // LOCALIT� PREPOTTO 10/C (CENTRO)
+            "D6901",  // LOCALIT� AURISINA 16 (SCUOLA)
+            "D6093",  // PREPOTTO
+            "D6013",  // STRADA PROVINCIALE 5 DI SAN PELAGIO 1/B
+            "D6089",  // STRADA PROVINCIALE 5 DI SAN PELAGIO 1/B
+            "D6075",  // STRADA PROVINCIALE 1 DEL CARSO 85 (SCUOLA DI AURISINA)
+            "D6026",  // STRADA PROVINCIALE 1 DEL CARSO 85 (SCUOLA DI AURISINA)
+            "D6094",  // LOCALIT� PREPOTTO 3
+            "D6092",  // LOCALIT� PREPOTTO 3
+            "D6012",  // STRADA PROVINCIALE 5 DI SAN PELAGIO 2
+            "D6090",  // STRADA PROVINCIALE 5 DI SAN PELAGIO 47/A
+            "D6074",  // STRADA PROVINCIALE 1 DEL CARSO 79/L (AURISINA CAVE)
+            "D6027",  // STRADA PROVINCIALE 1 DEL CARSO 82/M (STAZIONE CARABINIERI)
+            "D6091",  // STRADA PROVINCIALE 5 DI SAN PELAGIO (SAN PELAGIO)
+            "D6011",  // STRADA PROVINCIALE 5 DI SAN PELAGIO (SAN PELAGIO)
+            "D6110",  // STRADA PROVINCIALE 4 DI MALCHINA 45/D
+            "D6073",  // LOCALIT� AURISINA CAVE 78
+            "D6118",  // STRADA PROVINCIALE 5 DI SAN PELAGIO 43/A
+            "D6028",  // LOCALIT� AURISINA CAVE 82
+            "D6109",  // STRADA PROVINCIALE 4 DI MALCHINA 45/D
+            "D6072",  // AURISINA MUNICIPIO
+            "D6029",  // LOCALIT� AURISINA CAVE 24/B (MUNICIPIO)
+            "D6071",  // LOCALIT� AURISINA CAVE 28 (STAZIONE FERROVIARIA)
+            "D6030",  // LOCALIT� AURISINA CAVE 28 (BIVIO STAZIONE FERROVIARIA)
+            "D6070",  // STRADA PROVINCIALE 1 DEL CARSO 65
+            "D6031",  // STRADA PROVINCIALE 1 DEL CARSO 65
+            "D6114",  // LOCALIT� AURISINA CAVE 62/D
+            "D6113",  // LOCALIT� AURISINA CAVE 62/D
+            "D6069",  // STRADA PROVINCIALE 1 DEL CARSO 55
+            "D6009",  // PRECENICO
+            "D6032",  // STRADA PROVINCIALE 1 DEL CARSO 55
+            "D6096",  // STRADA PROVINCIALE 4 DI MALCHINA 4 (PRECENICO SUPERIORE)
+            "D6111",  // SLIVIA
+            "D6112",  // STRADA PROVINCIALE 31 DI SLIVIA 30/A
+            "D6097",  // STRADA PROVINCIALE 4 DI MALCHINA 17 (PRECENICO INFERIORE)
+            "D6008",  // STRADA PROVINCIALE 4 DI MALCHINA 17 (PRECENICO INFERIORE)
+            "D6068",  // STRADA PROVINCIALE 1 DEL CARSO 23/A
+            "D6033",  // STRADA PROVINCIALE 1 DEL CARSO 23/E
+            "D6067",  // STRADA PROVINCIALE 1 DEL CARSO (BIVIO BORGO SAN MAURO)
+            "D6034",  // STRADA PROVINCIALE 1 DEL CARSO (BIVIO BORGO SAN MAURO)
+            "D6106",  // BORGO SAN MAURO
+            "D6066",  // STRADA PROVINCIALE 1 DEL CARSO 25/A (SISTIANA)
+            "D6035",  // STRADA PROVINCIALE 1 DEL CARSO 25/A (SISTIANA)
+            "D6065",  // STRADA PROVINCIALE 1 DEL CARSO 27/F (SISTIANA)
+            "D6036",  // STRADA PROVINCIALE 1 DEL CARSO 29/A (SISTIANA)
+            "D6040",  // SP 4 DI MALCHINA 11/B (VISOGLIANO)
+            "D6064",  // SISTIANA 43/C (SS14,CENTRO)
+            "D6041",  // SISTIANA 45 (SS14, CENTRO)
+            "D6037",  // VISOGLIANO (STAZIONE)
+            "D6039",  // SP 4 DI MALCHINA 6 (VISOGLIANO)
+            "D6038",  // SP 4 DI MALCHINA 6/L (VISOGLIANO)
+            "D6004",  // STRADA PROVINCIALE 4 DI MALCHINA 27 (PIAZZA)
+            "D6098",  // STRADA PROVINCIALE 4 DI MALCHINA 26 (PIAZZA)
+            "D6003",  // STRADA PROVINCIALE 4 DI MALCHINA 7
+            "D6099",  // STRADA PROVINCIALE 4 DI MALCHINA 7
+            "D6063",  // SISTIANA, 55/E (SS14, FRONTE HOTEL)
+            "D6042",  // SISTIANA, 54/F (SS14, HOTEL)
+            "D6062",  // SISTIANA 60 (SS14, CAMPEGGIO)
+            "D6043",  // SISTIANA 59 (SS14, CAMPEGGIO)
+            "D6002",  // LOCALIT� CEROGLIE 3 (ANGOLO SP 4 PER SISTIANA)
+            "D6100",  // LOCALIT� CEROGLIE 3 (ANGOLO SP PER SISTIANA)
+            "D6001",  // CEROGLIE
+            "D6101",  // LOCALIT� CEROGLIE 18/A
+            "D6061",  // DUINO (FONTE 5/F , SS14, SUPERMERCATO)
+            "D6044",  // DUINO 5/F (SS14 SUPERMERCATO)
+            "D6060",  // DUINO (FRONTE CIVICO 10, SENTIERO RILKE)
+            "D6045",  // DUINO 10 (SENTIERO RILKE, DIREZIONE CARTIERA)
+            "D6046",  // DUINO 28 (SP 2, CENTRO)
+            "D6059",  // DUINO 29 (CENTRO, INGRESSO CASTELLO)
+            "D6058",  // DUINO 72/I (ANGOLO STRADA STATALE 14, ALICE)
+            "D6047",  // DUINO 76  (ANGOLO STRADA STATALE 14, ALICE)
+            "D6057",  // DUINO (FRONTE 81/C, SS14, BIVIO VILLAGGIO DEL PESCATORE)
+            "D6048",  // DUINO 81/C (SS14, BIVIO VILLAGGIO DEL PESCATORE)
+            "D6056",  // VILLAGGIO DEL PESCATORE (CENTRO)
+            "D6049",  // SAN GIOVANNI DI DUINO 11  (SS14)
+            "D6055",  // SAN GIOVANNI DI DUINO (SS14, CHIESA)
+            "D6107"  // CARTIERA DEL TIMAVO
+        ],
+        "directions": [
+            "AURISINA MUNICIPIO",
+            "CEROGLIE"
+        ]
     },
     {
-        "code":  "44",
-        "label":  "44",
-        "stops":  [
-                      "D6107",
-                      "10011",
-                      "D4015",
-                      "D6072",
-                      "23011",
-                      "23008",
-                      "24010"
-                  ],
-        "directions":  [
-                           "CARTIERA DEL TIMAVO",
-                           "PIAZZA OBERDAN"
-                       ]
+        "code": "44",
+        "label": "44",
+        "terminals": ["10011", "D6107", "24010"],
+        "stops": [
+            "10011",  // PIAZZA OBERDAN
+            "11007",  // VIALE MIRAMARE 5 (PIAZZA LIBERT�, STAZIONE FERROVIARIA)
+            "11008",  // VIALE MIRAMARE 19 (ANGOLO VIA ARIOSTO)
+            "23009",  // VIA SANTA TERESA 1 (LARGO ROIANO, AGENZIA DELLE ENTRATE)
+            "24004",  // SALITA DI GRETTA 1/1 (ANGOLO VIA DEI GIACINTI)
+            "24005",  // SALITA DI GRETTA 27 (ANGOLO VIA DEL CISTERNONE)
+            "24006",  // STRADA DEL FRIULI 10 (ANGOLO VIA AQUILEIA)
+            "24039",  // STRADA DEL FRIULI 51
+            "24040",  // STRADA DEL FRIULI 101
+            "24041",  // STRADA DEL FRIULI 107/B
+            "24042",  // STRADA DEL FRIULI 115/117 (FARO DELLA VITTORIA)
+            "24043",  // STRADA DEL FRIULI 106
+            "24044",  // STRADA DEL FRIULI 169
+            "49001",  // STRADA DEL FRIULI 261 (ANGOLO VIA DEI RIGHETTI)
+            "49002",  // STRADA DEL FRIULI 293
+            "49003",  // STRADA DEL FRIULI 339 (ANGOLO VIA DELLA MANDRIA)
+            "49004",  // STRADA DEL FRIULI 417 (ANGOLO VIA MONCOLANO)
+            "49005",  // STRADA DEL FRIULI 431
+            "49006",  // STRADA DEL FRIULI 469
+            "49020",  // STRADA DEL FRIULI 505
+            "49007",  // STRADA DEL FRIULI 517
+            "49008",  // STRADA DEL FRIULI 527 (EX DAZIO)
+            "D5020",  // STRADA DEL FRIULI (DIREZIONE PROSECCO)
+            "D4001",  // STRADA DEL FRIULI 83 (LOCALIT� CONTOVELLO)
+            "D4002",  // STRADA DEL FRIULI 453 (LOCALIT� CONTOVELLO)
+            "D4003",  // STRADA DEL FRIULI 531 (LOCALIT� CONTOVELLO, SCUOLA)
+            "D4004",  // STRADA DEL FRIULI 185 (LOCALIT� PROSECCO)
+            "D4005",  // PROSECCO
+            "D4006",  // BORGO SAN NAZARIO 73 (SCUOLA DELL'INFANZIA)
+            "D4007",  // BORGO SAN NAZARIO 70 (CENTRO PER ANZIANI)
+            "D4008",  // BORGO SAN NAZARIO
+            "D4009",  // STRADA VICENTINA PER MONTE GRISA (DIREZIONE OPICINA)
+            "D4036",  // DEVINCINA
+            "D4034",  // DEVINCINA
+            "D4021",  // LOCALIT� PROSECCO 316 (FARMACIA)
+            "D4022",  // STRADA PROVINCIALE 1 DEL CARSO (MOBILIFICIO)
+            "D4023",  // STRADA PROVINCIALE 1 DEL CARSO 16 (CAMPO SACRO)
+            "D7001",  // STRADA PROVINCIALE 1 DEL CARSO 8
+            "D7002",  // STRADA PROVINCIALE 1 DEL CARSO 13
+            "D7003",  // STRADA PROVINCIALE 1 DEL CARSO 15
+            "D7056",  // STRADA PROVINCIALE 1 DEL CARSO 8
+            "D7004",  // STRADA PROVINCIALE 1 DEL CARSO 21
+            "D7005",  // STRADA PROVINCIALE 1 DEL CARSO 16 (CHIOSCO)
+            "D4024",  // LOCALIT� SANTA CROCE 10
+            "D4025",  // LOCALIT� SANTA CROCE 4 (STRADA PROVINCIALE 1)
+            "D4026",  // STRADA PROVINCIALE 1 DEL CARSO 354 (SCUOLA DI SANTA CROCE)
+            "D6102",  // STRADA PROVINCIALE 1 DEL CARSO 1/F
+            "D6081",  // STRADA PROVINCIALE 5 DI SAN PELAGIO 173 (SCUOLA)
+            "D6082",  // STRADA PROVINCIALE 5 DI SAN PELAGIO 181/A
+            "D6083",  // STRADA PROVINCIALE 5 DI SAN PELAGIO 8
+            "D6084",  // STRADA PROVINCIALE 5 DI SAN PELAGIO 26 (SANATORIO)
+            "D6103",  // LOCALIT� AURISINA 40 (STAZIONE FERROVIARIA)
+            "D6018",  // STRADA PROVINCIALE 5 DI SAN PELAGIO 18 (SANATORIO)
+            "D6019",  // STRADA PROVINCIALE 5 DI SAN PELAGIO 10/B
+            "D6020",  // STRADA PROVINCIALE 5 DI SAN PELAGIO 181/A
+            "D6021",  // STRADA PROVINCIALE 5 DI SAN PELAGIO 173/A (SCUOLA)
+            "D6022",  // STRADA PROVINCIALE 1 DEL CARSO 167 (PIZZERIA, AURISINA)
+            "D6023",  // STRADA PROVINCIALE 1 DEL CARSO 142 (AURISINA)
+            "D6025",  // STRADA PROVINCIALE 1 DEL CARSO 125 (AURISINA)
+            "D6026",  // STRADA PROVINCIALE 1 DEL CARSO 85 (SCUOLA DI AURISINA)
+            "D6027",  // STRADA PROVINCIALE 1 DEL CARSO 82/M (STAZIONE CARABINIERI)
+            "D6028",  // LOCALIT� AURISINA CAVE 82
+            "D6072",  // AURISINA MUNICIPIO
+            "D6073",  // LOCALIT� AURISINA CAVE 78
+            "D6074",  // STRADA PROVINCIALE 1 DEL CARSO 79/L (AURISINA CAVE)
+            "D6075",  // STRADA PROVINCIALE 1 DEL CARSO 85 (SCUOLA DI AURISINA)
+            "D6076",  // STRADA PROVINCIALE 1 DEL CARSO 129 (AURISINA)
+            "D6077",  // STRADA PROVINCIALE 1 DEL CARSO 139 (AURISINA)
+            "D6079",  // STRADA PROVINCIALE 1 DEL CARSO 151 (AURISINA)
+            "D6080",  // STRADA PROVINCIALE 1 DEL CARSO 168 (AURISINA)
+            "D6104",  // STRADA PROVINCIALE 1 DEL CARSO 1/H
+            "D4027",  // STRADA PROVINCIALE 1 DEL CARSO 354 (SCUOLA DI SANTA CROCE)
+            "D4028",  // LOCALIT� SANTA CROCE 4
+            "D4029",  // SANTA CROCE
+            "D7006",  // STRADA PROVINCIALE 1 DEL CARSO 16 (CHIOSCO)
+            "D7007",  // STRADA PROVINCIALE 1 DEL CARSO 24
+            "D7057",  // STRADA PROVINCIALE 1 DEL CARSO 8
+            "D7008",  // STRADA PROVINCIALE 1 DEL CARSO 15
+            "D7009",  // STRADA PROVINCIALE 1 DEL CARSO 14 (TRATTORIA AI PINI)
+            "D7010",  // STRADA PROVINCIALE 1 DEL CARSO 9
+            "D4030",  // STRADA PROVINCIALE 1 DEL CARSO 16 (CAMPO SACRO)
+            "D4031",  // STRADA PROVINCIALE 1 DEL CARSO (MOBILIFICIO)
+            "D4032",  // LOCALIT� PROSECCO 162 (FARMACIA)
+            "D4044",  // DEVINCINA
+            "04010",  // VIA GHEGA 9 (CONSERVATORIO TARTINI)
+            "12004",  // VIALE MIRAMARE 5 (STAZIONE FERROVIARIA)
+            "12003",  // VIALE MIRAMARE 19 (VIA ARIOSTO)
+            "23008",  // VIA SANTA TERESA 4 (LARGO ROIANO)
+            "23011",  // SALITA DI GRETTA 1/1 (ANGOLO VIA DEI GIACINTI)
+            "24011",  // SALITA DI GRETTA 34 (ANGOLO VIA DEL CISTERNONE)
+            "24010",  // STRADA DEL FRIULI 6 (ANGOLO VIA AQUILEIA)
+            "24049",  // STRADA DEL FRIULI 38
+            "24048",  // STRADA DEL FRIULI 60
+            "24047",  // STRADA DEL FRIULI 86
+            "49018",  // STRADA DEL FRIULI 171
+            "49017",  // STRADA DEL FRIULI 124
+            "24046",  // STRADA DEL FRIULI 119 (FARO DELLA VITTORIA)
+            "49015",  // STRADA DEL FRIULI 150
+            "49019",  // STRADA DEL FRIULI 106
+            "49014",  // STRADA DEL FRIULI 166 (ANGOLO VIA DELLA MANDRIA)
+            "49013",  // STRADA DEL FRIULI 194 (ANGOLO VIA MONCOLANO)
+            "49012",  // STRADA DEL FRIULI 198
+            "49011",  // STRADA DEL FRIULI 216
+            "49021",  // STRADA DEL FRIULI 509
+            "49010",  // STRADA DEL FRIULI 230
+            "49009",  // STRADA DEL FRIULI 236/2 (EX DAZIO)
+            "D5021",  // STRADA DEL FRIULI (DIREZIONE TRIESTE)
+            "D4011",  // STRADA VICENTINA (PER MONTE GRISA, DIREZIONE PROSECCO)
+            "D4012",  // BORGO SAN NAZARIO
+            "D4046",  // DEVINCINA
+            "D4013",  // BORGO SAN NAZARIO 100/1
+            "D4019",  // STRADA DEL FRIULI 81 (LOCALIT� CONTOVELLO)
+            "D4014",  // BORGO SAN NAZARIO 50 (SCUOLA DELL'INFANZIA)
+            "D4018",  // STRADA DEL FRIULI 453 (LOCALIT� CONTOVELLO)
+            "D4017",  // LOCALIT� CONTOVELLO 201
+            "D4015",  // PROSECCO
+            "D4020",  // PROSECCO
+            "D4016",  // LOCALIT� PROSECCO 186 (SCUOLA MEDIA)
+            "D7020",  // STRADA PROVINCIALE 6 DI COMENO 37 (CAMPO SACRO)
+            "D7021",  // STRADA PROVINCIALE 6 DI COMENO 61 (GABROVIZZA)
+            "D7033",  // LOCALIT� SALES 54/A
+            "D7061",  // STRADA PROVINCIALE 6 DI COMENO 18 (BIVIO BRISTIE)
+            "D7034",  // STRADA PROVINCIALE 6 DI COMENO 24
+            "D7052",  // STRADA PROVINCIALE 6 DI COMENO 40
+            "D6116",  // STRADA PROVINCIALE 6 DI COMENO 12 (TERNOVA)
+            "D6108",  // TERNOVA
+            "D6016",  // STRADA PROVINCIALE 5 DI SAN PELAGIO 64 (PASSAGGIO LIVELLO)
+            "D6017",  // STRADA PROVINCIALE 5 DI SAN PELAGIO 54 (PASSAGGIO LIVELLO)
+            "D6015",  // STRADA PROVINCIALE 5 DI SAN PELAGIO 76
+            "D6093",  // PREPOTTO
+            "D6014",  // STRADA PROVINCIALE 5 DI SAN PELAGIO 79
+            "D6094",  // LOCALIT� PREPOTTO 3
+            "D6110",  // STRADA PROVINCIALE 4 DI MALCHINA 45/D
+            "D6013",  // STRADA PROVINCIALE 5 DI SAN PELAGIO 1/B
+            "D6012",  // STRADA PROVINCIALE 5 DI SAN PELAGIO 2
+            "D6011",  // STRADA PROVINCIALE 5 DI SAN PELAGIO (SAN PELAGIO)
+            "D6009",  // PRECENICO
+            "D6008",  // STRADA PROVINCIALE 4 DI MALCHINA 17 (PRECENICO INFERIORE)
+            "D6029",  // LOCALIT� AURISINA CAVE 24/B (MUNICIPIO)
+            "D6030",  // LOCALIT� AURISINA CAVE 28 (BIVIO STAZIONE FERROVIARIA)
+            "D6071",  // LOCALIT� AURISINA CAVE 28 (STAZIONE FERROVIARIA)
+            "D6114",  // LOCALIT� AURISINA CAVE 62/D
+            "D6070",  // STRADA PROVINCIALE 1 DEL CARSO 65
+            "D6031",  // STRADA PROVINCIALE 1 DEL CARSO 65
+            "D6111",  // SLIVIA
+            "D6069",  // STRADA PROVINCIALE 1 DEL CARSO 55
+            "D6032",  // STRADA PROVINCIALE 1 DEL CARSO 55
+            "D6068",  // STRADA PROVINCIALE 1 DEL CARSO 23/A
+            "D6033",  // STRADA PROVINCIALE 1 DEL CARSO 23/E
+            "D6067",  // STRADA PROVINCIALE 1 DEL CARSO (BIVIO BORGO SAN MAURO)
+            "D6034",  // STRADA PROVINCIALE 1 DEL CARSO (BIVIO BORGO SAN MAURO)
+            "D6106",  // BORGO SAN MAURO
+            "D6066",  // STRADA PROVINCIALE 1 DEL CARSO 25/A (SISTIANA)
+            "D6035",  // STRADA PROVINCIALE 1 DEL CARSO 25/A (SISTIANA)
+            "D6037",  // VISOGLIANO (STAZIONE)
+            "D6065",  // STRADA PROVINCIALE 1 DEL CARSO 27/F (SISTIANA)
+            "D6036",  // STRADA PROVINCIALE 1 DEL CARSO 29/A (SISTIANA)
+            "D6040",  // SP 4 DI MALCHINA 11/B (VISOGLIANO)
+            "D6039",  // SP 4 DI MALCHINA 6 (VISOGLIANO)
+            "D6064",  // SISTIANA 43/C (SS14,CENTRO)
+            "D6041",  // SISTIANA 45 (SS14, CENTRO)
+            "D6038",  // SP 4 DI MALCHINA 6/L (VISOGLIANO)
+            "D6063",  // SISTIANA, 55/E (SS14, FRONTE HOTEL)
+            "D6042",  // SISTIANA, 54/F (SS14, HOTEL)
+            "D6062",  // SISTIANA 60 (SS14, CAMPEGGIO)
+            "D6043",  // SISTIANA 59 (SS14, CAMPEGGIO)
+            "D6061",  // DUINO (FONTE 5/F , SS14, SUPERMERCATO)
+            "D6044",  // DUINO 5/F (SS14 SUPERMERCATO)
+            "D6060",  // DUINO (FRONTE CIVICO 10, SENTIERO RILKE)
+            "D6045",  // DUINO 10 (SENTIERO RILKE, DIREZIONE CARTIERA)
+            "D6046",  // DUINO 28 (SP 2, CENTRO)
+            "D6059",  // DUINO 29 (CENTRO, INGRESSO CASTELLO)
+            "D6058",  // DUINO 72/I (ANGOLO STRADA STATALE 14, ALICE)
+            "D6047",  // DUINO 76  (ANGOLO STRADA STATALE 14, ALICE)
+            "D6048",  // DUINO 81/C (SS14, BIVIO VILLAGGIO DEL PESCATORE)
+            "D6057",  // DUINO (FRONTE 81/C, SS14, BIVIO VILLAGGIO DEL PESCATORE)
+            "D6056",  // VILLAGGIO DEL PESCATORE (CENTRO)
+            "D6049",  // SAN GIOVANNI DI DUINO 11  (SS14)
+            "D6055",  // SAN GIOVANNI DI DUINO (SS14, CHIESA)
+            "D6107"  // CARTIERA DEL TIMAVO
+        ],
+        "directions": [
+            "PIAZZA OBERDAN",
+            "SAN GIOVANNI TIMAVO"
+        ]
     },
     {
-        "code":  "46",
-        "label":  "46",
-        "stops":  [
-                      "D6072",
-                      "D6073",
-                      "D6074",
-                      "D6075",
-                      "D6076",
-                      "D4015"
-                  ],
-        "directions":  [
-                           "AURISINA MUNICIPIO",
-                           "PROSECCO"
-                       ]
+        "code": "46",
+        "label": "46",
+        "terminals": ["D4015", "D4020", "D7037"],
+        "stops": [
+            "10011",  // PIAZZA OBERDAN
+            "04010",  // VIA GHEGA 9 (CONSERVATORIO TARTINI)
+            "11007",  // VIALE MIRAMARE 5 (PIAZZA LIBERT�, STAZIONE FERROVIARIA)
+            "12004",  // VIALE MIRAMARE 5 (STAZIONE FERROVIARIA)
+            "11008",  // VIALE MIRAMARE 19 (ANGOLO VIA ARIOSTO)
+            "12003",  // VIALE MIRAMARE 19 (VIA ARIOSTO)
+            "23009",  // VIA SANTA TERESA 1 (LARGO ROIANO, AGENZIA DELLE ENTRATE)
+            "23008",  // VIA SANTA TERESA 4 (LARGO ROIANO)
+            "23011",  // SALITA DI GRETTA 1/1 (ANGOLO VIA DEI GIACINTI)
+            "24004",  // SALITA DI GRETTA 1/1 (ANGOLO VIA DEI GIACINTI)
+            "24011",  // SALITA DI GRETTA 34 (ANGOLO VIA DEL CISTERNONE)
+            "24005",  // SALITA DI GRETTA 27 (ANGOLO VIA DEL CISTERNONE)
+            "24010",  // STRADA DEL FRIULI 6 (ANGOLO VIA AQUILEIA)
+            "24006",  // STRADA DEL FRIULI 10 (ANGOLO VIA AQUILEIA)
+            "24049",  // STRADA DEL FRIULI 38
+            "24039",  // STRADA DEL FRIULI 51
+            "24040",  // STRADA DEL FRIULI 101
+            "24048",  // STRADA DEL FRIULI 60
+            "24041",  // STRADA DEL FRIULI 107/B
+            "24047",  // STRADA DEL FRIULI 86
+            "24042",  // STRADA DEL FRIULI 115/117 (FARO DELLA VITTORIA)
+            "24046",  // STRADA DEL FRIULI 119 (FARO DELLA VITTORIA)
+            "24044",  // STRADA DEL FRIULI 169
+            "49018",  // STRADA DEL FRIULI 171
+            "24043",  // STRADA DEL FRIULI 106
+            "49019",  // STRADA DEL FRIULI 106
+            "49017",  // STRADA DEL FRIULI 124
+            "49001",  // STRADA DEL FRIULI 261 (ANGOLO VIA DEI RIGHETTI)
+            "49015",  // STRADA DEL FRIULI 150
+            "49002",  // STRADA DEL FRIULI 293
+            "49003",  // STRADA DEL FRIULI 339 (ANGOLO VIA DELLA MANDRIA)
+            "49014",  // STRADA DEL FRIULI 166 (ANGOLO VIA DELLA MANDRIA)
+            "49013",  // STRADA DEL FRIULI 194 (ANGOLO VIA MONCOLANO)
+            "49004",  // STRADA DEL FRIULI 417 (ANGOLO VIA MONCOLANO)
+            "49005",  // STRADA DEL FRIULI 431
+            "49012",  // STRADA DEL FRIULI 198
+            "49006",  // STRADA DEL FRIULI 469
+            "49011",  // STRADA DEL FRIULI 216
+            "49020",  // STRADA DEL FRIULI 505
+            "49021",  // STRADA DEL FRIULI 509
+            "49010",  // STRADA DEL FRIULI 230
+            "49007",  // STRADA DEL FRIULI 517
+            "49009",  // STRADA DEL FRIULI 236/2 (EX DAZIO)
+            "49008",  // STRADA DEL FRIULI 527 (EX DAZIO)
+            "D5021",  // STRADA DEL FRIULI (DIREZIONE TRIESTE)
+            "D5020",  // STRADA DEL FRIULI (DIREZIONE PROSECCO)
+            "D4011",  // STRADA VICENTINA (PER MONTE GRISA, DIREZIONE PROSECCO)
+            "D4012",  // BORGO SAN NAZARIO
+            "D4013",  // BORGO SAN NAZARIO 100/1
+            "D4019",  // STRADA DEL FRIULI 81 (LOCALIT� CONTOVELLO)
+            "D4001",  // STRADA DEL FRIULI 83 (LOCALIT� CONTOVELLO)
+            "D4018",  // STRADA DEL FRIULI 453 (LOCALIT� CONTOVELLO)
+            "D4002",  // STRADA DEL FRIULI 453 (LOCALIT� CONTOVELLO)
+            "D4014",  // BORGO SAN NAZARIO 50 (SCUOLA DELL'INFANZIA)
+            "D4017",  // LOCALIT� CONTOVELLO 201
+            "D4046",  // DEVINCINA
+            "D4003",  // STRADA DEL FRIULI 531 (LOCALIT� CONTOVELLO, SCUOLA)
+            "D4004",  // STRADA DEL FRIULI 185 (LOCALIT� PROSECCO)
+            "D4016",  // LOCALIT� PROSECCO 186 (SCUOLA MEDIA)
+            "D4033",  // VIA SAN NAZARIO
+            "D4020",  // PROSECCO
+            "D4015",  // PROSECCO
+            "D4044",  // DEVINCINA
+            "D4034",  // DEVINCINA
+            "D4032",  // LOCALIT� PROSECCO 162 (FARMACIA)
+            "D4021",  // LOCALIT� PROSECCO 316 (FARMACIA)
+            "D4035",  // LOCALIT� PROSECCO 430 (MONUMENTO AI CADUTI)
+            "D4031",  // STRADA PROVINCIALE 1 DEL CARSO (MOBILIFICIO)
+            "D4022",  // STRADA PROVINCIALE 1 DEL CARSO (MOBILIFICIO)
+            "D7024",  // STRADA PROVINCIALE 8 DI MONRUPINO 67 (RUPINPICCOLO, LOGGIA)
+            "D7025",  // STRADA PROVINCIALE 8 DI MONRUPINO 11 (RUPINPICCOLO)
+            "D7017",  // STRADA PROVINCIALE 8 DI MONRUPINO 17/A (RUPINPICCOLO)
+            "D7051",  // STRADA PROVINCIALE 6 DI COMENO 1 (CAMPO SACRO)
+            "D7018",  // STRADA PROVINCIALE 8 DI MONRUPINO 19/A (RUPINPICCOLO)
+            "D7020",  // STRADA PROVINCIALE 6 DI COMENO 37 (CAMPO SACRO)
+            "D7060",  // STRADA PROVINCIALE 8 DI MONRUPINO 42 (RUPINPICCOLO)
+            "D7050",  // STRADA PROVINCIALE 6 DI COMENO 25 (GABROVIZZA)
+            "D7021",  // STRADA PROVINCIALE 6 DI COMENO 61 (GABROVIZZA)
+            "D7039",  // STRADA PROVINCIALE 8 DI MONRUPINO (CENTRO SPORTIVO)
+            "D7040",  // STRADA PROVINCIALE 8 DI MONRUPINO (CENTRO SPORTIVO)
+            "D7022",  // STRADA PROVINCIALE 7 DI GABROVIZZA 72
+            "D7049",  // STRADA PROVINCIALE 7 DI GABROVIZZA 72
+            "D7013",  // STRADA PROVINCIALE 6 DI COMENO 1 (GABROVIZZA)
+            "D7055",  // STRADA PROVINCIALE 7 DI GABROVIZZA 55 (CARSIANA)
+            "D7054",  // STRADA PROVINCIALE 7 DI GABROVIZZA 48 (CARSIANA)
+            "D7062",  // STRADA PROVINCIALE 8 DI MONRUPINO 45 (MUNICIPIO DI SGONICO)
+            "D7023",  // STRADA PROVINCIALE 8 DI MONRUPINO 45 (MUNICIPIO DI SGONICO)
+            "D7026",  // STRADA PROVINCIALE 28 DI MONRUPINO 45 (MUNICIPIO DI SGONICO)
+            "D7048",  // STRADA PROVINCIALE 7 DI GABROVIZZA 43 (SGONICO)
+            "D7027",  // STRADA PROVINCIALE 28 DI SGONICO PER SALES 60 (CIMITERO)
+            "D7047",  // STRADA PROVINCIALE 28 DI SGONICO 60 (CIMITERO SGONICO)
+            "D7028",  // STRADA PROVINCIALE 28 DI SGONICO PER SALES (LATO COLLUDROZZA
+            "D7046",  // STRADA PROVINCIALE 28 DI SGONICO (LATO COLLUDROZZA)
+            "D7045",  // STRADA PROVINCIALE 28 DI SGONICO 15
+            "D7029",  // STRADA PROVINCIALE 28 DI SGONICO PER SALES 15
+            "D7044",  // LOCALIT� SALES 1/A
+            "D7030",  // LOCALIT� SALES 109
+            "D7043",  // LOCALIT� SALES 30 (EDICOLA VOTIVA)
+            "D7031",  // LOCALIT� SALES 30 (EDICOLA VOTIVA)
+            "D7042",  // SALES
+            "D7032",  // LOCALIT� SALES 66
+            "D7901",  // STRADA PROVINCIALE 6 DI COMENO 83 (BAITA)
+            "D7033",  // LOCALIT� SALES 54/A
+            "D7041",  // STRADA PER SAMATORZA 62/B (SALES)
+            "D7061",  // STRADA PROVINCIALE 6 DI COMENO 18 (BIVIO BRISTIE)
+            "D7012",  // STRADA PER SAMATORZA 77
+            "D7034",  // STRADA PROVINCIALE 6 DI COMENO 24
+            "D7052",  // STRADA PROVINCIALE 6 DI COMENO 40
+            "D7053",  // LOCALIT� SAMATORZA 8
+            "D7035",  // STRADA PER SAMATORZA 27
+            "D7036",  // STRADA PER SAMATORZA 30
+            "D7038",  // LOCALIT� SAMATORZA 16
+            "D6082",  // STRADA PROVINCIALE 5 DI SAN PELAGIO 181/A
+            "D6083",  // STRADA PROVINCIALE 5 DI SAN PELAGIO 8
+            "D6020",  // STRADA PROVINCIALE 5 DI SAN PELAGIO 181/A
+            "D6086",  // STRADA PROVINCIALE 5 DI SAN PELAGIO 63 (PASSAGGIO LIVELLO)
+            "D6019",  // STRADA PROVINCIALE 5 DI SAN PELAGIO 10/B
+            "D6085",  // STRADA PROVINCIALE 5 DI SAN PELAGIO 54 (PASSAGGIO LIVELLO)
+            "D6016",  // STRADA PROVINCIALE 5 DI SAN PELAGIO 64 (PASSAGGIO LIVELLO)
+            "D6017",  // STRADA PROVINCIALE 5 DI SAN PELAGIO 54 (PASSAGGIO LIVELLO)
+            "D6021",  // STRADA PROVINCIALE 5 DI SAN PELAGIO 173/A (SCUOLA)
+            "D6081",  // STRADA PROVINCIALE 5 DI SAN PELAGIO 173 (SCUOLA)
+            "D7037",  // SAMATORZA
+            "D6084",  // STRADA PROVINCIALE 5 DI SAN PELAGIO 26 (SANATORIO)
+            "D6018",  // STRADA PROVINCIALE 5 DI SAN PELAGIO 18 (SANATORIO)
+            "D6080",  // STRADA PROVINCIALE 1 DEL CARSO 168 (AURISINA)
+            "D6022",  // STRADA PROVINCIALE 1 DEL CARSO 167 (PIZZERIA, AURISINA)
+            "D6015",  // STRADA PROVINCIALE 5 DI SAN PELAGIO 76
+            "D6087",  // STRADA PROVINCIALE 5 DI SAN PELAGIO 76
+            "D6079",  // STRADA PROVINCIALE 1 DEL CARSO 151 (AURISINA)
+            "D6117",  // STRADA PROVINCIALE 6 DI COMENO 12 (TERNOVA)
+            "D6023",  // STRADA PROVINCIALE 1 DEL CARSO 142 (AURISINA)
+            "D6116",  // STRADA PROVINCIALE 6 DI COMENO 12 (TERNOVA)
+            "D6077",  // STRADA PROVINCIALE 1 DEL CARSO 139 (AURISINA)
+            "D6014",  // STRADA PROVINCIALE 5 DI SAN PELAGIO 79
+            "D6088",  // STRADA PROVINCIALE 5 DI SAN PELAGIO 79
+            "D6076",  // STRADA PROVINCIALE 1 DEL CARSO 129 (AURISINA)
+            "D6025",  // STRADA PROVINCIALE 1 DEL CARSO 125 (AURISINA)
+            "D6075",  // STRADA PROVINCIALE 1 DEL CARSO 85 (SCUOLA DI AURISINA)
+            "D6115",  // STRADA PROVINCIALE 6 DI COMENO 16 (TERNOVA)
+            "D6108",  // TERNOVA
+            "D6026",  // STRADA PROVINCIALE 1 DEL CARSO 85 (SCUOLA DI AURISINA)
+            "D6013",  // STRADA PROVINCIALE 5 DI SAN PELAGIO 1/B
+            "D6095",  // LOCALIT� PREPOTTO 10/C (CENTRO)
+            "D6089",  // STRADA PROVINCIALE 5 DI SAN PELAGIO 1/B
+            "D6093",  // PREPOTTO
+            "D6074",  // STRADA PROVINCIALE 1 DEL CARSO 79/L (AURISINA CAVE)
+            "D6027",  // STRADA PROVINCIALE 1 DEL CARSO 82/M (STAZIONE CARABINIERI)
+            "D6094",  // LOCALIT� PREPOTTO 3
+            "D6092",  // LOCALIT� PREPOTTO 3
+            "D6012",  // STRADA PROVINCIALE 5 DI SAN PELAGIO 2
+            "D6090",  // STRADA PROVINCIALE 5 DI SAN PELAGIO 47/A
+            "D6073",  // LOCALIT� AURISINA CAVE 78
+            "D6028",  // LOCALIT� AURISINA CAVE 82
+            "D6072",  // AURISINA MUNICIPIO
+            "D6091",  // STRADA PROVINCIALE 5 DI SAN PELAGIO (SAN PELAGIO)
+            "D6011"  // STRADA PROVINCIALE 5 DI SAN PELAGIO (SAN PELAGIO)
+        ],
+        "directions": [
+            "PROSECCO",
+            "SAMATORZA"
+        ]
     },
     {
-        "code":  "47",
-        "label":  "47",
-        "stops":  [
-                      "56019",
-                      "56028",
-                      "E0139",
-                      "E0144",
-                      "E0145",
-                      "E0148"
-                  ],
-        "directions":  [
-                           "DOMIO",
-                           "MUGGIA"
-                       ]
+        "code": "47",
+        "label": "47",
+        "terminals": ["E0145", "56028"],
+        "stops": [
+            "E0145",  // MUGGIA
+            "E0045",  // VIA BATTISTI 17
+            "E0031",  // VIA BATTISTI 14
+            "E0044",  // VIA DI TRIESTE 1 (CANTIERI NAVALI)
+            "E0032",  // VIA DI TRIESTE 1 (CANTERI SAN ROCCO)
+            "E0043",  // VIA DI TRIESTE 8 (VIGILI DEL FUOCO)
+            "E0033",  // VIA DI TRIESTE 8 (VIGILI DEL FUOCO)
+            "E0042",  // VIA DI TRIESTE 15 (MOLO BALOTA)
+            "E0034",  // VIA DI TRIESTE 15 (MOLO BALOTA)
+            "E0055",  // STRADA PROVINCIALE 15 DELLE NOGHERE 6
+            "E0148",  // STRADA PROVINCIALE 15 DELLE NOGHERE 2
+            "E0154",  // STRADA PROVINCIALE 15 DELLE NOGHERE 1
+            "E0153",  // STRADA PROVINCIALE 15 DELLE NOGHERE 1
+            "E0155",  // LOCALIT� FARNEI 14 (STRADA PROVINCIALE 15 DIREZIONE TRIESTE
+            "E0156",  // LOCALIT� FARNEI 14 (STRADA PROVINCIALE 15 DIREZIONE MUGGIA)
+            "E0151",  // VIA FLAVIA DI STRAMARE (ANGOLO SP 14 DI MUGGIA)
+            "E0062",  // VIA FLAVIA DI STRAMARE 31 (CASA CANTONIERA)
+            "E0139",  // VIA CADUTI SUL LAVORO 2
+            "E0165",  // VIA DEI LAGHETTI 1
+            "E0061",  // VIA FLAVIA DI STRAMARE 12
+            "E0058",  // VIA FLAVIA DI STRAMARE 131 (PONTE)
+            "E0060",  // VIA FLAVIA DI STRAMARE 99
+            "E0108",  // VIA DI NOGHERE 156 (ANGOLO VIA FLAVIA DI STRAMARE)
+            "E0036",  // STRADA PROVINCIALE 14 DI MUGGIA (EX RAFFINERIA)
+            "E0167",  // VIA DEL CANNETO 14 (ARGUS)
+            "E0057",  // VIA DI NOGHERE 96
+            "E0144",  // VIA DI NOGHERE 94
+            "E0107",  // VIA DI NOGHERE 8 (VIA DI MONTE SAN GIOVANNI)
+            "E0109",  // VIA DI NOGHERE 3 (VIA DI MONTE SAN GIOVANNI)
+            "E0059",  // STRADA PROVINCIALE 15 DELLE NOGHERE (MONTEDORO)
+            "E0106",  // VIA DI ZAULE 89 (SCUOLA)
+            "E0110",  // VIA DI ZAULE 89 (SCUOLA)
+            "E0105",  // VIA DI ZAULE 1 (ANGOLO VIA FLAVIA DI AQUILINIA)
+            "E0166",  // VIA DEL CANNETO 2 (ZUDEK)
+            "E0037",  // AQUILINIA
+            "E0038",  // VIA FLAVIA DI AQUILINIA 12
+            "56019",  // VIA FLAVIA (PONTE FERROVIARIO)
+            "56007",  // STRADA DI MONTE D'ORO 14 (ZONA INDUSTRIALE EST)
+            "D9003",  // STRADA DI MONTE D'ORO 345 (LOCALIT� FRANCOVEC)
+            "E1007",  // VIA RESSEL 6 (ZONA INDUSTRIALE)
+            "E1002",  // VIA RESSEL 6 (ZONA INDUSTRIALE)
+            "E1003",  // VIA RESSEL 5 (ZONA INDUSTRIALE)
+            "56028",  // DOMIO
+            "57010",  // STRADA PROVINCIALE 12 DELLA ROSANDRA 56 (DOMIO)
+            "E1006",  // VIA RESSEL 1 (ZONA INDUSTRIALE)
+            "E1004",  // VIA RESSEL 1 (ZONA INDUSTRIALE)
+            "D9002",  // STRADA PROVINCIALE 12 DELLA ROSANDRA 269 (DOMIO)
+            "D9001",  // STRADA PROVINCIALE 12 DELLA ROSANDRA 137 (LACOTISCE)
+            "E1010",  // STRADA PROVINCIALE 12 DELLA ROSANDRA 137 (VIA TRAVNIK)
+            "E1001"  // TRIESTE PIAZZALE WARTSILA (DOLINA)
+        ],
+        "directions": [
+            "MUGGIA",
+            "DOMIO"
+        ]
     },
     {
-        "code":  "48",
-        "label":  "48",
-        "stops":  [
-                      "08011",
-                      "52014",
-                      "52019",
-                      "52021",
-                      "41014"
-                  ],
-        "directions":  [
-                           "LARGO BARRIERA",
-                           "CATTINARA (OSPEDALE)"
-                       ]
+        "code": "48",
+        "label": "48",
+        "terminals": ["08011", "52014"],
+        "stops": [
+            "08011",  // LARGO BARRIERA
+            "17006",  // PIAZZA GARIBALDI 3
+            "17009",  // PIAZZA GARIBALDI 12
+            "16007",  // VIA DEL MOLINO A VENTO 51 (ANGOLO VIA DEI MONTECCHI)
+            "17008",  // VIA DEL MOLINO A VENTO 22 (ANGOLO VIA DEI MONTECCHI)
+            "16008",  // VIA DEL MOLINO A VENTO 72 (ANGOLO VIA DELLA BASTIA)
+            "16006",  // VIA DEL MOLINO A VENTO 70 (LARGO DEL PESTALOZZI)
+            "30005",  // VIA DELL'ISTRIA 43 (LARGO DEL PESTALOZZI, SCUOLA)
+            "32006",  // VIA DEL MOLINO A VENTO 88
+            "30006",  // VIA DELL'ISTRIA 57 (ANGOLO VIA MARENZI)
+            "30007",  // VIA DELL'ISTRIA 67 (OSPEDALE BURLO GAROFOLO)
+            "32003",  // VIA MOLINO A VENTO 154 (CENTRO SALUTE MENTALE MADDALENA)
+            "31001",  // VIA DELL'ISTRIA 142 (ANGOLO VIA ORSERA)
+            "34006",  // STRADA DI FIUME 52 (ANGOLO VIA ZAMMATTIO)
+            "41001",  // VIA DELL'ISTRIA 99
+            "44015",  // STRADA DI FIUME 131 (ANGOLO VIA PATRIZIO)
+            "41002",  // VIA DELL'ISTRIA 127
+            "44014",  // STRADA DI FIUME 141 (SCUOLA)
+            "41003",  // VIA DELL'ISTRIA (CIMITERO)
+            "41014",  // VIA FLAVIA 1 (VALMAURA, STADIO GREZAR, STADIO ROCCO)
+            "44016",  // STRADA DI FIUME 175 (CHIESA DI SAN MARCO EVANGELISTA)
+            "41015",  // VIA FLAVIA 3 (PALATRIESTE ALLIANZ DOME)
+            "44013",  // STRADA DI FIUME 112 (GIARDINO DI VILLA SARTORIO)
+            "56001",  // VIA FLAVIA (PIAZZALE CAGNI)
+            "44012",  // STRADA DI FIUME 152 (TRATTORIA ALLA GLORIA)
+            "44011",  // STRADA DI FIUME 198 (ANGOLO VIA BRIGATA CASALE)
+            "51001",  // VIA FLAVIA 23/1 (INCUBATORE BIC)
+            "51002",  // VIA FLAVIA 27
+            "51003",  // VIA FLAVIA 45 (ANGOLO VIA DEI GRAVISI)
+            "51004",  // VIA FLAVIA 55 (ANGOLO VIA BRIGATA CASALE)
+            "58019",  // VIA DELLE ALPI GIULIE 23 (SCUOLA DON MILANI)
+            "58006",  // VIA DELLE ALPI GIULIE 1
+            "58002",  // VIA DELLE ALPI GIULIE 2 (PISCINA)
+            "58005",  // VIA DELLE ALPI GIULIE (ANGOLO VIA MONTE PERALBA)
+            "53016",  // STRADA DI FIUME 294 (ANGOLO VIA NICOLICH)
+            "58003",  // VIA DELLE ALPI GIULIE 5 (GRATTACIELO)
+            "58015",  // VIA GREGO 32/1 (ANGOLO VIA SILLANI)
+            "52019",  // VIA DEL BOTRO 21
+            "58007",  // VIA DELLE ALPI GIULIE 12 (ANGOLO VIA DEL MONTASIO)
+            "58004",  // VIA DELLE ALPI GIULIE (PALO ELETTRICO 226)
+            "53019",  // STRADA DI FIUME 300 (ANGOLO VIA DEL CASTELLIERE)
+            "52021",  // STRADA DI FIUME 302
+            "58014",  // VIA RIO STORTO (ANGOLO VIA DEL MONTASIO)
+            "58013",  // VIA GREGO 38 (ANGOLO VIA SERGIO FORTI)
+            "57012",  // VIA FORTI 15 (SCUOLA)
+            "52014",  // CATTINARA (OSPEDALE)
+            "57013"  // VIA FORTI 74
+        ],
+        "directions": [
+            "LARGO BARRIERA",
+            "CATTINARA OSPEDALE"
+        ]
     },
     {
-        "code":  "49/",
-        "label":  "49/",
-        "stops":  [
-                      "52016",
-                      "E0139",
-                      "E0145",
-                      "E0148",
-                      "E0151",
-                      "E0152"
-                  ],
-        "directions":  [
-                           "CATTINARA (OSPEDALE)",
-                           "MUGGIA"
-                       ]
+        "code": "49/",
+        "label": "49/",
+        "terminals": ["E0145", "52016"],
+        "stops": [
+            "E0145",  // MUGGIA
+            "E0126",  // VIA FRAUSIN 10 (ANGOLO VIA GIACOMO MATTEOTTI)
+            "E0131",  // VIA FRAUSIN 13 (ANGOLO VIA GIACOMO MATTEOTTI)
+            "E0088",  // STRADA PROVINCIALE 16 DI SANTA BARBARA 29 (CIMITERO)
+            "E0125",  // STRADA PROVINCIALE 16 DI SANTA BARBARA 29 (CIMITERO)
+            "E0129",  // VIA DEI FONDITORI (CAVALCAVIA, DIREZIONE MUGGIA)
+            "E0128",  // VIA DEI FONDITORI (CAVALCAVIA, DIREZIONE AQUILINIA)
+            "E0042",  // VIA DI TRIESTE 15 (MOLO BALOTA)
+            "E0034",  // VIA DI TRIESTE 15 (MOLO BALOTA)
+            "E0055",  // STRADA PROVINCIALE 15 DELLE NOGHERE 6
+            "E0148",  // STRADA PROVINCIALE 15 DELLE NOGHERE 2
+            "E0153",  // STRADA PROVINCIALE 15 DELLE NOGHERE 1
+            "E0154",  // STRADA PROVINCIALE 15 DELLE NOGHERE 1
+            "E0155",  // LOCALIT� FARNEI 14 (STRADA PROVINCIALE 15 DIREZIONE TRIESTE
+            "E0156",  // LOCALIT� FARNEI 14 (STRADA PROVINCIALE 15 DIREZIONE MUGGIA)
+            "E0157",  // STRADA DI SAN CLEMENTE (PONTE RIO DI OSPO)
+            "E0137",  // STRADA DI SAN CLEMENTE (RACCORDO DI RABUIESE, CONFINE)
+            "E0139",  // VIA CADUTI SUL LAVORO 2
+            "E0152",  // VIA FLAVIA DI STRAMARE (ANGOLO SP 14 DI MUGGIA)
+            "E0151",  // VIA FLAVIA DI STRAMARE (ANGOLO SP 14 DI MUGGIA)
+            "E0062",  // VIA FLAVIA DI STRAMARE 31 (CASA CANTONIERA)
+            "E0063",  // VIA FLAVIA DI STRAMARE (CASA CANTONIERA)
+            "E0064",  // VIA FLAVIA DI STRAMARE 12
+            "E0061",  // VIA FLAVIA DI STRAMARE 12
+            "E0065",  // VIA FLAVIA DI STRAMARE 99
+            "E0060",  // VIA FLAVIA DI STRAMARE 99
+            "E0059",  // STRADA PROVINCIALE 15 DELLE NOGHERE (MONTEDORO)
+            "E0040",  // STRADA PROVINCIALE 14 DI MUGGIA (EX RAFFINERIA)
+            "E0036",  // STRADA PROVINCIALE 14 DI MUGGIA (EX RAFFINERIA)
+            "E0039",  // VIA FLAVIA DI AQUILINIA (EX RAFFINERIA)
+            "E0037",  // AQUILINIA
+            "E0038",  // VIA FLAVIA DI AQUILINIA 12
+            "56019",  // VIA FLAVIA (PONTE FERROVIARIO)
+            "56007",  // STRADA DI MONTE D'ORO 14 (ZONA INDUSTRIALE EST)
+            "D9003",  // STRADA DI MONTE D'ORO 345 (LOCALIT� FRANCOVEC)
+            "E1007",  // VIA RESSEL 6 (ZONA INDUSTRIALE)
+            "E1002",  // VIA RESSEL 6 (ZONA INDUSTRIALE)
+            "E1006",  // VIA RESSEL 1 (ZONA INDUSTRIALE)
+            "E1004",  // VIA RESSEL 1 (ZONA INDUSTRIALE)
+            "D9001",  // STRADA PROVINCIALE 12 DELLA ROSANDRA 137 (LACOTISCE)
+            "E1010",  // STRADA PROVINCIALE 12 DELLA ROSANDRA 137 (VIA TRAVNIK)
+            "D9063",  // STRADA PROVINCIALE 12 DELLA ROSANDRA (MATTONAIA 396)
+            "D9004",  // STRADA PROVINCIALE 12 DELLA ROSANDRA 306 (MATTONAIA)
+            "D9020",  // STRADA PROVINCIALE 12 DELLA ROSANDRA (MATTONAIA 542)
+            "D9007",  // STRADA PROVINCIALE 12 DELLA ROSANDRA 574 (MATTONAIA)
+            "52016",  // CATTINARA (OSPEDALE)
+            "53017",  // STRADA DI FIUME 525 (OSPEDALE DI CATTINARA)
+            "D9019",  // STRADA PROVINCIALE 12 DELLA ROSANDRA 355 (LOCALIT� DOLINA)
+            "D9005",  // STRADA PROVINCIALE 12 DELLA ROSANDRA 355 (ROTATORIA)
+            "53009",  // STRADA DI FIUME (SUPERMERCATO ZAZZERON)
+            "D9012",  // LOCALIT� DOLINA 200 (ANGOLO SP 12 DELLA ROSANDRA)
+            "D9073",  // LOCALIT� DOLINA 480 (SCUOLA DELL'INFANZIA)
+            "D9040",  // LOCALIT� DOLINA 270 (CENTRO SPORTIVO)
+            "D9066",  // STRADA PROVINCIALE 11 DI PREBENICO 154/A (CHIUSA)
+            "D9072",  // LOCALIT� DOLINA 462 (MUNICIPIO DI DOLINA)
+            "D9011",  // LOCALIT� DOLINA 462 (MUNICIPIO DI DOLINA)
+            "D9006",  // STRADA PROVINCIALE 12 DELLA ROSANDRA 200
+            "D9070",  // STRADA PROVINCIALE 11 DI PREBENICO (BIVIO SAN GIUSEPPE)
+            "D9071",  // STRADA PROVINCIALE 11 DI PREBENICO (BIVIO SAN GIUSEPPE)
+            "D9010",  // STRADA PROVINCIALE 11 DI PREBENICO 373 (TEATRO SLOVENO)
+            "D9008",  // STRADA PROVINCIALE 11 DI PREBENICO 266 (TEATRO SLOVENO)
+            "D9036",  // STRADA PROVINCIALE 11 DI PREBENICO (BAGNOLI)
+            "D9039",  // STRADA PROVINCIALE 11 DI PREBENICO (SANT'ANTONIO 1)
+            "D9032",  // STRADA PROVINCIALE 11 DI PREBENICO 1 (SANT'ANTONIO)
+            "D9033",  // STRADA PROVINCIALE 11 DI PREBENICO  137 (SANT'ANTONIO)
+            "D9038",  // STRADA PROVINCIALE 11 DI PREBENICO (SANT'ANTONIO 137)
+            "D9034",  // STRADA PROVINCIALE 11 DI PREBENICO 62 (MOCC�)
+            "D9037"  // STRADA PROVINCIALE 11 DI PREBENICO 62 (MOCC�)
+        ],
+        "directions": [
+            "MUGGIA",
+            "CATTINARA OSPEDALE"
+        ]
     },
     {
-        "code":  "51",
-        "label":  "51",
-        "stops":  [
-                      "04014",
-                      "D9055",
-                      "59901",
-                      "D3008",
-                      "D0018",
-                      "10008",
-                      "20001",
-                      "47001",
-                      "47007",
-                      "20003",
-                      "10004",
-                      "46042",
-                      "D3022",
-                      "47006",
-                      "10003",
-                      "10007",
-                      "20002",
-                      "03001",
-                      "54012"
-                  ],
-        "directions":  [
-                           "STAZIONE FERROVIARIA",
-                           "GROZZANA",
-                           "BASOVIZZA",
-                           "VILLA CARSIA",
-                           "AREA DI RICERCA"
-                       ]
+        "code": "51",
+        "label": "51",
+        "terminals": ["04014", "D3008"],
+        "stops": [
+            "D9052",  // STRADA PROVINCIALE 22 DI DRAGA 36
+            "D9051",  // LOCALIT� SAN LORENZO
+            "54014",  // STRADA STATALE 14 PER BASOVIZZA 112 (EX DAZIO)
+            "54013",  // STRADA STATALE 14 PER BASOVIZZA 112
+            "D9056",  // STRADA PROVINCIALE 21 DI GROZZANA 2 (PESEK)
+            "D9054",  // STRADA PROVINCIALE 21 DI GROZZANA 2 (PESEK)
+            "D9053",  // STRADA PER SAN LORENZO (EX MOTEL VAL ROSANDRA)
+            "10008",  // VIA DEL CORONEO (REGIONE)
+            "D9058",  // STRADA PER SAN LORENZO (EX MOTEL VAL ROSANDRA)
+            "03001",  // PIAZZA OBERDAN
+            "04002",  // VIA GHEGA 9 (CONSERVATORIO TARTINI)
+            "10003",  // VIA DEL CORONEO 27 (TRIBUNALE)
+            "04014",  // STAZIONE FERROVIARIA
+            "10004",  // VIA FABIO SEVERO 4 (TRIBUNALE)
+            "59010",  // VIA GRUDEN 32 (LOCALIT� BASOVIZZA, SCUOLA)
+            "59009",  // VIA GRUDEN 25 (LOCALIT� BASOVIZZA, SCUOLA)
+            "59901",  // VIA KETTE 10 (BASOVIZZA)
+            "59014",  // COMPRENSORIO SINCROTRONE ELETTRA (PARCHEGGIO)
+            "59001",  // VIA GRUDEN 1 (LOCALIT� BASOVIZZA, CHIESA)
+            "10007",  // VIA FABIO SEVERO 30 (ANGOLO VIA CATULLO)
+            "20001",  // VIA FABIO SEVERO 53 (CAMPUS DELL'EX OSPEDALE MILITARE)
+            "59008",  // VIA GRUDEN 74 (LOCALIT� BASOVIZZA, CHIESA)
+            "20003",  // VIA FABIO SEVERO 40 (CAMPUS DELL'EX OSPEDALE MILITARE)
+            "59011",  // COMPRENSORIO SINCROTRONE ELETTRA
+            "54012",  // STRADA STATALE 14 PER BASOVIZZA 62
+            "D9055",  // GROZZANA
+            "54015",  // STRADA STATALE 14 PER BASOVIZZA 56
+            "20002",  // VIA FABIO SEVERO 107 (ANGOLO VIA SOTTORIPA)
+            "59007",  // STRADA PROVINCIALE 1 DEL CARSO (PARCHEGGIO BASOVIZZA)
+            "47007",  // VIA ALFONSO VALERIO 2 (UNIVERSIT�)
+            "39001",  // VIA FABIO SEVERO 107 (ANGOLO VIA SOTTORIPA)
+            "47001",  // VIA ALFONSO VALERIO 2
+            "59002",  // STRADA PROVINCIALE 1 DEL CARSO (PARCHEGGIO BASOVIZZA)
+            "59006",  // STRADA PROVINCIALE 1 DEL CARSO (CIMITERO)
+            "59003",  // STRADA PROVINCIALE 1 DEL CARSO (CIMITERO)
+            "D0001",  // STRADA STATALE 14 PER BASOVIZZA 20
+            "D0016",  // STRADA STATALE 14 PER BASOVIZZA 20 (TRATTORIA DODICH)
+            "39002",  // VIA FABIO SEVERO 143 (CURVA MAS�)
+            "47008",  // VIA FABIO SEVERO 143 (CURVA MAS�)
+            "46001",  // VIA VALERIO 20
+            "47006",  // VIA ALFONSO VALERIO 20 (VIA DELLO SCOGLIO)
+            "59013",  // STRADA PROVINCIALE 1 DEL CARSO 173 (PADRICIANO)
+            "59012",  // STRADA PROVINCIALE 1 DEL CARSO 173 (PADRICIANO)
+            "59005",  // STRADA PROVINCIALE 1 DEL CARSO 228
+            "59004",  // STRADA PROVINCIALE 1 DEL CARSO 228
+            "46002",  // VIA VALERIO 113
+            "D0018",  // AREA DI RICERCA
+            "D0002",  // STRADA PROVINCIALE 1 DEL CARSO 262 (EX CAMPO PROFUGHI)
+            "D0015",  // STRADA PROVINCIALE 1 DEL CARSO 262 (EX CAMPO PROFUGHI)
+            "46009",  // VIA VALERIO 142
+            "46029",  // VIA ALFONSO VALERIO 73
+            "46042",  // VIA ALFONSO VALERIO (VIA SAN CILINO)
+            "D0014",  // STRADA PROVINCIALE 1 DEL CARSO 62 (CHIESA DI PADRICIANO)
+            "D0003",  // STRADA PROVINCIALE 1 DEL CARSO 59 (CHIESA DI PADRICIANO)
+            "D0017",  // STRADA PROVINCIALE 19 DI GROPADA 6 (PADRICIANO)
+            "D0004",  // STRADA PROVINCIALE 19 DI GROPADA 6
+            "D0010",  // STRADA PROVINCIALE 19 DI GROPADA 10 (PADRICIANO)
+            "D0013",  // STRADA PROVINCIALE 1 DEL CARSO 18
+            "D0009",  // STRADA PROVINCIALE 19 DI GROPADA 414
+            "D0011",  // STRADA PROVINCIALE 1 DEL CARSO 204
+            "D0005",  // STRADA PROVINCIALE 19 DI GROPADA 130
+            "D0012",  // STRADA PROVINCIALE 1 DEL CARSO 125 (CAMPI TENNIS)
+            "D1001",  // STRADA PROVINCIALE 1 DEL CARSO 124 (TREBICIANO, TENNIS)
+            "D0008",  // STRADA PROVINCIALE 19 DI GROPADA 92 (SCUOLA DELL'INFANZIA)
+            "D0006",  // STRADA PROVINCIALE 19 DI GROPADA 92 (SCUOLA DELL'INFANZIA)
+            "D1010",  // STRADA PROVINCIALE 1 DEL CARSO 239
+            "D1011",  // STRADA PROVINCIALE 1 DEL CARSO 239
+            "D0007",  // STRADA PROVINCIALE 19 DI GROPADA 138 (GROPADA PAESE)
+            "D1008",  // STRADA PROVINCIALE 1 DEL CARSO 178 (TREBICIANO)
+            "D1002",  // STRADA PROVINCIALE 1 DEL CARSO 226 (TREBICIANO)
+            "D1007",  // STRADA PROVINCIALE 1 DEL CARSO (MONUMENTO DI TREBICIANO)
+            "D2003",  // LOCALIT� BANNE 104 (BANNE PAESE, EX CASERME)
+            "D1003",  // STRADA PROVINCIALE 1 DEL CARSO 29 (MONUMENTO DI TREBICIANO)
+            "D1006",  // STRADA PROVINCIALE 1 DEL CARSO 2 (TREBICIANO)
+            "D2004",  // LOCALIT� BANNE 25 (BANNE PAESE, ALBERGO)
+            "D1009",  // STRADA PROVINCIALE 1 DEL CARSO 2 (TREBICIANO)
+            "D2002",  // LOCALIT� BANNE 205 (BANNE PAESE, PIAZZA)
+            "D1004",  // STRADA PROVINCIALE 1 DEL CARSO (CIMITERO DI TREBICIANO)
+            "D1005",  // STRADA PROVINCIALE 1 DEL CARSO (CIMITERO DI TREBICIANO)
+            "D1013",  // STRADA PROVINCIALE 1 DEL CARSO 274 (BANNE)
+            "D1012",  // STRADA PROVINCIALE 1 DEL CARSO 274 (BANNE)
+            "D2005",  // VIA DI BASOVIZZA 60 (SCUOLA)
+            "D2001",  // VIA DI BASOVIZZA 60 (SCUOLA DI BANNE)
+            "D3026",  // VIA DI BASOVIZZA 37
+            "D3019",  // VIA DI BASOVIZZA 40
+            "D3025",  // VIA DI BASOVIZZA 29/13
+            "D3020",  // VIA DI BASOVIZZA 28/1
+            "D3043",  // VIA DI BASOVIZZA 29
+            "D3044",  // VIA DI BASOVIZZA 24
+            "D3022",  // STRADA PER VIENNA 14
+            "D3023",  // STRADA PER VIENNA 9 (BAR)
+            "D3024",  // VIA DI BASOVIZZA 7 (SCUOLA DI OPICINA)
+            "D3011",  // VIA DI PROSECCO 10 (ANGOLO VIA DOBERD�)
+            "D3058",  // VIA DI PROSECCO 37 (CHIESA)
+            "D3036",  // VIA DI PROSECCO 233 (ANGOLO STRADA PROVINCIALE 1 DEL CARSO)
+            "D3010",  // VIA DI PROSECCO 44 (ANGOLO STRADA PROVINCIALE 1 DEL CARSO)
+            "D3008",  // VILLA CARSIA
+            "D3009",  // STRADA PROVINCIALE 1 DEL CARSO (CASERMA)
+            "D3041"  // STRADA PROVINCIALE 1 DEL CARSO (CASERME)
+        ],
+        "directions": [
+            "STAZIONE FERROVIARIA",
+            "VILLA CARSIA"
+        ]
     },
     {
-        "code":  "52",
-        "label":  "52",
-        "stops":  [
-                      "41025",
-                      "42008",
-                      "42013",
-                      "42012",
-                      "56029"
-                  ],
-        "directions":  [
-                           "VALMAURA"
-                       ]
+        "code": "52",
+        "label": "52",
+        "terminals": ["41025", "56029"],
+        "stops": [
+            "42008",  // VIA PAISIELLO
+            "42009",  // VIA PAISIELLO 9 (ANGOLO VIA ZANDONAI)
+            "42002",  // VIA PUCCINI
+            "41025",  // VALMAURA
+            "42014",  // VIA PUCCINI 50 (DISTRETTO SANITARIO)
+            "42013",  // VIA PUCCINI 24 (ANGOLO VIA PIETRO MASCAGNI)
+            "42006",  // VIA FLAVIA 23/1 (INCUBATORE BIC)
+            "42018",  // VIA ZANDONAI (SCUOLA)
+            "41015",  // VIA FLAVIA 3 (PALATRIESTE ALLIANZ DOME)
+            "42012",  // VIA MASCAGNI (PIAZZALE CAGNI)
+            "42005",  // PIAZZALE CAGNI 2
+            "55007",  // VIA SAN PANTALEONE (ANGOLO VIA ERCOLE MIANI)
+            "41007",  // VIA VALMAURA 35 (RISIERA DI SAN SABBA)
+            "55002",  // VIA DI GIARIZZOLE 1 (PIAZZALE DI GIARIZZOLE)
+            "41027",  // VIA MIANI (ANGOLO VIA ALBERTO PUSCHI)
+            "55006",  // VIA ROSSI 12 (ANGOLO VIA SAN PANTALEONE)
+            "41028",  // VIA VALMAURA (ANGOLO RATTO DELLA PILERIA)
+            "56031",  // VIA ROSSI 32 (ANGOLO VIA CESCA)
+            "56029",  // VIA ROSSI 36 (ANGOLO VIA PUSCHI)
+            "56013",  // VIA DI GIARIZZOLE 29 (ANGOLO VIA RACHELI)
+            "55005",  // VIA ROSSI 52 (ANGOLO VIA SCHMIDL)
+            "55004",  // VIA SCHMIDL 28
+            "55003",  // VIA DI GIARIZZOLE 39 (ANGOLO VIA SCHMIDL)
+            "55008"  // VIA SCHMIDL 48
+        ],
+        "directions": [
+            "VALMAURA CIRCOLARE"
+        ]
     },
     {
-        "code":  "55",
-        "label":  "55",
-        "stops":  [
-                      "46042",
-                      "50003"
-                  ],
-        "directions":  [
-                           "VIA VALERIO",
-                           "BARCOLA"
-                       ]
+        "code": "55",
+        "label": "55",
+        "terminals": ["50003", "46042"],
+        "stops": [
+            "50003",  // BARCOLA
+            "50002",  // VIALE MIRAMARE 113 (ISTITUTO RITTMEYER)
+            "50004",  // VIALE MIRAMARE 52 (ISTITUTO RITTMEYER)
+            "50005",  // VIALE MIRAMARE 36 (CIRCOLO SPORTIVO SATURNIA, BOVEDO)
+            "50001",  // VIALE MIRAMARE 36 (PARCHEGGIO BOVEDO)
+            "50016",  // VIALE MIRAMARE (PARCHEGGIO BOVEDO)
+            "50015",  // VIALE MIRAMARE (PARCHEGGIO BOVEDO)
+            "24003",  // VIALE MIRAMARE 30 (BAGNI FERROVIARIO E CRAL)
+            "24002",  // VIALE MIRAMARE 30 (FERROVIARIO E CRAL)
+            "24053",  // VIALE MIRAMARE (PORTO VECCHIO)
+            "12001",  // VIALE MIRAMARE 77 (SALITA MADONNA DI GRETTA, CAVALCAVIA)
+            "24001",  // VIALE MIRAMARE 77 (CAVALCAVIA)
+            "12005",  // VIALE MIRAMARE 67 (POLIZIA LOCALE)
+            "24051",  // VIALE MIRAMARE 61 (POLIZIA LOCALE)
+            "23007",  // TRIESTE VIALE MIRAMARE (FRONTE CIVICO 14, LARGO ROIANO)
+            "12002",  // TRIESTE VIALE MIRAMARE 12 (LARGO ROIANO)
+            "12003",  // VIALE MIRAMARE 19 (VIA ARIOSTO)
+            "11008",  // VIALE MIRAMARE 19 (ANGOLO VIA ARIOSTO)
+            "12004",  // VIALE MIRAMARE 5 (STAZIONE FERROVIARIA)
+            "11007",  // VIALE MIRAMARE 5 (PIAZZA LIBERT�, STAZIONE FERROVIARIA)
+            "04002",  // VIA GHEGA 9 (CONSERVATORIO TARTINI)
+            "11009",  // VIA GHEGA 6 (CONSERVATORIO TARTINI)
+            "03001",  // PIAZZA OBERDAN
+            "47013",  // VIA CANTU'
+            "10008",  // VIA DEL CORONEO (REGIONE)
+            "10004",  // VIA FABIO SEVERO 4 (TRIBUNALE)
+            "21001",  // VIA CANT� 34 (ANGOLO VIA GUICCIARDINI)
+            "47012",  // VIA CESARE CANT� 34 (ANGOLO VIA GUICCIARDINI)
+            "10003",  // VIA DEL CORONEO 27 (TRIBUNALE)
+            "10007",  // VIA FABIO SEVERO 30 (ANGOLO VIA CATULLO)
+            "20004",  // VIA DEL CORONEO 41 (ANGOLO VIA SEVERO)
+            "21005",  // VIA CANT� 12 (ANGOLO VIA DEL MONTELLO)
+            "47019",  // VIA CESARE CANT� 12 (ANGOLO VIA DEL MONTELLO)
+            "47011",  // VIA CESARE CANT� 43 (SCUOLA)
+            "21002",  // VIA CANT� 10 (SCUOLA)
+            "20001",  // VIA FABIO SEVERO 53 (CAMPUS DELL'EX OSPEDALE MILITARE)
+            "20003",  // VIA FABIO SEVERO 40 (CAMPUS DELL'EX OSPEDALE MILITARE)
+            "47010",  // VIA CESARE CANT� 39 (ANGOLO VIA MONTE SAN GABRIELE)
+            "47016",  // VIA CESARE CANT� 39 (SCUOLE)
+            "20005",  // VIA FABIO SEVERO 88/A (ANGOLO VIA VERO)
+            "39003",  // VIA FABIO SEVERO 85 (ANGOLO VIA VERO)
+            "20002",  // VIA FABIO SEVERO 107 (ANGOLO VIA SOTTORIPA)
+            "47009",  // VIA CESARE CANT� 1 (ANGOLO VICOLO DEL CASTAGNETO)
+            "39001",  // VIA FABIO SEVERO 107 (ANGOLO VIA SOTTORIPA)
+            "47017",  // VIA CESARE CANT� 1 (ANGOLO VICOLO DEL CASTAGNETO)
+            "47008",  // VIA FABIO SEVERO 143 (CURVA MAS�)
+            "39002",  // VIA FABIO SEVERO 143 (CURVA MAS�)
+            "39004",  // VIA FABIO SEVERO (UNIVERSIT�, PIAZZALE EUROPA)
+            "47015",  // VIA FABIO SEVERO (UNIVERSIT�, PIAZZALE EUROPA)
+            "47007",  // VIA ALFONSO VALERIO 2 (UNIVERSIT�)
+            "47001",  // VIA ALFONSO VALERIO 2
+            "47006",  // VIA ALFONSO VALERIO 20 (VIA DELLO SCOGLIO)
+            "46001",  // VIA VALERIO 20
+            "46024",  // VIA VALERIO 38 (ANGOLO CLIVO ARTEMISIO)
+            "47018",  // VIA ALFONSO VALERIO 38 (ANGOLO CLIVO ARTEMISIO)
+            "46042",  // VIA ALFONSO VALERIO (VIA SAN CILINO)
+            "46023"  // SAN CILINO
+        ],
+        "directions": [
+            "UNIVERSITA'",
+            "BARCOLA"
+        ]
     },
     {
-        "code":  "56",
-        "label":  "56",
-        "stops":  [
-                      "46042",
-                      "E0001"
-                  ],
-        "directions":  [
-                           "VIA VALERIO",
-                           "MUGGIA"
-                       ]
+        "code": "56",
+        "label": "56",
+        "terminals": ["E0001", "46042"],
+        "stops": [
+            "E0001",  // MUGGIA
+            "E0128",  // VIA DEI FONDITORI (CAVALCAVIA, DIREZIONE AQUILINIA)
+            "E0129",  // VIA DEI FONDITORI (CAVALCAVIA, DIREZIONE MUGGIA)
+            "E0088",  // STRADA PROVINCIALE 16 DI SANTA BARBARA 29 (CIMITERO)
+            "E0125",  // STRADA PROVINCIALE 16 DI SANTA BARBARA 29 (CIMITERO)
+            "E0162",  // STRADA PROVINCIALE 15 DELLE NOGHERE 48 (BRICOCENTER)
+            "E0126",  // VIA FRAUSIN 10 (ANGOLO VIA GIACOMO MATTEOTTI)
+            "E0155",  // LOCALIT� FARNEI 14 (STRADA PROVINCIALE 15 DIREZIONE TRIESTE
+            "E0156",  // LOCALIT� FARNEI 14 (STRADA PROVINCIALE 15 DIREZIONE MUGGIA)
+            "E0034",  // VIA DI TRIESTE 15 (MOLO BALOTA)
+            "E0055",  // STRADA PROVINCIALE 15 DELLE NOGHERE 6
+            "E0131",  // VIA FRAUSIN 13 (ANGOLO VIA GIACOMO MATTEOTTI)
+            "E0042",  // VIA DI TRIESTE 15 (MOLO BALOTA)
+            "E0153",  // STRADA PROVINCIALE 15 DELLE NOGHERE 1
+            "E0148",  // STRADA PROVINCIALE 15 DELLE NOGHERE 2
+            "E0154",  // STRADA PROVINCIALE 15 DELLE NOGHERE 1
+            "E0161",  // STRADA PROVINCIALE 15 DELLE NOGHERE 44 (FAMILA)
+            "E0058",  // VIA FLAVIA DI STRAMARE 131 (PONTE)
+            "E0163",  // STRADA PROVINCIALE 15 DELLE NOGHERE (MONTEDORO)
+            "E0059",  // STRADA PROVINCIALE 15 DELLE NOGHERE (MONTEDORO)
+            "E0065",  // VIA FLAVIA DI STRAMARE 99
+            "E0060",  // VIA FLAVIA DI STRAMARE 99
+            "E0064",  // VIA FLAVIA DI STRAMARE 12
+            "E0061",  // VIA FLAVIA DI STRAMARE 12
+            "E0063",  // VIA FLAVIA DI STRAMARE (CASA CANTONIERA)
+            "E0062",  // VIA FLAVIA DI STRAMARE 31 (CASA CANTONIERA)
+            "E0152",  // VIA FLAVIA DI STRAMARE (ANGOLO SP 14 DI MUGGIA)
+            "E0151",  // VIA FLAVIA DI STRAMARE (ANGOLO SP 14 DI MUGGIA)
+            "E0040",  // STRADA PROVINCIALE 14 DI MUGGIA (EX RAFFINERIA)
+            "E0036",  // STRADA PROVINCIALE 14 DI MUGGIA (EX RAFFINERIA)
+            "E0039",  // VIA FLAVIA DI AQUILINIA (EX RAFFINERIA)
+            "E0037",  // AQUILINIA
+            "E0038",  // VIA FLAVIA DI AQUILINIA 12
+            "56019",  // VIA FLAVIA (PONTE FERROVIARIO)
+            "56024",  // VIA FLAVIA 126 (DIACO)
+            "56020",  // VIA FLAVIA 126 (DIACO)
+            "56001",  // VIA FLAVIA (PIAZZALE CAGNI)
+            "41010",  // VIA FLAVIA 10 (PALATRIESTE)
+            "41015",  // VIA FLAVIA 3 (PALATRIESTE ALLIANZ DOME)
+            "42005",  // PIAZZALE CAGNI 2
+            "41011",  // VIA FLAVIA 1 (VALMAURA, STADIO GREZAR, STADIO ROCCO)
+            "41014",  // VIA FLAVIA 1 (VALMAURA, STADIO GREZAR, STADIO ROCCO)
+            "56023",  // VIA FLAVIA 118 (ILLYCAFF�)
+            "56021",  // VIA FLAVIA 114 (ILLYCAFF�)
+            "42006",  // VIA FLAVIA 23/1 (INCUBATORE BIC)
+            "51001",  // VIA FLAVIA 23/1 (INCUBATORE BIC)
+            "41003",  // VIA DELL'ISTRIA (CIMITERO)
+            "51002",  // VIA FLAVIA 27
+            "42001",  // VIA DELL'ISTRIA 206 (CIMITERO)
+            "51003",  // VIA FLAVIA 45 (ANGOLO VIA DEI GRAVISI)
+            "51007",  // VIA FLAVIA 27
+            "51006",  // VIA FLAVIA 58 (ANGOLO VIA DEI GRAVISI)
+            "51004",  // VIA FLAVIA 55 (ANGOLO VIA BRIGATA CASALE)
+            "51005",  // VIA FLAVIA 70 (ANGOLO VIA BRIGATA CASALE)
+            "41002",  // VIA DELL'ISTRIA 127
+            "56002",  // VIA FLAVIA 59
+            "56006",  // VIA FLAVIA 84
+            "56022",  // VIA FLAVIA 104
+            "31001",  // VIA DELL'ISTRIA 142 (ANGOLO VIA ORSERA)
+            "56005",  // VIA FLAVIA 102 (ENEL)
+            "42004",  // VIA DELL'ISTRIA 138 (ANGOLO VIA ORSERA)
+            "42003",  // VIA DELL'ISTRIA 101 (ANGOLO VIA BAIAMONTI)
+            "41001",  // VIA DELL'ISTRIA 99
+            "30007",  // VIA DELL'ISTRIA 67 (OSPEDALE BURLO GAROFOLO)
+            "32001",  // VIA DELL'ISTRIA 69 (OSPEDALE BURLO GAROFOLO)
+            "30006",  // VIA DELL'ISTRIA 57 (ANGOLO VIA MARENZI)
+            "32002",  // VIA DELL'ISTRIA 102 (ANGOLO VIA MARENZI)
+            "30005",  // VIA DELL'ISTRIA 43 (LARGO DEL PESTALOZZI, SCUOLA)
+            "16004",  // VIA DELL'ISTRIA 56 (ANGOLO VIA DELLA BASTIA)
+            "16003",  // VIA DELL'ISTRIA 15 (ANGOLO VIA RIVALTO)
+            "16005",  // VIA DELL'ISTRIA 24/C (ANGOLO VIA DI RIVALTO)
+            "15001",  // VIA SAN GIACOMO IN MONTE 2 (ANGOLO VIA DEL BOSCO)
+            "07002",  // PIAZZA VICO 9 (ANGOLO VIA DEL BOSCO)
+            "15004",  // CAMPO SAN GIACOMO 1/B
+            "15003",  // CAMPO SAN GIACOMO 3
+            "07001",  // VIA SAN GIACOMO IN MONTE 12 (GIARDINO BASEVI)
+            "15002",  // VIA SAN GIACOMO IN MONTE 9
+            "06002",  // PIAZZA DEL SANSOVINO 6 (CROCE ROSSA)
+            "06001",  // PIAZZA DEL SANSOVINO (CROCE ROSSA)
+            "03010",  // PIAZZA GOLDONI
+            "03004",  // PIAZZA GOLDONI
+            "03013",  // PIAZZA SAN GIOVANNI 5/D
+            "03002",  // VIA CARDUCCI (LUMINOSA)
+            "03001",  // PIAZZA OBERDAN
+            "10008",  // VIA DEL CORONEO (REGIONE)
+            "10004",  // VIA FABIO SEVERO 4 (TRIBUNALE)
+            "10003",  // VIA DEL CORONEO 27 (TRIBUNALE)
+            "20004",  // VIA DEL CORONEO 41 (ANGOLO VIA SEVERO)
+            "10007",  // VIA FABIO SEVERO 30 (ANGOLO VIA CATULLO)
+            "20001",  // VIA FABIO SEVERO 53 (CAMPUS DELL'EX OSPEDALE MILITARE)
+            "20003",  // VIA FABIO SEVERO 40 (CAMPUS DELL'EX OSPEDALE MILITARE)
+            "47013",  // VIA CANTU'
+            "20005",  // VIA FABIO SEVERO 88/A (ANGOLO VIA VERO)
+            "39003",  // VIA FABIO SEVERO 85 (ANGOLO VIA VERO)
+            "21001",  // VIA CANT� 34 (ANGOLO VIA GUICCIARDINI)
+            "47012",  // VIA CESARE CANT� 34 (ANGOLO VIA GUICCIARDINI)
+            "21005",  // VIA CANT� 12 (ANGOLO VIA DEL MONTELLO)
+            "47019",  // VIA CESARE CANT� 12 (ANGOLO VIA DEL MONTELLO)
+            "21002",  // VIA CANT� 10 (SCUOLA)
+            "20002",  // VIA FABIO SEVERO 107 (ANGOLO VIA SOTTORIPA)
+            "47011",  // VIA CESARE CANT� 43 (SCUOLA)
+            "47010",  // VIA CESARE CANT� 39 (ANGOLO VIA MONTE SAN GABRIELE)
+            "39001",  // VIA FABIO SEVERO 107 (ANGOLO VIA SOTTORIPA)
+            "47016",  // VIA CESARE CANT� 39 (SCUOLE)
+            "47007",  // VIA ALFONSO VALERIO 2 (UNIVERSIT�)
+            "47015",  // VIA FABIO SEVERO (UNIVERSIT�, PIAZZALE EUROPA)
+            "39004",  // VIA FABIO SEVERO (UNIVERSIT�, PIAZZALE EUROPA)
+            "47001",  // VIA ALFONSO VALERIO 2
+            "47009",  // VIA CESARE CANT� 1 (ANGOLO VICOLO DEL CASTAGNETO)
+            "47017",  // VIA CESARE CANT� 1 (ANGOLO VICOLO DEL CASTAGNETO)
+            "39002",  // VIA FABIO SEVERO 143 (CURVA MAS�)
+            "47008",  // VIA FABIO SEVERO 143 (CURVA MAS�)
+            "46001",  // VIA VALERIO 20
+            "47006",  // VIA ALFONSO VALERIO 20 (VIA DELLO SCOGLIO)
+            "46024",  // VIA VALERIO 38 (ANGOLO CLIVO ARTEMISIO)
+            "47018",  // VIA ALFONSO VALERIO 38 (ANGOLO CLIVO ARTEMISIO)
+            "46023",  // SAN CILINO
+            "46042"  // VIA ALFONSO VALERIO (VIA SAN CILINO)
+        ],
+        "directions": [
+            "UNIVERSITA'",
+            "MUGGIA"
+        ]
     },
     {
-        "code":  "57",
-        "label":  "57",
-        "stops":  [
-                      "46015",
-                      "D6072"
-                  ],
-        "directions":  [
-                           "PIAZZALE GIOBERTI",
-                           "AURISINA"
-                       ]
+        "code": "57",
+        "label": "57",
+        "terminals": ["46015", "D6072"],
+        "stops": [
+            "46015",  // PIAZZALE GIOBERTI
+            "46010",  // PIAZZALE GIOBERTI 1
+            "46014",  // VIALE SANZIO 17
+            "46011",  // VIALE RAFFAELLO SANZIO 30 (ANGOLO VIA BRUNELLESCHI)
+            "46013",  // VIALE RAFFAELLO SANZIO 1 (ROTONDA DEL BOSCHETTO)
+            "46012",  // VIALE RAFFAELLO SANZIO (ROTONDA DEL BOSCHETTO)
+            "38006",  // VIA GIULIA 77 (CENTRO COMMERCIALE IL GIULIA)
+            "38001",  // VIA GIULIA 80 (CENTRO COMMERCIALE IL GIULIA)
+            "38005",  // VIA GIULIA 55 (SCUOLA)
+            "38002",  // VIA GIULIA 48 (SCUOLA)
+            "38003",  // VIA GIULIA 22 (PIAZZA DEI VOLONTARI GIULIANI)
+            "38004",  // VIA GIULIA 37 (PIAZZA DEI VOLONTARI GIULIANI)
+            "19004",  // VIA GIULIA 21 (LARGO TOMIZZA)
+            "19002",  // LARGO TOMIZZA
+            "19003",  // VIA GIULIA 3/C (GIARDINO PUBBLICO, TEATRO ROSSETTI)
+            "19008",  // VIA BATTISTI 22 (ANGOLO VIA GIUSEPPE LORENZO GATTERI)
+            "09002",  // VIA BATTISTI (GALLERIA FENICE)
+            "09001",  // VIA BATTISTI (GALLERIA FENICE)
+            "03002",  // VIA CARDUCCI (LUMINOSA)
+            "03001",  // PIAZZA OBERDAN
+            "10001",  // PIAZZA OBERDAN
+            "11009",  // VIA GHEGA 6 (CONSERVATORIO TARTINI)
+            "04010",  // VIA GHEGA 9 (CONSERVATORIO TARTINI)
+            "11007",  // VIALE MIRAMARE 5 (PIAZZA LIBERT�, STAZIONE FERROVIARIA)
+            "12004",  // VIALE MIRAMARE 5 (STAZIONE FERROVIARIA)
+            "11008",  // VIALE MIRAMARE 19 (ANGOLO VIA ARIOSTO)
+            "12003",  // VIALE MIRAMARE 19 (VIA ARIOSTO)
+            "23009",  // VIA SANTA TERESA 1 (LARGO ROIANO, AGENZIA DELLE ENTRATE)
+            "23008",  // VIA SANTA TERESA 4 (LARGO ROIANO)
+            "23011",  // SALITA DI GRETTA 1/1 (ANGOLO VIA DEI GIACINTI)
+            "24004",  // SALITA DI GRETTA 1/1 (ANGOLO VIA DEI GIACINTI)
+            "24011",  // SALITA DI GRETTA 34 (ANGOLO VIA DEL CISTERNONE)
+            "24005",  // SALITA DI GRETTA 27 (ANGOLO VIA DEL CISTERNONE)
+            "24010",  // STRADA DEL FRIULI 6 (ANGOLO VIA AQUILEIA)
+            "24006",  // STRADA DEL FRIULI 10 (ANGOLO VIA AQUILEIA)
+            "24049",  // STRADA DEL FRIULI 38
+            "24039",  // STRADA DEL FRIULI 51
+            "24040",  // STRADA DEL FRIULI 101
+            "24048",  // STRADA DEL FRIULI 60
+            "24041",  // STRADA DEL FRIULI 107/B
+            "24044",  // STRADA DEL FRIULI 169
+            "24047",  // STRADA DEL FRIULI 86
+            "49018",  // STRADA DEL FRIULI 171
+            "49017",  // STRADA DEL FRIULI 124
+            "49001",  // STRADA DEL FRIULI 261 (ANGOLO VIA DEI RIGHETTI)
+            "24042",  // STRADA DEL FRIULI 115/117 (FARO DELLA VITTORIA)
+            "24046",  // STRADA DEL FRIULI 119 (FARO DELLA VITTORIA)
+            "49002",  // STRADA DEL FRIULI 293
+            "49015",  // STRADA DEL FRIULI 150
+            "24043",  // STRADA DEL FRIULI 106
+            "49019",  // STRADA DEL FRIULI 106
+            "49003",  // STRADA DEL FRIULI 339 (ANGOLO VIA DELLA MANDRIA)
+            "49014",  // STRADA DEL FRIULI 166 (ANGOLO VIA DELLA MANDRIA)
+            "49013",  // STRADA DEL FRIULI 194 (ANGOLO VIA MONCOLANO)
+            "49004",  // STRADA DEL FRIULI 417 (ANGOLO VIA MONCOLANO)
+            "49005",  // STRADA DEL FRIULI 431
+            "49012",  // STRADA DEL FRIULI 198
+            "49006",  // STRADA DEL FRIULI 469
+            "49011",  // STRADA DEL FRIULI 216
+            "49020",  // STRADA DEL FRIULI 505
+            "49021",  // STRADA DEL FRIULI 509
+            "49010",  // STRADA DEL FRIULI 230
+            "49007",  // STRADA DEL FRIULI 517
+            "49009",  // STRADA DEL FRIULI 236/2 (EX DAZIO)
+            "49008",  // STRADA DEL FRIULI 527 (EX DAZIO)
+            "D5021",  // STRADA DEL FRIULI (DIREZIONE TRIESTE)
+            "D5020",  // STRADA DEL FRIULI (DIREZIONE PROSECCO)
+            "D4019",  // STRADA DEL FRIULI 81 (LOCALIT� CONTOVELLO)
+            "D4001",  // STRADA DEL FRIULI 83 (LOCALIT� CONTOVELLO)
+            "D4018",  // STRADA DEL FRIULI 453 (LOCALIT� CONTOVELLO)
+            "D4002",  // STRADA DEL FRIULI 453 (LOCALIT� CONTOVELLO)
+            "D4017",  // LOCALIT� CONTOVELLO 201
+            "D4003",  // STRADA DEL FRIULI 531 (LOCALIT� CONTOVELLO, SCUOLA)
+            "D4004",  // STRADA DEL FRIULI 185 (LOCALIT� PROSECCO)
+            "D4015",  // PROSECCO
+            "D4020",  // PROSECCO
+            "D4016",  // LOCALIT� PROSECCO 186 (SCUOLA MEDIA)
+            "D4032",  // LOCALIT� PROSECCO 162 (FARMACIA)
+            "D4021",  // LOCALIT� PROSECCO 316 (FARMACIA)
+            "D4031",  // STRADA PROVINCIALE 1 DEL CARSO (MOBILIFICIO)
+            "D4022",  // STRADA PROVINCIALE 1 DEL CARSO (MOBILIFICIO)
+            "D4030",  // STRADA PROVINCIALE 1 DEL CARSO 16 (CAMPO SACRO)
+            "D4023",  // STRADA PROVINCIALE 1 DEL CARSO 16 (CAMPO SACRO)
+            "D7010",  // STRADA PROVINCIALE 1 DEL CARSO 9
+            "D7001",  // STRADA PROVINCIALE 1 DEL CARSO 8
+            "D7009",  // STRADA PROVINCIALE 1 DEL CARSO 14 (TRATTORIA AI PINI)
+            "D7002",  // STRADA PROVINCIALE 1 DEL CARSO 13
+            "D7008",  // STRADA PROVINCIALE 1 DEL CARSO 15
+            "D7003",  // STRADA PROVINCIALE 1 DEL CARSO 15
+            "D7056",  // STRADA PROVINCIALE 1 DEL CARSO 8
+            "D7057",  // STRADA PROVINCIALE 1 DEL CARSO 8
+            "D7007",  // STRADA PROVINCIALE 1 DEL CARSO 24
+            "D7004",  // STRADA PROVINCIALE 1 DEL CARSO 21
+            "D7006",  // STRADA PROVINCIALE 1 DEL CARSO 16 (CHIOSCO)
+            "D7005",  // STRADA PROVINCIALE 1 DEL CARSO 16 (CHIOSCO)
+            "D4029",  // SANTA CROCE
+            "D4024",  // LOCALIT� SANTA CROCE 10
+            "D4028",  // LOCALIT� SANTA CROCE 4
+            "D4025",  // LOCALIT� SANTA CROCE 4 (STRADA PROVINCIALE 1)
+            "D4027",  // STRADA PROVINCIALE 1 DEL CARSO 354 (SCUOLA DI SANTA CROCE)
+            "D4026",  // STRADA PROVINCIALE 1 DEL CARSO 354 (SCUOLA DI SANTA CROCE)
+            "D6104",  // STRADA PROVINCIALE 1 DEL CARSO 1/H
+            "D6102",  // STRADA PROVINCIALE 1 DEL CARSO 1/F
+            "D6080",  // STRADA PROVINCIALE 1 DEL CARSO 168 (AURISINA)
+            "D6022",  // STRADA PROVINCIALE 1 DEL CARSO 167 (PIZZERIA, AURISINA)
+            "D6079",  // STRADA PROVINCIALE 1 DEL CARSO 151 (AURISINA)
+            "D6023",  // STRADA PROVINCIALE 1 DEL CARSO 142 (AURISINA)
+            "D6077",  // STRADA PROVINCIALE 1 DEL CARSO 139 (AURISINA)
+            "D6025",  // STRADA PROVINCIALE 1 DEL CARSO 125 (AURISINA)
+            "D6076",  // STRADA PROVINCIALE 1 DEL CARSO 129 (AURISINA)
+            "D6075",  // STRADA PROVINCIALE 1 DEL CARSO 85 (SCUOLA DI AURISINA)
+            "D6026",  // STRADA PROVINCIALE 1 DEL CARSO 85 (SCUOLA DI AURISINA)
+            "D6074",  // STRADA PROVINCIALE 1 DEL CARSO 79/L (AURISINA CAVE)
+            "D6027",  // STRADA PROVINCIALE 1 DEL CARSO 82/M (STAZIONE CARABINIERI)
+            "D6073",  // LOCALIT� AURISINA CAVE 78
+            "D6028",  // LOCALIT� AURISINA CAVE 82
+            "D6072"  // AURISINA MUNICIPIO
+        ],
+        "directions": [
+            "AURISINA CENTRO",
+            "PIAZZALE GIOBERTI"
+        ]
     },
     {
-        "code":  "58",
-        "label":  "58",
-        "stops":  [
-                      "46015",
-                      "D9009"
-                  ],
-        "directions":  [
-                           "PIAZZALE GIOBERTI",
-                           "BAGNOLI"
-                       ]
+        "code": "58",
+        "label": "58",
+        "terminals": ["46015", "D9009"],
+        "stops": [
+            "46015",  // PIAZZALE GIOBERTI
+            "D9009"  // BAGNOLI
+        ],
+        "directions": [
+            "PIAZZALE GIOBERTI",
+            "DOLINA",
+            "BAGNOLI"
+        ]
     },
     {
-        "code":  "64",
-        "label":  "64",
-        "stops":  [
-                      "05012",
-                      "D3022",
-                      "D3012",
-                      "48009"
-                  ],
-        "directions":  [
-                           "PIAZZA TOMMASEO",
-                           "STRADA PER VIENNA 14"
-                       ]
+        "code": "64",
+        "label": "64",
+        "terminals": ["05012", "48009"],
+        "stops": [
+            "05012",  // PIAZZA TOMMASEO
+            "02002",  // VIA MAZZINI 4
+            "01002",  // VIA ROMA 18/B (PONTE ROSSO)
+            "01001",  // VIA FILZI 3 (PIAZZA SANT'ANTONIO NUOVO, PONTE ROSSO)
+            "04003",  // VIA ROMA 28 (PIAZZA VITTORIO VENETO, POSTA CENTRALE)
+            "03008",  // VIA FILZI 23
+            "11011",  // VIA DE RITTMEYER (ANGOLO VIA UDINE)
+            "11010",  // VIA COMMERCIALE 26 (TRENOVIA)
+            "23014",  // VIA COMMERCIALE 68
+            "21003",  // VIA COMMERCIALE 21
+            "22008",  // VIA COMMERCIALE 47
+            "22007",  // VIA COMMERCIALE 92 (ANGOLO VIA DAVIS)
+            "22009",  // VIA COMMERCIALE 67 (ANGOLO VIA DAVIS)
+            "22006",  // VIA COMMERCIALE 126 (ANGOLO VIA OVIDIO)
+            "22010",  // VIA COMMERCIALE 95 (ANGOLO VIA OVIDIO)
+            "22011",  // VIA COMMERCIALE 158 (SCALA DELL'ERICA)
+            "22005",  // VIA COMMERCIALE 160 (SCALA DELL'ERICA)
+            "22004",  // VIA COMMERCIALE 155
+            "23903",  // VIA COMMERCIALE (ANGOLO VIA DEI GIAGGIOLI)
+            "23902",  // VIA COMMERCIALE (PALO ELETTRICO 822)
+            "22902",  // SALITA A CONCONELLO 5
+            "22003",  // STRADA NUOVA PER OPICINA 2 (CASA CANTONIERA)
+            "D3001",  // STRADA NUOVA PER OPICINA 37 (CAMPEGGIO OBELISCO)
+            "D3002",  // VIA NAZIONALE 4 (SOTTOPASSO NAPOLEONICA)
+            "D3013",  // VIA NAZIONALE 4 (SOTTOPASSO NAPOLEONICA)
+            "48009",  // STRADA NUOVA PER OPICINA 22 (DIREZIONE CONCONELLO)
+            "48007",  // STRADA NUOVA PER OPICINA 31 (DIREZIONE CONCONELLO)
+            "23001",  // STRADA NUOVA PER OPICINA 26 (ANGOLO VIA COMMERCIALE)
+            "48008",  // STRADA NUOVA PER OPICINA 26 (ANGOLO VIA COMMERCIALE)
+            "D3902",  // VIA NAZIONALE 15
+            "D3903",  // VIA NAZIONALE 14
+            "D3012",  // OPICINA TRENOVIA
+            "D3057",  // VIA NAZIONALE 43/A (RISTORANTE)
+            "D3022",  // STRADA PER VIENNA 14
+            "D3023",  // STRADA PER VIENNA 9 (BAR)
+            "D3035",  // STRADA PER VIENNA 85 (POLIGONO)
+            "D3032",  // STRADA PER VIENNA 84
+            "D8008",  // STRADA REGIONALE 58 DELLA CARNIOLA 20 (CAMPEGGIO EUROPA)
+            "D8021"  // LOCALIT� FERNETTI 3/A (CASA DI RIPOSO)
+        ],
+        "directions": [
+            "PIAZZA TOMMASEO",
+            "OPICINA CENTRO"
+        ]
     },
     {
-        "code":  "A",
-        "label":  "A",
-        "stops":  [
-                      "03011",
-                      "28003",
-                      "52012",
-                      "08003"
-                  ],
-        "directions":  [
-                           "PIAZZA GOLDONI",
-                           "VIALE CAMPI ELISI",
-                           "CATTINARA",
-                           "PONTE DELLA FABRA"
-                       ]
+        "code": "A",
+        "label": "A",
+        "terminals": ["03006", "03011", "52012", "52018", "53017", "26001", "28001", "28002", "28003", "28004"],
+        "stops": [
+            "08003",  // PONTE DELLA FABRA
+            "08004",  // PIAZZA DELL'OSPITALE 3/D (OSPEDALE MAGGIORE)
+            "17002",  // VIA D'AZEGLIO (ANGOLO VIA FOSCOLO)
+            "18002",  // VIA FOSCOLO (ANGOLO VIA GIUSEPPE LORENZO GATTERI)
+            "18003",  // VIA ROSSETTI 53 (CHIESA)
+            "18004",  // VIA ROSSETTI 67 (OSPEDALE SANATORIO TRIESTINO)
+            "34001",  // VIA ROSSETTI 93 (ANGOLO ANANIAN, TEATRO PELLICO)
+            "35001",  // VIA ROSSETTI 113 (ANGOLO VIA REVOLTELLA, FIERA)
+            "44018",  // VIA REVOLTELLA 29
+            "44001",  // VIA REVOLTELLA 41 (FARMACIA)
+            "44002",  // VIA REVOLTELLA 83 (SCALA BONGHI)
+            "45001",  // VIA REVOLTELLA 126 (ANGOLO VIA D'ANGELI)
+            "45002",  // VIA REVOLTELLA (SCUOLA, CHIESA)
+            "45003",  // VIA REVOLTELLA 138 (ANGOLO VIA BEDA)
+            "45004",  // VIA REVOLTELLA (ROZZOL)
+            "45005",  // VIA SAN PASQUALE 23
+            "45006",  // VIA SAN PASQUALE
+            "45007",  // VIA SAN PASQUALE 40 (ANGOLO VIA DELL'EREMO)
+            "36001",  // VIA SAN PASQUALE 89 (CHIESA)
+            "36002",  // VIA SAN PASQUALE 111 (SCUOLA)
+            "45008",  // VIA SAN PASQUALE 113
+            "45009",  // VIA SAN PASQUALE 133
+            "45010",  // FERDINANDEO
+            "45012",  // VIA SAN PASQUALE 84
+            "45013",  // VIA SAN PASQUALE 76
+            "36003",  // VIA SAN PASQUALE 101 (SCUOLA)
+            "36012",  // VIA SAN PASQUALE 87 (CHIESA)
+            "36013",  // VIA SAN PASQUALE 40 (ANGOLO VIA DELL'EREMO)
+            "45014",  // VIA SAN PASQUALE
+            "45015",  // VIA SAN PASQUALE 17
+            "45021",  // VIA FORLANINI 9 (ANGOLO STRADA DI ROZZOL)
+            "45022",  // VIA FORLANINI (ANGOLO VIA SOFIANOPULO)
+            "45023",  // VIA FORLANINI 37 (ANGOLO VIA GORTAN)
+            "53014",  // VIA FORLANINI (ANGOLO VIA KOCH, CHIESA)
+            "53001",  // VIA FORLANINI 77
+            "53007",  // VIA FORLANINI 117 (ROZZOL MELARA)
+            "53008",  // VIA FORLANINI 131/145 (SCUOLA)
+            "53002",  // VIA FORLANINI 40 (ANGOLO VIA DE MARCHESETTI)
+            "53017",  // STRADA DI FIUME 525 (OSPEDALE DI CATTINARA)
+            "52018",  // STRADA DI FIUME 320 (OSPEDALE DI CATTINARA)
+            "52012",  // CATTINARA (OSPEDALE)
+            "53009",  // STRADA DI FIUME (SUPERMERCATO ZAZZERON)
+            "53018",  // VIA FORLANINI 40 (ANGOLO VIA DE MARCHESETTI)
+            "53010",  // VIA FORLANINI (SCUOLA)
+            "53011",  // VIA FORLANINI 117
+            "53012",  // VIA FORLANINI 77
+            "53013",  // VIA FORLANINI (ANGOLO VIA KOCH, CHIESA)
+            "45024",  // VIA FORLANINI 37
+            "45025",  // VIA FORLANINI 21
+            "45026",  // VIA FORLANINI 9
+            "45016",  // VIA REVOLTELLA 148 (ROZZOL)
+            "45017",  // VIA REVOLTELLA 138 (ANGOLO VIA FRANCESCO BEDA)
+            "45018",  // VIA REVOLTELLA 130 (CHIESA, SCUOLA)
+            "45019",  // VIA REVOLTELLA 126 (ANGOLO VIA D'ANGELI)
+            "45020",  // VIA REVOLTELLA 75 (SCALA BONGHI)
+            "35004",  // VIA REVOLTELLA 38/A (ANGOLO VIA LONZA)
+            "35005",  // VIA REVOLTELLA 29 (POLIZIA LOCALE)
+            "35006",  // VIA DEI PICCARDI 66 (ANGOLO VIA REVOLTELLA, TEATRO PELLICO)
+            "35007",  // VIA DEI PICCARDI 40/B (ANGOLO VIA DELL'EREMO)
+            "18005",  // VIA DEI PICCARDI 20 (ANGOLO VIA DEI PORTA)
+            "18013",  // VIA PASCOLI 42 (ANGOLO VIA DEI PICCARDI)
+            "18001",  // VIA PASCOLI 28 (ISTITUTO ITIS)
+            "08001",  // VIA D'AZEGLIO (ANGOLO VIA VASARI)
+            "08002",  // PIAZZA DELL'OSPITALE 1 (OSPEDALE MAGGIORE)
+            "03011",  // PIAZZA GOLDONI
+            "27011",  // PASSEGGIO SANT'ANDREA (PASSERELLA AREA FERROVIARIA)
+            "27005",  // PASSEGGIO SANT'ANDREA (PALO 394)
+            "27003",  // VIA GIULIO CESARE (VIA DI CAMPO MARZIO, MUSEO FERROVIARIO)
+            "27010",  // PASSEGGIO SANT'ANDREA
+            "27014",  // VIA DI CAMPO MARZIO 20
+            "27002",  // VIA AUGUSTO 12 (MERCATO ORTOFRUTTICOLO)
+            "27009",  // TRIESTE LARGO IRNERI (LLOYD)
+            "27006",  // TRIESTE PASSEGGIO SANT'ANDREA (FRONTE 6/A)
+            "13003",  // RIVA GRUMULA (STAZIONE ROGERS)
+            "13004",  // RIVA GRUMULA 12/A
+            "27008",  // PASSEGGIO SANT'ANDREA 12 (VIA DELLE FIAMME GIALLE 6)
+            "27007",  // PASSEGGIO SANT'ANDREA (GUARDIA DI FINANZA)
+            "13002",  // RIVA SAURO 1 (SALONE DEGLI INCANTI)
+            "13005",  // RIVA SAURO 24 (ACQUARIO, MUSEO REVOLTELLA)
+            "28004",  // VIALE CAMPI ELISI 16
+            "28001",  // VIALE DEI CAMPI ELISI 32 (ANGOLO VIA DE COLETTI)
+            "13001",  // RIVA DEL MANDRACCHIO (PALACONGRESSI)
+            "13006",  // RIVA DEL MANDRACCHIO 4 (HOTEL EXCELSIOR)
+            "28002",  // VIALE DEI CAMPI ELISI 59 (PONTE FERROVIA)
+            "26001",  // VIALE DEI CAMPI ELISI 95 (PONTE FERROVIA)
+            "05001",  // RIVA TRE NOVEMBRE (PREFETTURA, TEATRO VERDI, MUNICIPIO)
+            "05002",  // RIVA CADUTI PER L'ITALIANIT� DI TRIESTE (TEATRO VERDI)
+            "28003",  // VIALE CAMPI ELISI
+            "02005",  // PIAZZA TOMMASEO
+            "02002",  // VIA MAZZINI 4
+            "02003",  // VIA MAZZINI (ANGOLO CASSA DI RISPARMIO)
+            "03016",  // PIAZZA DELLA REPUBBLICA 2
+            "02001",  // PIAZZA DELLA REPUBBLICA
+            "03006"  // PIAZZA GOLDONI
+        ],
+        "directions": [
+            "PIAZZA GOLDONI",
+            "CATTINARA",
+            "CAMPI ELISI"
+        ]
     },
     {
-        "code":  "B",
-        "label":  "B",
-        "stops":  [
-                      "03011",
-                      "29016",
-                      "54007",
-                      "03004",
-                      "37013"
-                  ],
-        "directions":  [
-                           "PIAZZA GOLDONI",
-                           "VIA SVEVO",
-                           "LONGERA",
-                           "SOTTOLONGERA"
-                       ]
+        "code": "B",
+        "label": "B",
+        "terminals": ["03004", "03011", "54007", "29016"],
+        "stops": [
+            "54007",  // LONGERA
+            "54008",  // STRADA PER LONGERA 238 (CHIESA)
+            "54009",  // STRADA PER LONGERA 228
+            "54010",  // STRADA PER LONGERA 224
+            "54011",  // STRADA PER LONGERA 210
+            "37014",  // STRADA PER LONGERA 207
+            "37015",  // STRADA PER LONGERA 82 (SOTTOLONGERA)
+            "37016",  // STRADA PER LONGERA 66 (ANGOLO VIA LEVIER)
+            "37017",  // STRADA PER LONGERA 131 (ANGOLO DEL FARNETELLO)
+            "37018",  // STRADA PER LONGERA 37 (ANGOLO VIA TIMIGNANO)
+            "37019",  // STRADA PER LONGERA 4 (ANGOLO VIA COZZI)
+            "37020",  // STRADA PER LONGERA 1
+            "37021",  // STRADA DI GUARDIELLA 18 (ANGOLO STRADA PER LONGERA)
+            "46027",  // STRADA DI GUARDIELLA 4 (ROTONDA DEL BOSCHETTO)
+            "46013",  // VIALE RAFFAELLO SANZIO 1 (ROTONDA DEL BOSCHETTO)
+            "46014",  // VIALE SANZIO 17
+            "46010",  // PIAZZALE GIOBERTI 1
+            "46011",  // VIALE RAFFAELLO SANZIO 30 (ANGOLO VIA BRUNELLESCHI)
+            "46012",  // VIALE RAFFAELLO SANZIO (ROTONDA DEL BOSCHETTO)
+            "38001",  // VIA GIULIA 80 (CENTRO COMMERCIALE IL GIULIA)
+            "38002",  // VIA GIULIA 48 (SCUOLA)
+            "38003",  // VIA GIULIA 22 (PIAZZA DEI VOLONTARI GIULIANI)
+            "19002",  // LARGO TOMIZZA
+            "19008",  // VIA BATTISTI 22 (ANGOLO VIA GIUSEPPE LORENZO GATTERI)
+            "09001",  // VIA BATTISTI (GALLERIA FENICE)
+            "03011",  // PIAZZA GOLDONI
+            "07004",  // VIA BERNINI 6 (ANGOLO VIA DEL BOSCO)
+            "26006",  // VIA ALBERTI
+            "26007",  // VIA ALBERTI
+            "40003",  // VIA DI SERVOLA (CHIESA)
+            "28010",  // VIA CADUTI SUL LAVORO (TRIESTE TRASPORTI)
+            "28012",  // VIA SVEVO (CANTIERI)
+            "29011",  // VIA SVEVO 38 (CASA EMMAUS)
+            "29016",  // VIA SVEVO
+            "40002",  // VIA DEI SONCINI 179 (ANGOLO VIA DI SERVOLA)
+            "29007",  // VIA D'ALVIANO 14 (GASOMETRO)
+            "29017",  // VIA SVEVO 22 (CENTRO COMMERCIALE TORRI D'EUROPA)
+            "29012",  // VIA D'ALVIANO 14 (DISTRIBUTORE CARBURANTE)
+            "40004",  // VIA DI SERVOLA 2 (ANGOLO VIA DELLA CALCARA)
+            "40001",  // VIA BAIAMONTI 47 (ANGOLO VIA SVEVO)
+            "29010",  // VIA D'ALVIANO 37 (UFFICIO POSTALE)
+            "29008",  // VIA D'ALVIANO 15 (TRIESTE TRASPORTI, VIGILI DEL FUOCO)
+            "29013",  // VIA D'ALVIANO 39 (UFFICIO POSTALE)
+            "29009",  // VIA D'ALVIANO 27 (CENTRO COMMERCIALE TORRI D'EUROPA)
+            "29015",  // VIA D'ALVIANO 66 (TRIESTE TRASPORTI, VIGILI DEL FUOCO)
+            "29014",  // VIA D'ALVIANO 86 (CENTRO COMMERCIALE TORRI D'EUROPA)
+            "41022",  // VIA DEI SONCINI 107
+            "07005",  // VIA BERNINI 6 (ANGOLO VIA DEL BOSCO)
+            "41016",  // VIA BAIAMONTI 61
+            "41021",  // VIA DEI SONCINI 79 (ANGOLO VIA GIACOMETTI)
+            "07003",  // CORSO SABA
+            "03004",  // PIAZZA GOLDONI
+            "09002",  // VIA BATTISTI (GALLERIA FENICE)
+            "41017",  // VIA BAIAMONTI 93 (ANGOLO VIA PIRANO)
+            "41020",  // VIA DEI SONCINI 55 (ANGOLO VIA ZARA)
+            "41018",  // VIA BAIAMONTI 103 (ANGOLO VIA DELL'ISTRIA)
+            "41019",  // VIA DEI SONCINI 3 (PONTE)
+            "19003",  // VIA GIULIA 3/C (GIARDINO PUBBLICO, TEATRO ROSSETTI)
+            "19004",  // VIA GIULIA 21 (LARGO TOMIZZA)
+            "38004",  // VIA GIULIA 37 (PIAZZA DEI VOLONTARI GIULIANI)
+            "38005",  // VIA GIULIA 55 (SCUOLA)
+            "38006",  // VIA GIULIA 77 (CENTRO COMMERCIALE IL GIULIA)
+            "46026",  // STRADA DI GUARDIELLA 2 (ROTONDA DEL BOSCHETTO)
+            "37007",  // STRADA DI GUARDIELLA 9 (ANGOLO STRADA PER LONGERA)
+            "37008",  // STRADA PER LONGERA 1 (ANGOLO STRADA DI GUARDIELLA)
+            "37009",  // STRADA PER LONGERA 6 (ANGOLO VIA ANTONI)
+            "46015",  // PIAZZALE GIOBERTI
+            "37010",  // STRADA PER LONGERA 39 (ANGOLO VIA TIMIGNANO)
+            "37011",  // STRADA PER LONGERA 127 (ANGOLO DEL FARNETELLO)
+            "37012",  // STRADA PER LONGERA 66 (ANGOLO VIA LEVIER)
+            "37013",  // SOTTOLONGERA
+            "54002",  // STRADA PER LONGERA 207 (ANGOLO VIA MASACCIO)
+            "54003",  // STRADA PER LONGERA 212
+            "54004",  // STRADA PER LONGERA 224
+            "54005",  // STRADA PER LONGERA 232
+            "54006"  // STRADA PER LONGERA 251 (CHIESA)
+        ],
+        "directions": [
+            "PIAZZA GOLDONI",
+            "LONGERA",
+            "VIA SVEVO"
+        ]
     },
     {
-        "code":  "C",
-        "label":  "C",
-        "stops":  [
-                      "52014",
-                      "03012",
-                      "50003",
-                      "03010",
-                      "41024",
-                      "03004"
-                  ],
-        "directions":  [
-                           "CATTINARA",
-                           "PIAZZA GOLDONI",
-                           "BARCOLA",
-                           "VALMAURA"
-                       ]
+        "code": "C",
+        "label": "C",
+        "terminals": ["03004", "03010", "03012", "50003", "41024", "52014"],
+        "stops": [
+            "03012",  // PIAZZA GOLDONI
+            "08010",  // LARGO DELLA BARRIERA VECCHIA 17
+            "17006",  // PIAZZA GARIBALDI 3
+            "16007",  // VIA DEL MOLINO A VENTO 51 (ANGOLO VIA DEI MONTECCHI)
+            "16008",  // VIA DEL MOLINO A VENTO 72 (ANGOLO VIA DELLA BASTIA)
+            "32007",  // VIA DEL MOLINO A VENTO 85
+            "32004",  // STRADA DI FIUME 7 (CENTRO SALUTE MENTALE DELLA MADDALENA)
+            "32005",  // STRADA DI FIUME 73 (ANGOLO VIA ZAMMATTIO)
+            "43008",  // VIA PATRIZIO (ANGOLO VIA DELLE CAMPANELLE)
+            "43009",  // VIA DELLE CAMPANELLE 143 (ANGOLO VIA STANCOVICH)
+            "43010",  // VIA DELLE CAMPANELLE 138 (PONTE)
+            "43011",  // VIA DELLE CAMPANELLE 203 (ANGOLO VIA ANTICO)
+            "43012",  // VIA DELLE CAMPANELLE (ANGOLO VIA VENTURA)
+            "43013",  // VIA DELLE CAMPANELLE 260 (ANGOLO VIA ZAROTTI)
+            "43014",  // VIA DELLE CAMPANELLE 257 (SCUOLA)
+            "52003",  // VIA DELLE CAMPANELLE (ANGOLO VIA DELL'ACQUA)
+            "52001",  // CAMPANELLE
+            "58002",  // VIA DELLE ALPI GIULIE 2 (PISCINA)
+            "58003",  // VIA DELLE ALPI GIULIE 5 (GRATTACIELO)
+            "58004",  // VIA DELLE ALPI GIULIE (PALO ELETTRICO 226)
+            "58005",  // VIA DELLE ALPI GIULIE (ANGOLO VIA MONTE PERALBA)
+            "58019",  // VIA DELLE ALPI GIULIE 23 (SCUOLA DON MILANI)
+            "58006",  // VIA DELLE ALPI GIULIE 1
+            "58007",  // VIA DELLE ALPI GIULIE 12 (ANGOLO VIA DEL MONTASIO)
+            "58014",  // VIA RIO STORTO (ANGOLO VIA DEL MONTASIO)
+            "52019",  // VIA DEL BOTRO 21
+            "52021",  // STRADA DI FIUME 302
+            "52014",  // CATTINARA (OSPEDALE)
+            "53019",  // STRADA DI FIUME 300 (ANGOLO VIA DEL CASTELLIERE)
+            "52020",  // VIA DEL BOTRO 32
+            "58017",  // VIA RIO STORTO (ANGOLO VIA DEL MONTASIO)
+            "58008",  // VIA DELLE ALPI GIULIE (CHIOSCO IN CEMENTO)
+            "58009",  // VIA DELLE ALPI GIULIE 12 (ANGOLO VIA DEL MONTASIO)
+            "58010",  // VIA DELLE ALPI GIULIE 1 (CABINA ELETTRICA ACEGAS)
+            "58018",  // VIA DELLE ALPI GIULIE 27 (SCUOLA)
+            "58011",  // VIA DELLE ALPI GIULIE (ANGOLO VIA MONTE PERALBA)
+            "58012",  // VIA DELLE ALPI GIULIE 2 (PISCINA)
+            "52013",  // VIA DELLE CAMPANELLE 300 (CAMPO SPORTIVO)
+            "52002",  // VIA DELLE CAMPANELLE (VIA DELL'ACQUA)
+            "43001",  // VIA DELLE CAMPANELLE 257 (SCUOLA)
+            "43002",  // VIA DELLE CAMPANELLE 260 (ANGOLO VIA ZAROTTI)
+            "43003",  // VIA DELLE CAMPANELLE (ANGOLO VIA VENTURA)
+            "43004",  // VIA DELLE CAMPANELLE 203 (ANGOLO VIA ANTICO)
+            "43005",  // VIA DELLE CAMPANELLE 138 (PONTE)
+            "43006",  // VIA DELLE CAMPANELLE 120 (ANGOLO VIA STANCOVICH)
+            "43007",  // VIA DELLE CAMPANELLE 108 (ANGOLO VIA PATRIZIO)
+            "34006",  // STRADA DI FIUME 52 (ANGOLO VIA ZAMMATTIO)
+            "32003",  // VIA MOLINO A VENTO 154 (CENTRO SALUTE MENTALE MADDALENA)
+            "32006",  // VIA DEL MOLINO A VENTO 88
+            "16006",  // VIA DEL MOLINO A VENTO 70 (LARGO DEL PESTALOZZI)
+            "17008",  // VIA DEL MOLINO A VENTO 22 (ANGOLO VIA DEI MONTECCHI)
+            "17009",  // PIAZZA GARIBALDI 12
+            "08011",  // LARGO BARRIERA
+            "41024",  // VALMAURA
+            "41004",  // PIAZZALE VALMAURA
+            "41005",  // VIA VALMAURA (STADIO ROCCO E GREZAR)
+            "41007",  // VIA VALMAURA 35 (RISIERA DI SAN SABBA)
+            "41006",  // VIA VALMAURA 37 (ANGOLO VIA DE JENNER, RISIERA SAN SABBA)
+            "40005",  // VIA VALMAURA 43
+            "40006",  // VIA VALMAURA 69
+            "41003",  // VIA DELL'ISTRIA (CIMITERO)
+            "42001",  // VIA DELL'ISTRIA 206 (CIMITERO)
+            "41002",  // VIA DELL'ISTRIA 127
+            "42003",  // VIA DELL'ISTRIA 101 (ANGOLO VIA BAIAMONTI)
+            "41001",  // VIA DELL'ISTRIA 99
+            "31001",  // VIA DELL'ISTRIA 142 (ANGOLO VIA ORSERA)
+            "42004",  // VIA DELL'ISTRIA 138 (ANGOLO VIA ORSERA)
+            "32001",  // VIA DELL'ISTRIA 69 (OSPEDALE BURLO GAROFOLO)
+            "30007",  // VIA DELL'ISTRIA 67 (OSPEDALE BURLO GAROFOLO)
+            "30006",  // VIA DELL'ISTRIA 57 (ANGOLO VIA MARENZI)
+            "32002",  // VIA DELL'ISTRIA 102 (ANGOLO VIA MARENZI)
+            "30005",  // VIA DELL'ISTRIA 43 (LARGO DEL PESTALOZZI, SCUOLA)
+            "16004",  // VIA DELL'ISTRIA 56 (ANGOLO VIA DELLA BASTIA)
+            "16005",  // VIA DELL'ISTRIA 24/C (ANGOLO VIA DI RIVALTO)
+            "16003",  // VIA DELL'ISTRIA 15 (ANGOLO VIA RIVALTO)
+            "15004",  // CAMPO SAN GIACOMO 1/B
+            "15003",  // CAMPO SAN GIACOMO 3
+            "15002",  // VIA SAN GIACOMO IN MONTE 9
+            "07001",  // VIA SAN GIACOMO IN MONTE 12 (GIARDINO BASEVI)
+            "15001",  // VIA SAN GIACOMO IN MONTE 2 (ANGOLO VIA DEL BOSCO)
+            "07002",  // PIAZZA VICO 9 (ANGOLO VIA DEL BOSCO)
+            "06002",  // PIAZZA DEL SANSOVINO 6 (CROCE ROSSA)
+            "06001",  // PIAZZA DEL SANSOVINO (CROCE ROSSA)
+            "03010",  // PIAZZA GOLDONI
+            "03004",  // PIAZZA GOLDONI
+            "03013",  // PIAZZA SAN GIOVANNI 5/D
+            "03002",  // VIA CARDUCCI (LUMINOSA)
+            "10005",  // VIA CARDUCCI (REGIONE)
+            "03001",  // PIAZZA OBERDAN
+            "04010",  // VIA GHEGA 9 (CONSERVATORIO TARTINI)
+            "11007",  // VIALE MIRAMARE 5 (PIAZZA LIBERT�, STAZIONE FERROVIARIA)
+            "12004",  // VIALE MIRAMARE 5 (STAZIONE FERROVIARIA)
+            "11008",  // VIALE MIRAMARE 19 (ANGOLO VIA ARIOSTO)
+            "12003",  // VIALE MIRAMARE 19 (VIA ARIOSTO)
+            "12002",  // TRIESTE VIALE MIRAMARE 12 (LARGO ROIANO)
+            "23007",  // TRIESTE VIALE MIRAMARE (FRONTE CIVICO 14, LARGO ROIANO)
+            "24051",  // VIALE MIRAMARE 61 (POLIZIA LOCALE)
+            "12005",  // VIALE MIRAMARE 67 (POLIZIA LOCALE)
+            "12001",  // VIALE MIRAMARE 77 (SALITA MADONNA DI GRETTA, CAVALCAVIA)
+            "24001",  // VIALE MIRAMARE 77 (CAVALCAVIA)
+            "24053",  // VIALE MIRAMARE (PORTO VECCHIO)
+            "24002",  // VIALE MIRAMARE 30 (FERROVIARIO E CRAL)
+            "24003",  // VIALE MIRAMARE 30 (BAGNI FERROVIARIO E CRAL)
+            "50015",  // VIALE MIRAMARE (PARCHEGGIO BOVEDO)
+            "50016",  // VIALE MIRAMARE (PARCHEGGIO BOVEDO)
+            "50001",  // VIALE MIRAMARE 36 (PARCHEGGIO BOVEDO)
+            "50005",  // VIALE MIRAMARE 36 (CIRCOLO SPORTIVO SATURNIA, BOVEDO)
+            "50004",  // VIALE MIRAMARE 52 (ISTITUTO RITTMEYER)
+            "50002",  // VIALE MIRAMARE 113 (ISTITUTO RITTMEYER)
+            "50003",  // BARCOLA
+            "50014",  // TRIESTE VIALE MIRAMARE 127 (GELATERIA PIPOLO, BARCOLA)
+            "50012",  // VIALE MIRAMARE 201 (FONTANA)
+            "50007",  // VIALE MIRAMARE 211 (PIAZZALE BIAGIO MARIN, FONTANA)
+            "50011",  // VIALE MIRAMARE 271 (BARCOLA)
+            "50008",  // VIALE MIRAMARE 271/1
+            "50009",  // VIALE MIRAMARE (EX DAZIO)
+            "50010",  // VIALE MIRAMARE (EX DAZIO)
+            "D5019",  // VIALE MIRAMARE 285 (GELATERIA)
+            "D5001",  // VIALE MIRAMARE 279 (GELATERIA)
+            "D5017",  // VIALE MIRAMARE 293 (PORTICCIOLO)
+            "D5003",  // VIALE MIRAMARE 293 (PORTICCIOLO)
+            "D5016",  // VIALE MIRAMARE 303 (CALIFORNIA INN)
+            "D5004",  // VIALE MIRAMARE 303 (CALIFORNIA INN)
+            "D5015",  // VIALE MIRAMARE 323
+            "D5005",  // VIALE MIRAMARE 323 (MARINELLA)
+            "D5014",  // VIALE MIRAMARE (PALO ELETTRICO 20)
+            "D5007",  // STRADA STATALE 14 DELLA VENEZIA GIULIA (CASTELLO MIRAMARE)
+            "D5013",  // CASTELLO DI MIRAMARE (BIVIO)
+            "D5006",  // STRADA STATALE 14 DELLA VENEZIA GIULIA 2 (HOTEL)
+            "D5023",  // STRADA STATALE 14 (VIA BEIRUT, CASTELLO DI MIRAMARE, ICTP)
+            "D5022",  // STRADA STATALE 14 DELLA VENEZIA GIULIA 9
+            "D5008",  // GRIGNANO/MIRAMARE SS 14 (STRADA COSTIERA 17)
+            "D5011",  // GRIGNANO/MIRAMARE SS 14 (STRADA COSTIERA)
+            "D5010"  // GRIGNANO
+        ],
+        "directions": [
+            "PIAZZA GOLDONI",
+            "BARCOLA",
+            "VALMAURA",
+            "CATTINARA"
+        ]
     },
     {
-        "code":  "D",
-        "label":  "D",
-        "stops":  [
-                      "08003",
-                      "44003",
-                      "03011"
-                  ],
-        "directions":  [
-                           "PONTE DELLA FABRA",
-                           "VIA CUMANO",
-                           "PIAZZA GOLDONI"
-                       ]
+        "code": "D",
+        "label": "D",
+        "terminals": ["03011", "44003"],
+        "stops": [
+            "27017",  // VIA MURAT
+            "27018",  // VIA HERMET (PIAZZA CARLO ALBERTO)
+            "27016",  // VIA HERMET (PIAZZA CARLO ALBERTO)
+            "27002",  // VIA AUGUSTO 12 (MERCATO ORTOFRUTTICOLO)
+            "27015",  // VIA FRANCA 15 (ANGOLO VIA BELPOGGIO)
+            "13003",  // RIVA GRUMULA (STAZIONE ROGERS)
+            "27019",  // VIA FRANCA 14 (ANGOLO VIA BELPOGGIO)
+            "13002",  // RIVA SAURO 1 (SALONE DEGLI INCANTI)
+            "27020",  // VIA FRANCA 1 (LARGO DEL PROMONTORIO)
+            "25002",  // LARGO DEL PROMONTORIO 1
+            "13001",  // RIVA DEL MANDRACCHIO (PALACONGRESSI)
+            "05001",  // RIVA TRE NOVEMBRE (PREFETTURA, TEATRO VERDI, MUNICIPIO)
+            "25001",  // VIA COLAUTTI 2 (ANGOLO VIA DE AMICIS)
+            "25003",  // VIA COLAUTTI 6 (ANGOLO VIA DE AMICIS)
+            "02002",  // VIA MAZZINI 4
+            "26003",  // VIA BESENGHI 46 (ANGOLO VIA NICOL� DE RIN)
+            "26002",  // VIA BESENGHI 53 (ANGOLO VIA NICOL� DE RIN)
+            "14003",  // VIA BESENGHI 37 (SEMINARIO VESCOVILE)
+            "03007",  // PIAZZA DELLA REPUBBLICA 2
+            "26004",  // VIA BESENGHI 12 (SEMINARIO)
+            "14001",  // VIA TIEPOLO (LARGO CANAL)
+            "14005",  // VIA TIEPOLO (LARGO CANAL)
+            "14002",  // VIA SEGANTINI 4 (ANGOLO VIA DEI NAVALI)
+            "14004",  // VIA SEGANTINI 3 (ANGOLO VIA DEI NAVALI)
+            "03011",  // PIAZZA GOLDONI
+            "06001",  // PIAZZA DEL SANSOVINO (CROCE ROSSA)
+            "06002",  // PIAZZA DEL SANSOVINO 6 (CROCE ROSSA)
+            "08003",  // PONTE DELLA FABRA
+            "08004",  // PIAZZA DELL'OSPITALE 3/D (OSPEDALE MAGGIORE)
+            "08002",  // PIAZZA DELL'OSPITALE 1 (OSPEDALE MAGGIORE)
+            "08001",  // VIA D'AZEGLIO (ANGOLO VIA VASARI)
+            "17002",  // VIA D'AZEGLIO (ANGOLO VIA FOSCOLO)
+            "18001",  // VIA PASCOLI 28 (ISTITUTO ITIS)
+            "17003",  // VIA PASCOLI 31/A (ISTITUTO ITIS)
+            "17001",  // VIA DEI CONTI (ANGOLO VIA PIO RIEGO GAMBINI)
+            "17004",  // VIA DEI CONTI (ANGOLO VIA PIO RIEGO GAMBINI)
+            "33006",  // PIAZZA DEL PERUGINO 7/A
+            "33002",  // PIAZZA DEL PERUGINO 6
+            "33003",  // VIALE D'ANNUNZIO 48 (ANGOLO VIA LIMITANEA, TEATRO BOBBIO)
+            "34003",  // VIALE D'ANNUNZIO 51 (ANGOLO VIA LIMITANEA, TEATRO BOBBIO)
+            "34004",  // VIALE GABRIELE D'ANNUNZIO 79 (PIAZZA DEI FORAGGI)
+            "34002",  // PIAZZA DEI FORAGGI 7
+            "34005",  // VIALE DELL'IPPODROMO 12 (IPPODROME, EX FIERA)
+            "44007",  // VIALE DELL'IPPODROMO 16 (EX FIERA)
+            "44006",  // VIA COSTANTINO CUMANO 2 (ANGOLO VIA EUGENIO SCOMPARINI)
+            "44008",  // VIA COSTANTINO CUMANO 2 (ANGOLO VIA EUGENIO SCOMPARINI)
+            "44004",  // VIA FITTKE 5
+            "44009",  // VIA COSTANTINO CUMANO 20 (MUSEI)
+            "44005",  // VIA DEI TOMINZ (MUSEO DI STORIA NATURALE)
+            "44017",  // VIA COSTANTINO CUMANO 22 (MUSEI)
+            "44010",  // VIA COSTANTINO CUMANO 9 (ANGOLO VIA RIETTI)
+            "44003"  // VIA CUMANO
+        ],
+        "directions": [
+            "PIAZZA GOLDONI",
+            "VIA CUMANO",
+            "CAMPO MARZIO"
+        ]
     },
     {
-        "code":  "777",
-        "label":  "777 Bateo Gambling",
-        "stops":  [
-
-                  ],
-        "directions":  [
-                           "CASINO’ VENEZIA"
-                       ]
+        "code": "777",
+        "label": "777 Bateo Gambling",
+        "stops": [],
+        "directions": [
+            "CASINO’ VENEZIA"
+        ]
     }
 ];
