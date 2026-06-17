@@ -1848,13 +1848,17 @@ class BusMagoApp {
         // indice include sempre il primo e l'ultimo (= i due capolinea) piu'
         // alcuni intermedi distribuiti lungo il percorso: basta per intercettare
         // tutti i bus in servizio senza sovraccaricare l'API.
+        // Densita' di campionamento. Lo scenario tipico e' ~5 linee insieme:
+        // puntiamo alla massima precisione mantenendo il totale richieste entro
+        // limiti ragionevoli (~200/ciclo). I capolinea sono comunque sempre
+        // interrogati a parte (vedi sotto).
         let stopsLimitPerLine;
         if (activeLineCount > CONFIG.REFRESH.MANY_LINES_THRESHOLD) {
-            stopsLimitPerLine = 3;   // molte linee: capolinea + 1 intermedio
+            stopsLimitPerLine = 10;  // molte linee: copertura essenziale
         } else if (activeLineCount > 5) {
-            stopsLimitPerLine = 6;
+            stopsLimitPerLine = 22;
         } else {
-            stopsLimitPerLine = 16;  // poche linee: buona copertura del percorso
+            stopsLimitPerLine = 40;  // poche linee (caso tipico): copertura fitta
         }
 
         const uniqueStops = new Set();
@@ -1866,8 +1870,11 @@ class BusMagoApp {
             if (isLineActive) {
                 hasActiveLines = true;
                 
-                // Campiona le fermate per indice. Le fermate in lines.js sono
-                // ordinate lungo il percorso: indice 0 e ultimo = i due capolinea.
+                // Campiona le fermate lungo il percorso (ordinate spazialmente).
+                // Campionamento PESATO VERSO IL CENTRO: gli estremi sono i
+                // capolinea (gia' sempre interrogati sotto), mentre i bus "in
+                // mezzo" sfuggono al monitor dei capolinea, quindi serve piu'
+                // densita' nei tratti centrali.
                 const src = Array.isArray(l.stops) ? l.stops : [];
                 let stopsToUse;
                 if (src.length <= stopsLimitPerLine) {
@@ -1875,13 +1882,17 @@ class BusMagoApp {
                 } else if (stopsLimitPerLine <= 1) {
                     stopsToUse = [src[0]];
                 } else {
-                    const picked = [];
+                    const picked = new Set();
                     const lastIdx = src.length - 1;
                     for (let i = 0; i < stopsLimitPerLine; i++) {
-                        const idx = Math.round((i * lastIdx) / (stopsLimitPerLine - 1));
-                        picked.push(src[idx]);
+                        const t = i / (stopsLimitPerLine - 1);      // 0..1 uniforme
+                        const s = 2 * t - 1;                         // -1..1
+                        // esponente >1 comprime i punti verso il centro
+                        const biased = Math.sign(s) * Math.pow(Math.abs(s), 1.6);
+                        const idx = Math.round((0.5 + 0.5 * biased) * lastIdx);
+                        picked.add(src[idx]);
                     }
-                    stopsToUse = picked;
+                    stopsToUse = Array.from(picked);
                 }
 
                 stopsToUse.forEach(s => uniqueStops.add(s));
