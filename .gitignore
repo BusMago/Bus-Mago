@@ -2,3 +2,7 @@ check_lines.ps1
 *.tmp
 *.log
 *.code-workspace
+
+# Direttive di progetto per Claude (solo locale, non pubblicare)
+CLAUDE.md
+lines-BACKUP.js
