@@ -198,6 +198,7 @@ class BusMagoApp {
         abortController: null
       },
       isHardRefreshing: false,
+      isRefreshing: false, // Flag for normal refresh animation
       wakeLock: null,
       justResumedFromBackground: false // Flag to force fresh data on first refresh after resume
     };
@@ -654,7 +655,7 @@ class BusMagoApp {
   updateRefreshButtonVisual() {
     const btn = document.getElementById('refresh-btn');
     if (!btn) return;
-    if (this.state.isHardRefreshing) {
+    if (this.state.isHardRefreshing || this.state.isRefreshing) {
       btn.classList.add('refreshing');
     } else {
       btn.classList.remove('refreshing');
@@ -1869,6 +1870,10 @@ class BusMagoApp {
         return;
       }
     }
+    
+    // Start refresh animation!
+    this.state.isRefreshing = true;
+    this.updateRefreshButtonVisual();
 
     if (this.state.refreshControl.abortController) {
       this.state.refreshControl.abortController.abort();
@@ -2082,6 +2087,9 @@ class BusMagoApp {
           this.state.refreshControl.lastAppliedRequestSeq = requestId;
         }
         this.state.refreshControl.inFlight = false;
+        // Stop refresh animation!
+        this.state.isRefreshing = false;
+        this.updateRefreshButtonVisual();
         this.compactStopCache();
         this.scheduleNextRefresh(this.getRefreshIntervalMs());
     }
