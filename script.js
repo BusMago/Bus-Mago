@@ -902,12 +902,25 @@ class BusMagoApp {
         });
     }
 
-    // On returning to foreground: reacquire wake lock (if following) and
-    // refresh immediately so the user doesn't stare at stale positions.
+    // Handle app visibility changes:
     document.addEventListener('visibilitychange', () => {
       if (document.visibilityState === 'visible') {
+        // When returning to foreground: reset everything to avoid stale state
+        // Reset refresh control flags
+        if (this.state.refreshControl.abortController) {
+          this.state.refreshControl.abortController.abort();
+        }
+        this.state.refreshControl.abortController = null;
+        this.state.refreshControl.inFlight = false;
+
         if (this.state.isFollowing && this.state.selectedVehicleKey) this.requestWakeLock();
         this.scheduleNextRefresh(0);
+      } else {
+        // When going to background: clean up
+        if (this.state.refreshControl.abortController) {
+          this.state.refreshControl.abortController.abort();
+        }
+        this.releaseWakeLock();
       }
     });
 
@@ -1825,9 +1838,22 @@ class BusMagoApp {
   }
 
   async refreshData() {
+    // Safety check: if inFlight has been stuck for too long, reset it
+    // This prevents the app from freezing if visibility change missed something
     if (this.state.refreshControl.inFlight) {
-      this.scheduleNextRefresh(this.getRefreshIntervalMs());
-      return;
+      const now = Date.now();
+      const lastSuccess = this.state.updateStatus.lastSuccessAt;
+      const lastError = this.state.updateStatus.lastErrorAt;
+      const lastActivity = Math.max(lastSuccess, lastError);
+      const timeSinceLastActivity = lastActivity > 0 ? (now - lastActivity) : 30000;
+
+      // If no activity for more than 30 seconds, reset inFlight flag
+      if (timeSinceLastActivity > 30000) {
+        this.state.refreshControl.inFlight = false;
+      } else {
+        this.scheduleNextRefresh(this.getRefreshIntervalMs());
+        return;
+      }
     }
 
     if (this.state.refreshControl.abortController) {
