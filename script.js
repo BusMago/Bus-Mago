@@ -198,7 +198,8 @@ class BusMagoApp {
         abortController: null
       },
       isHardRefreshing: false,
-      wakeLock: null
+      wakeLock: null,
+      justResumedFromBackground: false // Flag to force fresh data on first refresh after resume
     };
 
     // DOM Elements
@@ -905,15 +906,28 @@ class BusMagoApp {
     // Handle app visibility changes:
     document.addEventListener('visibilitychange', () => {
       if (document.visibilityState === 'visible') {
-        // When returning to foreground: reset everything to avoid stale state
+        // When returning to foreground: reset EVERYTHING for fresh data!
         // Reset refresh control flags
         if (this.state.refreshControl.abortController) {
           this.state.refreshControl.abortController.abort();
         }
         this.state.refreshControl.abortController = null;
         this.state.refreshControl.inFlight = false;
-
+        
+        // Clear all caches to get fresh data immediately!
+        this.state.stopCache = {
+          entries: {},
+          inFlight: {}
+        };
+        
+        // Reset last known signature for directions to ensure fresh data
+        this.state.directions.lastKnownSignature = '';
+        
+        // Set flag to force fresh data for first refresh!
+        this.state.justResumedFromBackground = true;
+        
         if (this.state.isFollowing && this.state.selectedVehicleKey) this.requestWakeLock();
+        // Force immediate refresh with NO CACHE!
         this.scheduleNextRefresh(0);
       } else {
         // When going to background: clean up
@@ -1945,7 +1959,14 @@ class BusMagoApp {
         // TTL dinamico: leggermente inferiore all'intervallo di refresh così
         // ogni ciclo riceve dati freschi (no cache stantia durante il follow),
         // ma resta alto con molte linee per non sovraccaricare l'API.
-        const ttlMs = Math.max(1000, this.getRefreshIntervalMs() - 500);
+        // If we just resumed from background, FORCE 0 TTL to get fresh data!
+        let ttlMs;
+        if (this.state.justResumedFromBackground) {
+          ttlMs = 0; // Force fresh data!
+          this.state.justResumedFromBackground = false; // Clear flag after this refresh!
+        } else {
+          ttlMs = Math.max(1000, this.getRefreshIntervalMs() - 500);
+        }
         const requests = stopsList.map(code => this.fetchStopRuns(code, controller.signal, ttlMs));
         const results = await Promise.all(requests);
 
