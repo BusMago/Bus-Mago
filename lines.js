@@ -787,7 +787,7 @@ window.linesConfig = [
     {
         "code": "15",
         "label": "15",
-        "terminals": ["10010", "27017", "03003"],
+        "terminals": ["27017", "10010"],
         "stops": [
             "10010",  // PIAZZA OBERDAN
             "03002",  // VIA CARDUCCI (LUMINOSA)
@@ -822,8 +822,8 @@ window.linesConfig = [
             "28009"  // VIA COLAUTTI 14/A (PIAZZALE DELLA RESISTENZA)
         ],
         "directions": [
-            "PIAZZA OBERDAN",
-            "VIA MURAT"
+            "VIA MURAT",
+            "PIAZZA OBERDAN"
         ]
     },
     {
@@ -2248,7 +2248,7 @@ window.linesConfig = [
     {
         "code": "36",
         "label": "36",
-        "terminals": ["D5013", "19002"],
+        "terminals": ["D5013", "09001", "19002", "03002"],
         "stops": [
             "19002",  // LARGO TOMIZZA
             "19008",  // VIA BATTISTI 22 (ANGOLO VIA GIUSEPPE LORENZO GATTERI)
@@ -2298,8 +2298,10 @@ window.linesConfig = [
             "19003"  // VIA GIULIA 3/C (GIARDINO PUBBLICO, TEATRO ROSSETTI)
         ],
         "directions": [
-            "CASTELLO DI MIRAMARE",
-            "LARGO TOMIZZA"
+            "CASTELLO DI MIRAMARE (BIVIO)",
+            "VIA BATTISTI (GALLERIA FENICE)",
+            "LARGO TOMIZZA",
+            "VIA CARDUCCI (LUMINOSA)"
         ]
     },
     {
@@ -3136,7 +3138,7 @@ window.linesConfig = [
     {
         "code": "44",
         "label": "44",
-        "terminals": ["10011", "D6107", "24010"],
+        "terminals": ["D4044", "10011", "D6072", "D6055", "D6056"],
         "stops": [
             "D6055",  // SAN GIOVANNI DI DUINO (SS14, CHIESA)
             "D6057",  // DUINO (FRONTE 81/C, SS14, BIVIO VILLAGGIO DEL PESCATORE)
@@ -3320,8 +3322,11 @@ window.linesConfig = [
             "D6107"  // CARTIERA DEL TIMAVO
         ],
         "directions": [
+            "DEVINCINA",
             "PIAZZA OBERDAN",
-            "CARTIERA DEL TIMAVO"
+            "AURISINA MUNICIPIO",
+            "SAN GIOVANNI AL TIMAVO",
+            "VILLAGGIO DEL PESCATORE"
         ]
     },
     {
@@ -3837,8 +3842,7 @@ window.linesConfig = [
             "42002"  // VIA PUCCINI
         ],
         "directions": [
-            "VALMAURA",
-            "VIA ROSSI 36"
+            "VALMAURA"
         ]
     },
     {
@@ -4182,7 +4186,7 @@ window.linesConfig = [
     {
         "code": "64",
         "label": "64",
-        "terminals": ["05012", "D3022", "48009"],
+        "terminals": ["05012", "D3022"],
         "stops": [
             "05012",  // PIAZZA TOMMASEO
             "01001",  // VIA FILZI 3 (PIAZZA SANT'ANTONIO NUOVO, PONTE ROSSO)
