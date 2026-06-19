@@ -2,7 +2,7 @@ window.linesConfig = [
     {
         "code": "1",
         "label": "1",
-        "terminals": ["04018", "04022", "29016"],
+        "terminals": ["04018", "29016"],
         "stops": [
             "04018",  // STAZIONE FERROVIARIA
             "04002",  // VIA GHEGA 9 (CONSERVATORIO TARTINI)
@@ -70,7 +70,7 @@ window.linesConfig = [
     {
         "code": "2",
         "label": "2",
-        "terminals": ["D3012", "TRDAL", "TROPI"],
+        "terminals": ["TROPI", "TRDAL", "D3012"],
         "stops": [
             "TROPI",  // OPICINA - TRAMVIA
             "TR01R",  // QUADRIVIO OPICINA - TRAMVIA
@@ -165,7 +165,7 @@ window.linesConfig = [
     {
         "code": "4",
         "label": "4",
-        "terminals": ["03018", "D3008", "02004"],
+        "terminals": ["03018", "02004", "D3008"],
         "stops": [
             "03018",  // PIAZZA OBERDAN
             "10003",  // VIA DEL CORONEO 27 (TRIBUNALE)
@@ -320,7 +320,7 @@ window.linesConfig = [
     {
         "code": "6",
         "label": "6",
-        "terminals": ["46015", "D5010", "03001"],
+        "terminals": ["D5010", "03001", "46015"],
         "stops": [
             "D5010",  // GRIGNANO
             "D5011",  // GRIGNANO/MIRAMARE SS 14 (STRADA COSTIERA)
@@ -402,7 +402,7 @@ window.linesConfig = [
     {
         "code": "7",
         "label": "7",
-        "terminals": ["E0145", "E0014"],
+        "terminals": ["E0014", "E0145"],
         "stops": [
             "E0145",  // MUGGIA
             "E0136",  // VIA ROMA 9 (MUSEO D'ARTE MODERNA CAR�)
@@ -450,7 +450,7 @@ window.linesConfig = [
     {
         "code": "8",
         "label": "8",
-        "terminals": ["41009", "23004", "28011", "29019"],
+        "terminals": ["28011", "41009", "23004", "29019"],
         "stops": [
             "23004",  // ROIANO
             "23005",  // VIA STOCK (LARGO DEI PETAZZI, AGENZIA DELLE ENTRATE)
@@ -521,7 +521,7 @@ window.linesConfig = [
     {
         "code": "9",
         "label": "9",
-        "terminals": ["27009", "46028", "27006", "09001"],
+        "terminals": ["27009", "27006", "09001", "46028"],
         "stops": [
             "46028",  // PIAZZALE GIOBERTI
             "46010",  // PIAZZALE GIOBERTI 1
@@ -575,7 +575,7 @@ window.linesConfig = [
     {
         "code": "10",
         "label": "10",
-        "terminals": ["02005", "41004", "41024"],
+        "terminals": ["02005", "41024"],
         "stops": [
             "02005",  // PIAZZA TOMMASEO
             "02003",  // VIA MAZZINI (ANGOLO CASSA DI RISPARMIO)
@@ -698,7 +698,7 @@ window.linesConfig = [
     {
         "code": "12",
         "label": "12",
-        "terminals": ["46015", "46016", "46017", "46019", "46021", "46025", "46035"],
+        "terminals": ["46015", "46035", "46019"],
         "stops": [
             "46015",  // PIAZZALE GIOBERTI
             "46041",  // VIA DELLE DOCCE 18
@@ -787,7 +787,7 @@ window.linesConfig = [
     {
         "code": "15",
         "label": "15",
-        "terminals": ["10010", "27017"],
+        "terminals": ["10010", "27017", "03003"],
         "stops": [
             "10010",  // PIAZZA OBERDAN
             "03002",  // VIA CARDUCCI (LUMINOSA)
@@ -822,14 +822,14 @@ window.linesConfig = [
             "28009"  // VIA COLAUTTI 14/A (PIAZZALE DELLA RESISTENZA)
         ],
         "directions": [
-            "VIA MURAT",
-            "PIAZZA OBERDAN"
+            "PIAZZA OBERDAN",
+            "VIA MURAT"
         ]
     },
     {
         "code": "16",
         "label": "16",
-        "terminals": ["10010", "26001", "28002", "28003", "28005", "28011", "28017"],
+        "terminals": ["28003", "28017", "10010"],
         "stops": [
             "10010",  // PIAZZA OBERDAN
             "03002",  // VIA CARDUCCI (LUMINOSA)
@@ -845,11 +845,6 @@ window.linesConfig = [
             "28005",  // VIA SCHIAPARELLI 3 (ANGOLO VIALE DEI CAMPI ELISI)
             "28002",  // VIALE DEI CAMPI ELISI 59 (PONTE FERROVIA)
             "28003",  // VIALE CAMPI ELISI
-            "28015",  // VIA SAN MARCO 52
-            "28008",  // TORRE DEL LLOYD
-            "28017",  // VIA VON BRUCK 30 (GIRONE)
-            "28016",  // VIA VON BRUCK 12
-            "28014",  // VIA SAN MARCO 52
             "26001",  // VIALE DEI CAMPI ELISI 95 (PONTE FERROVIA)
             "26005",  // VIA SCHIAPARELLI 20 (PIAZZALE DELLA RESISTENZA)
             "28009",  // VIA COLAUTTI 14/A (PIAZZALE DELLA RESISTENZA)
@@ -860,6 +855,11 @@ window.linesConfig = [
             "14005",  // VIA TIEPOLO (LARGO CANAL)
             "06002",  // PIAZZA DEL SANSOVINO 6 (CROCE ROSSA)
             "03004",  // PIAZZA GOLDONI
+            "28015",  // VIA SAN MARCO 52
+            "28008",  // TORRE DEL LLOYD
+            "28017",  // VIA VON BRUCK 30 (GIRONE)
+            "28016",  // VIA VON BRUCK 12
+            "28014",  // VIA SAN MARCO 52
             "28011"  // VIALE CAMPI ELISI (EX PAM)
         ],
         "directions": [
@@ -871,7 +871,7 @@ window.linesConfig = [
     {
         "code": "17/",
         "label": "17/",
-        "terminals": ["04022", "46023"],
+        "terminals": ["04022", "10004", "46023"],
         "stops": [
             "46023",  // SAN CILINO
             "47018",  // VIA ALFONSO VALERIO 38 (ANGOLO CLIVO ARTEMISIO)
@@ -900,13 +900,14 @@ window.linesConfig = [
         ],
         "directions": [
             "STAZIONE FERROVIARIA",
+            "VIA FABIO SEVERO 4 (TRIBUNALE)",
             "SAN CILINO"
         ]
     },
     {
         "code": "17",
         "label": "17",
-        "terminals": ["13008", "46023", "10004"],
+        "terminals": ["10004", "13008", "46023"],
         "stops": [
             "46023",  // SAN CILINO
             "47018",  // VIA ALFONSO VALERIO 38 (ANGOLO CLIVO ARTEMISIO)
@@ -993,7 +994,7 @@ window.linesConfig = [
     {
         "code": "19",
         "label": "19",
-        "terminals": ["04019", "42002", "42001"],
+        "terminals": ["42001", "04019", "42002"],
         "stops": [
             "04019",  // STAZIONE FERROVIARIA
             "04002",  // VIA GHEGA 9 (CONSERVATORIO TARTINI)
@@ -1061,20 +1062,53 @@ window.linesConfig = [
     {
         "code": "20",
         "label": "20",
-        "terminals": ["04015", "04017", "E0001", "E0145", "42001", "03003", "50003", "03002"],
+        "terminals": ["42001", "03003", "04017", "50003", "E0001", "03002"],
         "stops": [
-            "50003",  // BARCOLA
-            "50004",  // VIALE MIRAMARE 52 (ISTITUTO RITTMEYER)
-            "50005",  // VIALE MIRAMARE 36 (CIRCOLO SPORTIVO SATURNIA, BOVEDO)
-            "50015",  // VIALE MIRAMARE (PARCHEGGIO BOVEDO)
-            "24003",  // VIALE MIRAMARE 30 (BAGNI FERROVIARIO E CRAL)
-            "24053",  // VIALE MIRAMARE (PORTO VECCHIO)
+            "E0001",  // MUGGIA
+            "E0126",  // VIA FRAUSIN 10 (ANGOLO VIA GIACOMO MATTEOTTI)
+            "E0088",  // STRADA PROVINCIALE 16 DI SANTA BARBARA 29 (CIMITERO)
+            "E0128",  // VIA DEI FONDITORI (CAVALCAVIA, DIREZIONE AQUILINIA)
+            "E0034",  // VIA DI TRIESTE 15 (MOLO BALOTA)
+            "E0066",  // STRADA DELLE SALINE 30 (CONFARTIGIANATO)
+            "E0150",  // STRADA DELLE SALINE 7 (DIREZIONE AQUILINIA)
+            "E0139",  // VIA CADUTI SUL LAVORO 2
+            "E0055",  // STRADA PROVINCIALE 15 DELLE NOGHERE 6
+            "E0153",  // STRADA PROVINCIALE 15 DELLE NOGHERE 1
+            "E0155",  // LOCALIT� FARNEI 14 (STRADA PROVINCIALE 15 DIREZIONE TRIESTE
+            "E0162",  // STRADA PROVINCIALE 15 DELLE NOGHERE 48 (BRICOCENTER)
+            "E0058",  // VIA FLAVIA DI STRAMARE 131 (PONTE)
+            "E0059",  // STRADA PROVINCIALE 15 DELLE NOGHERE (MONTEDORO)
+            "E0060",  // VIA FLAVIA DI STRAMARE 99
+            "E0061",  // VIA FLAVIA DI STRAMARE 12
+            "E0062",  // VIA FLAVIA DI STRAMARE 31 (CASA CANTONIERA)
+            "E0151",  // VIA FLAVIA DI STRAMARE (ANGOLO SP 14 DI MUGGIA)
+            "E0036",  // STRADA PROVINCIALE 14 DI MUGGIA (EX RAFFINERIA)
+            "E0037",  // AQUILINIA
+            "56019",  // VIA FLAVIA (PONTE FERROVIARIO)
+            "56020",  // VIA FLAVIA 126 (DIACO)
+            "56021",  // VIA FLAVIA 114 (ILLYCAFF�)
+            "56005",  // VIA FLAVIA 102 (ENEL)
+            "56006",  // VIA FLAVIA 84
+            "51005",  // VIA FLAVIA 70 (ANGOLO VIA BRIGATA CASALE)
+            "51006",  // VIA FLAVIA 58 (ANGOLO VIA DEI GRAVISI)
+            "51007",  // VIA FLAVIA 27
+            "42006",  // VIA FLAVIA 23/1 (INCUBATORE BIC)
+            "42005",  // PIAZZALE CAGNI 2
+            "41010",  // VIA FLAVIA 10 (PALATRIESTE)
+            "41011",  // VIA FLAVIA 1 (VALMAURA, STADIO GREZAR, STADIO ROCCO)
+            "42001",  // VIA DELL'ISTRIA 206 (CIMITERO)
+            "41012",  // VIA SALATA 6 (CHIOSCO MURATURA)
+            "34002",  // PIAZZA DEI FORAGGI 7
+            "33003",  // VIALE D'ANNUNZIO 48 (ANGOLO VIA LIMITANEA, TEATRO BOBBIO)
+            "33004",  // VIALE GABRIELE D'ANNUNZIO 38/A (PIAZZA DEL PERUGINO)
+            "17005",  // VIALE GABRIELE D'ANNUNZIO 14 (LARGO SONNINO)
+            "17009",  // PIAZZA GARIBALDI 12
+            "08008",  // LARGO BARRIERA
+            "03003",  // PIAZZA GOLDONI
+            "09003",  // VIA CARDUCCI 14 (GUIDA LUMINOSA)
+            "10001",  // PIAZZA OBERDAN
+            "04017",  // STAZIONE FERROVIARIA
             "24055",  // PORTO VECCHIO
-            "24054",  // PORTO VECCHIO TCC
-            "24002",  // VIALE MIRAMARE 30 (FERROVIARIO E CRAL)
-            "50016",  // VIALE MIRAMARE (PARCHEGGIO BOVEDO)
-            "50001",  // VIALE MIRAMARE 36 (PARCHEGGIO BOVEDO)
-            "50002",  // VIALE MIRAMARE 113 (ISTITUTO RITTMEYER)
             "04023",  // STAZIONE FERROVIARIA (VARCO PORTO VECCHIO)
             "04002",  // VIA GHEGA 9 (CONSERVATORIO TARTINI)
             "03001",  // PIAZZA OBERDAN
@@ -1107,85 +1141,52 @@ window.linesConfig = [
             "E0064",  // VIA FLAVIA DI STRAMARE 12
             "E0065",  // VIA FLAVIA DI STRAMARE 99
             "E0163",  // STRADA PROVINCIALE 15 DELLE NOGHERE (MONTEDORO)
-            "E0161",  // STRADA PROVINCIALE 15 DELLE NOGHERE 44 (FAMILA)
-            "E0156",  // LOCALIT� FARNEI 14 (STRADA PROVINCIALE 15 DIREZIONE MUGGIA)
-            "E0154",  // STRADA PROVINCIALE 15 DELLE NOGHERE 1
-            "E0148",  // STRADA PROVINCIALE 15 DELLE NOGHERE 2
+            "E0140",  // VIA CADUTI SUL LAVORO 10 (ANGOLO VIA FLAVIA DI STRAMARE)
+            "E0149",  // STRADA DELLE SALINE 7 (DIREZIONE MUGGIA)
+            "E0041",  // STRADA DELLE SALINE 40 (CONFARTIGIANATO)
             "E0042",  // VIA DI TRIESTE 15 (MOLO BALOTA)
             "E0129",  // VIA DEI FONDITORI (CAVALCAVIA, DIREZIONE MUGGIA)
             "E0125",  // STRADA PROVINCIALE 16 DI SANTA BARBARA 29 (CIMITERO)
             "E0131",  // VIA FRAUSIN 13 (ANGOLO VIA GIACOMO MATTEOTTI)
-            "E0001",  // MUGGIA
-            "E0126",  // VIA FRAUSIN 10 (ANGOLO VIA GIACOMO MATTEOTTI)
-            "E0088",  // STRADA PROVINCIALE 16 DI SANTA BARBARA 29 (CIMITERO)
-            "E0128",  // VIA DEI FONDITORI (CAVALCAVIA, DIREZIONE AQUILINIA)
-            "E0034",  // VIA DI TRIESTE 15 (MOLO BALOTA)
-            "E0066",  // STRADA DELLE SALINE 30 (CONFARTIGIANATO)
-            "E0150",  // STRADA DELLE SALINE 7 (DIREZIONE AQUILINIA)
-            "E0139",  // VIA CADUTI SUL LAVORO 2
-            "E0059",  // STRADA PROVINCIALE 15 DELLE NOGHERE (MONTEDORO)
-            "E0060",  // VIA FLAVIA DI STRAMARE 99
-            "E0061",  // VIA FLAVIA DI STRAMARE 12
-            "E0062",  // VIA FLAVIA DI STRAMARE 31 (CASA CANTONIERA)
-            "E0151",  // VIA FLAVIA DI STRAMARE (ANGOLO SP 14 DI MUGGIA)
-            "E0036",  // STRADA PROVINCIALE 14 DI MUGGIA (EX RAFFINERIA)
-            "E0037",  // AQUILINIA
-            "56019",  // VIA FLAVIA (PONTE FERROVIARIO)
-            "56020",  // VIA FLAVIA 126 (DIACO)
-            "56021",  // VIA FLAVIA 114 (ILLYCAFF�)
-            "56003",  // STRADA PROVINCIALE 12 DELLA ROSANDRA (MAGAZZINO OBI)
-            "57010",  // STRADA PROVINCIALE 12 DELLA ROSANDRA 56 (DOMIO)
-            "57001",  // VIA PETRACCO 10 (SCUOLA, ANGOLO VIA CURIEL)
-            "57002",  // VIA CURIEL (ANGOLO VIA ROSANI)
-            "57003",  // BORGO SAN SERGIO
-            "57004",  // VIA VINCENZO GIGANTE (PIAZZALE SARTORI)
-            "57005",  // VIA MAOVAZ 36 (ANGOLO VIA SALA)
-            "57006",  // VIA MAOVAZ 6/B (ANGOLO VIA DI PECO)
-            "57007",  // VIA FORTI 70
-            "57008",  // VIA FORTI 54 (PARCO GIOCHI)
-            "57009",  // VIA FORTI 30 (SCUOLA)
-            "56030",  // VIA MORPURGO 12 (ANGOLO VIA PETRACCO)
-            "56027",  // STRADA PROVINCIALE 12 DELLA ROSANDRA 50 (PANE QUOTIDIANO)
-            "56004",  // STRADA PROVINCIALE 12 DELLA ROSANDRA 2 (MAGAZZINO OBI)
-            "56005",  // VIA FLAVIA 102 (ENEL)
-            "56006",  // VIA FLAVIA 84
-            "51005",  // VIA FLAVIA 70 (ANGOLO VIA BRIGATA CASALE)
-            "51006",  // VIA FLAVIA 58 (ANGOLO VIA DEI GRAVISI)
-            "51007",  // VIA FLAVIA 27
-            "42006",  // VIA FLAVIA 23/1 (INCUBATORE BIC)
-            "42005",  // PIAZZALE CAGNI 2
-            "41010",  // VIA FLAVIA 10 (PALATRIESTE)
-            "41011",  // VIA FLAVIA 1 (VALMAURA, STADIO GREZAR, STADIO ROCCO)
-            "42001",  // VIA DELL'ISTRIA 206 (CIMITERO)
-            "41012",  // VIA SALATA 6 (CHIOSCO MURATURA)
-            "34002",  // PIAZZA DEI FORAGGI 7
-            "33003",  // VIALE D'ANNUNZIO 48 (ANGOLO VIA LIMITANEA, TEATRO BOBBIO)
-            "33004",  // VIALE GABRIELE D'ANNUNZIO 38/A (PIAZZA DEL PERUGINO)
-            "17005",  // VIALE GABRIELE D'ANNUNZIO 14 (LARGO SONNINO)
-            "17009",  // PIAZZA GARIBALDI 12
-            "08008",  // LARGO BARRIERA
-            "03003",  // PIAZZA GOLDONI
-            "09003",  // VIA CARDUCCI 14 (GUIDA LUMINOSA)
-            "10001",  // PIAZZA OBERDAN
-            "04017",  // STAZIONE FERROVIARIA
+            "24054",  // PORTO VECCHIO TCC
+            "24002",  // VIALE MIRAMARE 30 (FERROVIARIO E CRAL)
+            "50016",  // VIALE MIRAMARE (PARCHEGGIO BOVEDO)
+            "50001",  // VIALE MIRAMARE 36 (PARCHEGGIO BOVEDO)
+            "50002",  // VIALE MIRAMARE 113 (ISTITUTO RITTMEYER)
+            "50003",  // BARCOLA
+            "50004",  // VIALE MIRAMARE 52 (ISTITUTO RITTMEYER)
+            "50005",  // VIALE MIRAMARE 36 (CIRCOLO SPORTIVO SATURNIA, BOVEDO)
+            "50015",  // VIALE MIRAMARE (PARCHEGGIO BOVEDO)
+            "24003",  // VIALE MIRAMARE 30 (BAGNI FERROVIARIO E CRAL)
+            "24053",  // VIALE MIRAMARE (PORTO VECCHIO)
             "E1001",  // TRIESTE PIAZZALE WARTSILA (DOLINA)
             "E1010",  // STRADA PROVINCIALE 12 DELLA ROSANDRA 137 (VIA TRAVNIK)
             "D9001",  // STRADA PROVINCIALE 12 DELLA ROSANDRA 137 (LACOTISCE)
             "E1004",  // VIA RESSEL 1 (ZONA INDUSTRIALE)
             "E1006",  // VIA RESSEL 1 (ZONA INDUSTRIALE)
-            "E1003",  // VIA RESSEL 5 (ZONA INDUSTRIALE)
             "D9002",  // STRADA PROVINCIALE 12 DELLA ROSANDRA 269 (DOMIO)
+            "E1003",  // VIA RESSEL 5 (ZONA INDUSTRIALE)
             "E1002",  // VIA RESSEL 6 (ZONA INDUSTRIALE)
+            "57010",  // STRADA PROVINCIALE 12 DELLA ROSANDRA 56 (DOMIO)
             "E1007",  // VIA RESSEL 6 (ZONA INDUSTRIALE)
-            "E0058",  // VIA FLAVIA DI STRAMARE 131 (PONTE)
-            "E0140",  // VIA CADUTI SUL LAVORO 10 (ANGOLO VIA FLAVIA DI STRAMARE)
+            "57005",  // VIA MAOVAZ 36 (ANGOLO VIA SALA)
+            "57004",  // VIA VINCENZO GIGANTE (PIAZZALE SARTORI)
+            "57002",  // VIA CURIEL (ANGOLO VIA ROSANI)
+            "57003",  // BORGO SAN SERGIO
+            "56027",  // STRADA PROVINCIALE 12 DELLA ROSANDRA 50 (PANE QUOTIDIANO)
+            "57001",  // VIA PETRACCO 10 (SCUOLA, ANGOLO VIA CURIEL)
+            "57006",  // VIA MAOVAZ 6/B (ANGOLO VIA DI PECO)
             "56007",  // STRADA DI MONTE D'ORO 14 (ZONA INDUSTRIALE EST)
-            "E0162",  // STRADA PROVINCIALE 15 DELLE NOGHERE 48 (BRICOCENTER)
-            "E0149",  // STRADA DELLE SALINE 7 (DIREZIONE MUGGIA)
-            "E0155",  // LOCALIT� FARNEI 14 (STRADA PROVINCIALE 15 DIREZIONE TRIESTE
-            "E0153",  // STRADA PROVINCIALE 15 DELLE NOGHERE 1
-            "E0041",  // STRADA DELLE SALINE 40 (CONFARTIGIANATO)
-            "E0055",  // STRADA PROVINCIALE 15 DELLE NOGHERE 6
+            "56030",  // VIA MORPURGO 12 (ANGOLO VIA PETRACCO)
+            "57007",  // VIA FORTI 70
+            "57008",  // VIA FORTI 54 (PARCO GIOCHI)
+            "56004",  // STRADA PROVINCIALE 12 DELLA ROSANDRA 2 (MAGAZZINO OBI)
+            "56003",  // STRADA PROVINCIALE 12 DELLA ROSANDRA (MAGAZZINO OBI)
+            "57009",  // VIA FORTI 30 (SCUOLA)
+            "E0161",  // STRADA PROVINCIALE 15 DELLE NOGHERE 44 (FAMILA)
+            "E0156",  // LOCALIT� FARNEI 14 (STRADA PROVINCIALE 15 DIREZIONE MUGGIA)
+            "E0154",  // STRADA PROVINCIALE 15 DELLE NOGHERE 1
+            "E0148",  // STRADA PROVINCIALE 15 DELLE NOGHERE 2
             "41004",  // PIAZZALE VALMAURA
             "41024",  // VALMAURA
             "41005",  // VIA VALMAURA (STADIO ROCCO E GREZAR)
@@ -1193,15 +1194,15 @@ window.linesConfig = [
             "41006",  // VIA VALMAURA 37 (ANGOLO VIA DE JENNER, RISIERA SAN SABBA)
             "40005",  // VIA VALMAURA 43
             "40006",  // VIA VALMAURA 69
-            "E0145",  // MUGGIA
             "41018",  // VIA BAIAMONTI 103 (ANGOLO VIA DELL'ISTRIA)
             "41026",  // VIA BAIAMONTI 68 (ANGOLO VIA DELL'ISTRIA)
             "41017",  // VIA BAIAMONTI 93 (ANGOLO VIA PIRANO)
             "31002",  // VIA BAIAMONTI 52 (ANGOLO VIA PIRANO)
             "31005",  // VIA BAIAMONTI 38 (BANCA)
             "41016",  // VIA BAIAMONTI 61
-            "40003",  // VIA DI SERVOLA (CHIESA)
             "40004",  // VIA DI SERVOLA 2 (ANGOLO VIA DELLA CALCARA)
+            "E0145",  // MUGGIA
+            "40003",  // VIA DI SERVOLA (CHIESA)
             "40001",  // VIA BAIAMONTI 47 (ANGOLO VIA SVEVO)
             "31006",  // VIA BAIAMONTI 14 (ANGOLO VIA SVEVO)
             "29011",  // VIA SVEVO 38 (CASA EMMAUS)
@@ -1212,12 +1213,12 @@ window.linesConfig = [
             "28012",  // VIA SVEVO (CANTIERI)
             "29020",  // VIA CADUTI SUL LAVORO (TRIESTE TRASPORTI)
             "28003",  // VIALE CAMPI ELISI
-            "26007",  // VIA ALBERTI
             "07005",  // VIA BERNINI 6 (ANGOLO VIA DEL BOSCO)
+            "26007",  // VIA ALBERTI
             "03004",  // PIAZZA GOLDONI
             "10010",  // PIAZZA OBERDAN
-            "27008",  // PASSEGGIO SANT'ANDREA 12 (VIA DELLE FIAMME GIALLE 6)
             "01001",  // VIA FILZI 3 (PIAZZA SANT'ANTONIO NUOVO, PONTE ROSSO)
+            "27008",  // PASSEGGIO SANT'ANDREA 12 (VIA DELLE FIAMME GIALLE 6)
             "05012",  // PIAZZA TOMMASEO
             "04015",  // STAZIONE FERROVIARIA
             "13005",  // RIVA SAURO 24 (ACQUARIO, MUSEO REVOLTELLA)
@@ -1300,7 +1301,7 @@ window.linesConfig = [
     {
         "code": "22",
         "label": "22",
-        "terminals": ["04015", "52012"],
+        "terminals": ["04015", "09001", "52012", "03002"],
         "stops": [
             "04015",  // STAZIONE FERROVIARIA
             "04010",  // VIA GHEGA 9 (CONSERVATORIO TARTINI)
@@ -1384,13 +1385,15 @@ window.linesConfig = [
         ],
         "directions": [
             "STAZIONE FERROVIARIA",
-            "CATTINARA (OSPEDALE)"
+            "VIA BATTISTI (GALLERIA FENICE)",
+            "CATTINARA (OSPEDALE)",
+            "VIA CARDUCCI (LUMINOSA)"
         ]
     },
     {
         "code": "23",
         "label": "23",
-        "terminals": ["04016", "E1001", "03003", "42001"],
+        "terminals": ["03003", "04016", "42001", "E1001"],
         "stops": [
             "04016",  // STAZIONE FERROVIARIA
             "01002",  // VIA ROMA 18/B (PONTE ROSSO)
@@ -1577,7 +1580,7 @@ window.linesConfig = [
     {
         "code": "26",
         "label": "26",
-        "terminals": ["24008", "36017", "52015"],
+        "terminals": ["24008", "52015", "36017"],
         "stops": [
             "24008",  // LARGO OSOPPO
             "24009",  // VIA AQUILEIA 2 (CHIESA)
@@ -1857,7 +1860,7 @@ window.linesConfig = [
     {
         "code": "29",
         "label": "29",
-        "terminals": ["03011", "29016"],
+        "terminals": ["29016", "03011"],
         "stops": [
             "03011",  // PIAZZA GOLDONI
             "07004",  // VIA BERNINI 6 (ANGOLO VIA DEL BOSCO)
@@ -1907,7 +1910,7 @@ window.linesConfig = [
     {
         "code": "30",
         "label": "30",
-        "terminals": ["04007", "27022"],
+        "terminals": ["27022", "04007"],
         "stops": [
             "04007",  // STAZIONE FERROVIARIA
             "04002",  // VIA GHEGA 9 (CONSERVATORIO TARTINI)
@@ -2016,13 +2019,10 @@ window.linesConfig = [
         "label": "32",
         "terminals": ["E0145", "E0093"],
         "stops": [
-            "E0093",  // SANTA BARBARA
-            "E0094",  // VIA COLARICH 64
-            "E0095",  // VIA COLARICH 93
-            "E0035",  // VIA COLARICH 72
-            "E0096",  // VIA COLARICH 87/A
-            "E0097",  // VIA COLARICH 67
-            "E0147",  // STRADA PROVINCIALE 16 DI SANTA BARBARA 55
+            "E0145",  // MUGGIA
+            "E0126",  // VIA FRAUSIN 10 (ANGOLO VIA GIACOMO MATTEOTTI)
+            "E0088",  // STRADA PROVINCIALE 16 DI SANTA BARBARA 29 (CIMITERO)
+            "E0089",  // STRADA PROVINCIALE 16 DI SANTA BARBARA 42
             "E0098",  // VIA DI SANTA BARBARA, STRADELLO A 1/B
             "E0100",  // VIA DI SANTA BARBARA, STRADELLO A 20/A
             "E0130",  // VIA DEI MECCANICI 2/B (ANGOLO VIA DEI CALAFATI)
@@ -2033,13 +2033,16 @@ window.linesConfig = [
             "E0146",  // STRADA PROVINCIALE 16 DI SANTA BARBARA 55
             "E0138",  // STRADA PROVINCIALE 16 DI SANTA BARBARA 62/D
             "E0091",  // STRADA PROVINCIALE 16 DI SANTA BARBARA 68
+            "E0093",  // SANTA BARBARA
+            "E0094",  // VIA COLARICH 64
+            "E0095",  // VIA COLARICH 93
+            "E0035",  // VIA COLARICH 72
+            "E0096",  // VIA COLARICH 87/A
+            "E0097",  // VIA COLARICH 67
+            "E0147",  // STRADA PROVINCIALE 16 DI SANTA BARBARA 55
             "E0099",  // STRADA PROVINCIALE 16 DI SANTA BARBARA 29/A
             "E0125",  // STRADA PROVINCIALE 16 DI SANTA BARBARA 29 (CIMITERO)
             "E0131",  // VIA FRAUSIN 13 (ANGOLO VIA GIACOMO MATTEOTTI)
-            "E0145",  // MUGGIA
-            "E0126",  // VIA FRAUSIN 10 (ANGOLO VIA GIACOMO MATTEOTTI)
-            "E0088",  // STRADA PROVINCIALE 16 DI SANTA BARBARA 29 (CIMITERO)
-            "E0089",  // STRADA PROVINCIALE 16 DI SANTA BARBARA 42
             "E0085",  // VIA FORTI 38
             "E0081",  // VIA D'ANNUNZIO 48 (SCUOLA MEDIA)
             "E0084",  // VIALE XXV APRILE 16/A (VIA DEI MULINI)
@@ -2055,7 +2058,7 @@ window.linesConfig = [
     {
         "code": "33",
         "label": "33",
-        "terminals": ["08011", "52001", "16009", "43022"],
+        "terminals": ["16009", "08011", "52001", "43022"],
         "stops": [
             "43022",
             "43005",  // VIA DELLE CAMPANELLE 138 (PONTE)
@@ -2123,7 +2126,7 @@ window.linesConfig = [
     {
         "code": "34",
         "label": "34",
-        "terminals": ["08007", "42008", "42021"],
+        "terminals": ["08007", "42021", "42008"],
         "stops": [
             "08007",  // LARGO BARRIERA
             "17006",  // PIAZZA GARIBALDI 3
@@ -2177,7 +2180,7 @@ window.linesConfig = [
     {
         "code": "35",
         "label": "35",
-        "terminals": ["10005", "03002", "54007", "37013"],
+        "terminals": ["10005", "54007", "37013"],
         "stops": [
             "10005",  // VIA CARDUCCI (REGIONE)
             "03002",  // VIA CARDUCCI (LUMINOSA)
@@ -2295,14 +2298,14 @@ window.linesConfig = [
             "19003"  // VIA GIULIA 3/C (GIARDINO PUBBLICO, TEATRO ROSSETTI)
         ],
         "directions": [
-            "CASTELLO DI MIRAMARE (BIVIO)",
+            "CASTELLO DI MIRAMARE",
             "LARGO TOMIZZA"
         ]
     },
     {
         "code": "37",
         "label": "37",
-        "terminals": ["08011", "52014", "42001"],
+        "terminals": ["42001", "08011", "52014"],
         "stops": [
             "52014",  // CATTINARA (OSPEDALE)
             "53019",  // STRADA DI FIUME 300 (ANGOLO VIA DEL CASTELLIERE)
@@ -2390,7 +2393,7 @@ window.linesConfig = [
     {
         "code": "38",
         "label": "38",
-        "terminals": ["03018", "24015", "24016", "24017", "24018", "24019", "24020", "24021", "24022", "24023", "24024", "24025", "24026", "24027", "24028", "24029", "24030", "24031", "24032", "24033", "24034", "10009"],
+        "terminals": ["24025", "10009"],
         "stops": [
             "10009",  // TRIESTE PIAZZA GUGLIELMO OBERDAN 7 (ANGOLO VIA XXIV MAGGIO)
             "11001",  // VIA UDINE 7 (SEDE INPS)
@@ -2440,7 +2443,7 @@ window.linesConfig = [
     {
         "code": "39/",
         "label": "39/",
-        "terminals": ["52016", "D6072"],
+        "terminals": ["52016", "D4044", "D6072"],
         "stops": [
             "D6072",  // AURISINA MUNICIPIO
             "D6073",  // LOCALIT� AURISINA CAVE 78
@@ -2463,6 +2466,7 @@ window.linesConfig = [
             "D4030",  // STRADA PROVINCIALE 1 DEL CARSO 16 (CAMPO SACRO)
             "D4031",  // STRADA PROVINCIALE 1 DEL CARSO (MOBILIFICIO)
             "D4032",  // LOCALIT� PROSECCO 162 (FARMACIA)
+            "D4044",  // DEVINCINA
             "D4005",  // PROSECCO
             "D4006",  // BORGO SAN NAZARIO 73 (SCUOLA DELL'INFANZIA)
             "D4007",  // BORGO SAN NAZARIO 70 (CENTRO PER ANZIANI)
@@ -2549,7 +2553,6 @@ window.linesConfig = [
             "D6026",  // STRADA PROVINCIALE 1 DEL CARSO 85 (SCUOLA DI AURISINA)
             "D6027",  // STRADA PROVINCIALE 1 DEL CARSO 82/M (STAZIONE CARABINIERI)
             "D6028",  // LOCALIT� AURISINA CAVE 82
-            "D4044",  // DEVINCINA
             "D4034",  // DEVINCINA
             "D4015",  // PROSECCO
             "D6071",  // LOCALIT� AURISINA CAVE 28 (STAZIONE FERROVIARIA)
@@ -2561,13 +2564,14 @@ window.linesConfig = [
         ],
         "directions": [
             "CATTINARA (OSPEDALE)",
+            "DEVINCINA",
             "AURISINA MUNICIPIO"
         ]
     },
     {
         "code": "40",
         "label": "40",
-        "terminals": ["04011", "D9015", "41004"],
+        "terminals": ["41004", "04011", "D9015"],
         "stops": [
             "04011",  // STAZIONE FERROVIARIA
             "03001",  // PIAZZA OBERDAN
@@ -2581,12 +2585,6 @@ window.linesConfig = [
             "51003",  // VIA FLAVIA 45 (ANGOLO VIA DEI GRAVISI)
             "56002",  // VIA FLAVIA 59
             "56028",  // DOMIO
-            "E1006",  // VIA RESSEL 1 (ZONA INDUSTRIALE)
-            "E1007",  // VIA RESSEL 6 (ZONA INDUSTRIALE)
-            "E1005",  // VIA MUGGIA 19
-            "E1013",  // VIA MUGGIA 15 (ANGOLO VIA TRAVNIK)
-            "E1008",  // VIA TRAVNIK 21 (ZONA INDUSTRIALE)
-            "E1009",  // VIA TRAVNIK 3 (ZONA INDUSTRIALE, TERZA TRASVERSALE EST)
             "E1010",  // STRADA PROVINCIALE 12 DELLA ROSANDRA 137 (VIA TRAVNIK)
             "D9004",  // STRADA PROVINCIALE 12 DELLA ROSANDRA 306 (MATTONAIA)
             "D9007",  // STRADA PROVINCIALE 12 DELLA ROSANDRA 574 (MATTONAIA)
@@ -2637,8 +2635,18 @@ window.linesConfig = [
             "D9017",  // STRADA PROVINCIALE 11 DI PREBENICO (DOLINA, LAVATOIO)
             "D9018",  // STRADA PROVINCIALE 11 DI PREBENICO 220
             "D9021",  // STRADA PROVINCIALE 11 DI PREBENICO 96 (PREBENEG)
-            "D9059",  // STRADA PROVINCIALE 13 DI CARESANA (SERBATOI)
             "D9024",  // STRADA PROVINCIALE 13 DI CARESANA 106 (TRATTORIA TUL)
+            "D9059",  // STRADA PROVINCIALE 13 DI CARESANA (SERBATOI)
+            "D9005",  // STRADA PROVINCIALE 12 DELLA ROSANDRA 355 (ROTATORIA)
+            "D9013",  // STRADA PROVINCIALE 11 DELLA ROSANDRA 216 (DOLINA)
+            "D9014",  // LOCALIT� DOLINA 230 (PIAZZA)
+            "D9015",  // DOLINA
+            "E1009",  // VIA TRAVNIK 3 (ZONA INDUSTRIALE, TERZA TRASVERSALE EST)
+            "E1008",  // VIA TRAVNIK 21 (ZONA INDUSTRIALE)
+            "E1013",  // VIA MUGGIA 15 (ANGOLO VIA TRAVNIK)
+            "E1006",  // VIA RESSEL 1 (ZONA INDUSTRIALE)
+            "E1005",  // VIA MUGGIA 19
+            "E1007",  // VIA RESSEL 6 (ZONA INDUSTRIALE)
             "D9003",  // STRADA DI MONTE D'ORO 345 (LOCALIT� FRANCOVEC)
             "56007",  // STRADA DI MONTE D'ORO 14 (ZONA INDUSTRIALE EST)
             "56021",  // VIA FLAVIA 114 (ILLYCAFF�)
@@ -2670,7 +2678,7 @@ window.linesConfig = [
     {
         "code": "41",
         "label": "41",
-        "terminals": ["41011", "41014", "D9022", "D9023", "D9025", "D9026", "D9027", "D9028", "D9029", "D9031", "D9035", "D9044", "D9045", "D9046", "D9047", "D9050", "D9070", "D9071", "D9009", "42001", "41024", "04011", "D9015"],
+        "terminals": ["42001", "41024", "04011", "D9009", "D9015"],
         "stops": [
             "D9009",  // BAGNOLI
             "D9037",  // STRADA PROVINCIALE 11 DI PREBENICO 62 (MOCC�)
@@ -2811,7 +2819,7 @@ window.linesConfig = [
     {
         "code": "42",
         "label": "42",
-        "terminals": ["03018", "10011", "D3045", "D4036", "D4008"],
+        "terminals": ["10011", "D4036", "D4008", "D3045"],
         "stops": [
             "D3045",  // OPICINA
             "D3058",  // VIA DI PROSECCO 37 (CHIESA)
@@ -2819,19 +2827,7 @@ window.linesConfig = [
             "D3041",  // STRADA PROVINCIALE 1 DEL CARSO (CASERME)
             "D3047",  // STRADA PROVINCIALE 1 DEL CARSO (OPICINA 1249)
             "D4036",  // DEVINCINA
-            "D3023",  // STRADA PER VIENNA 9 (BAR)
-            "D3030",  // VIA DI MONRUPINO 27
-            "D3039",  // VIA DI MONRUPINO 85
-            "D3031",  // STRADA PROVINCIALE 9 DEL VIPACCO 916
-            "D8001",  // STRADA PROVINCIALE 9 DEL VIPACCO 51 (MONRUPINO)
-            "D8007",  // STRADA PROVINCIALE 8 DI MONRUPINO (BIVIO MONRUPINO)
-            "D8003",  // STRADA PROVINCIALE 8 DI MONRUPINO 50 (CIMITERO DI COL)
-            "D8004",  // STRADA PROVINCIALE 8 DI MONRUPINO 40 (MUNICIPIO DI COL)
-            "D8011",  // STRADA PROVINCIALE 8 DI MONRUPINO 95 (GIRASOLI)
-            "D8005",  // STRADA PROVINCIALE 8 DI MONRUPINO 86 (CASA DELLA CULTURA)
-            "D8006",  // STRADA PROVINCIALE 8 DI MONRUPINO (MONUMENTO DI REPEN)
-            "D8019",  // STRADA PROVINCIALE 8 DI MONRUPINO 103 (REPEN)
-            "D7016",  // STRADA PROVINCIALE 8 DI MONRUPINO (DIREZIONE TRIESTE)
+            "D7058",  // LOCALIT� BORGO GROTTA GIGANTE (EX CASERMA DARDI)
             "D7014",  // LOCALIT� BORGO GROTTA GIGANTE 34 (PIAZZA)
             "D7015",  // STRADA PROVINCIALE DI BORGO GROTTA GIGANTE (CAMPO SPORTIVO)
             "D4038",  // STRADA PROVINCIALE 35 DI OPICINA 29 (CENTRO COMMERCIALE)
@@ -2899,65 +2895,77 @@ window.linesConfig = [
             "D4007",  // BORGO SAN NAZARIO 70 (CENTRO PER ANZIANI)
             "D4008",  // BORGO SAN NAZARIO
             "D4009",  // STRADA VICENTINA PER MONTE GRISA (DIREZIONE OPICINA)
+            "D4010",  // MONTE GRISA
             "D4037",  // STRADA PROVINCIALE 35 DI OPICINA 29 (CENTRO COMMERCIALE)
             "D7063",  // STRADA PROVINCIALE 29 DI BORGO GROTTA GIGANTE (CAMPO SPORTIV
             "D7011",  // BORGO GROTTA GIGANTE (PIAZZA)
-            "D7019",  // STRADA PROVINCIALE 8 DI MONRUPINO (DIREZIONE OPICINA)
-            "D8020",  // STRADA PROVINCIALE 8 DI MONRUPINO 146
-            "D8012",  // STRADA PROVINCIALE 8 DI MONRUPINO (MONUMENTO REPEN)
-            "D8013",  // STRADA PROVINCIALE 8 DI MONRUPINO 87
-            "D8014",  // STRADA PROVINCIALE 8 DI MONRUPINO 40 (COL)
-            "D8015",  // STRADA PROVINCIALE 8 DI MONRUPINO 42 (CAVA DI COL)
-            "D8002",  // LOCALIT� MONRUPINO 78 (CHIOSCO)
-            "D8017",  // STRADA PER FERNETTI (MONRUPINO, DIREZIONE OPICINA)
-            "D8018",  // LOCALIT� FERNETTI (CONFINE DI STATO)
-            "D3035",  // STRADA PER VIENNA 85 (POLIGONO)
-            "D3022",  // STRADA PER VIENNA 14
+            "D7059",  // LOCALIT� BORGO GROTTA GIGANTE (EX CASERMA DARDI)
+            "D3046",  // STRADA PROVINCIALE 1 DEL CARSO 1249 (OPICINA)
+            "D3009",  // STRADA PROVINCIALE 1 DEL CARSO (CASERMA)
+            "D3010",  // VIA DI PROSECCO 44 (ANGOLO STRADA PROVINCIALE 1 DEL CARSO)
+            "D3011",  // VIA DI PROSECCO 10 (ANGOLO VIA DOBERD�)
             "46003",  // STRADA NUOVA PER OPICINA (CAVA FACCANONI)
             "D8009",  // LOCALIT� FERNETTI (CONFINE DI STATO)
-            "46002",  // VIA VALERIO 113
+            "D8018",  // LOCALIT� FERNETTI (CONFINE DI STATO)
             "D8008",  // STRADA REGIONALE 58 DELLA CARNIOLA 20 (CAMPEGGIO EUROPA)
+            "46002",  // VIA VALERIO 113
             "46004",  // STRADA NUOVA PER OPICINA 9
             "46005",  // STRADA NUOVA PER OPICINA 2/1 (CASA LE BEATITUDINI)
             "46029",  // VIA ALFONSO VALERIO 73
             "46024",  // VIA VALERIO 38 (ANGOLO CLIVO ARTEMISIO)
             "46001",  // VIA VALERIO 20
-            "47001",  // VIA ALFONSO VALERIO 2
             "48001",  // STRADA NUOVA PER OPICINA 29 (ANGOLO VIA DEI BAIARDI)
+            "47001",  // VIA ALFONSO VALERIO 2
+            "D2005",  // VIA DI BASOVIZZA 60 (SCUOLA)
             "39004",  // VIA FABIO SEVERO (UNIVERSIT�, PIAZZALE EUROPA)
             "39002",  // VIA FABIO SEVERO 143 (CURVA MAS�)
-            "D2005",  // VIA DI BASOVIZZA 60 (SCUOLA)
             "47017",  // VIA CESARE CANT� 1 (ANGOLO VICOLO DEL CASTAGNETO)
-            "47002",  // STRADA NUOVA PER OPICINA 18
             "D3026",  // VIA DI BASOVIZZA 37
+            "47002",  // STRADA NUOVA PER OPICINA 18
             "47016",  // VIA CESARE CANT� 39 (SCUOLE)
-            "21002",  // VIA CANT� 10 (SCUOLA)
             "22002",  // STRADA NUOVA PER OPICINA (CASA CANTONIERA)
-            "D3060",  // STRADA PROVINCIALE 35 DI OPICINA 52 (VILLAGGIO)
-            "48007",  // STRADA NUOVA PER OPICINA 31 (DIREZIONE CONCONELLO)
             "D3025",  // VIA DI BASOVIZZA 29/13
+            "D3060",  // STRADA PROVINCIALE 35 DI OPICINA 52 (VILLAGGIO)
+            "21002",  // VIA CANT� 10 (SCUOLA)
+            "48007",  // STRADA NUOVA PER OPICINA 31 (DIREZIONE CONCONELLO)
             "21005",  // VIA CANT� 12 (ANGOLO VIA DEL MONTELLO)
-            "21001",  // VIA CANT� 34 (ANGOLO VIA GUICCIARDINI)
             "D3043",  // VIA DI BASOVIZZA 29
-            "23001",  // STRADA NUOVA PER OPICINA 26 (ANGOLO VIA COMMERCIALE)
             "D3032",  // STRADA PER VIENNA 84
-            "47013",  // VIA CANTU'
-            "03018",  // PIAZZA OBERDAN
-            "D3034",  // VIA DI MONRUPINO 22
+            "D8002",  // LOCALIT� MONRUPINO 78 (CHIOSCO)
+            "23001",  // STRADA NUOVA PER OPICINA 26 (ANGOLO VIA COMMERCIALE)
+            "D3035",  // STRADA PER VIENNA 85 (POLIGONO)
+            "21001",  // VIA CANT� 34 (ANGOLO VIA GUICCIARDINI)
+            "D8017",  // STRADA PER FERNETTI (MONRUPINO, DIREZIONE OPICINA)
             "D8010",  // STRADA PER FERNETTI (MONRUPINO, DIREZIONE PIAZZA OBERDAN)
+            "D8001",  // STRADA PROVINCIALE 9 DEL VIPACCO 51 (MONRUPINO)
+            "D8007",  // STRADA PROVINCIALE 8 DI MONRUPINO (BIVIO MONRUPINO)
             "D8016",  // STRADA PROVINCIALE 9 DEL VIPACCO 53 (MONRUPINO)
+            "D3034",  // VIA DI MONRUPINO 22
+            "D3030",  // VIA DI MONRUPINO 27
+            "47013",  // VIA CANTU'
             "D3033",  // STRADA PROVINCIALE 9 DEL VIPACCO 916 (CAMPAGNA)
+            "D3031",  // STRADA PROVINCIALE 9 DEL VIPACCO 916
+            "D8015",  // STRADA PROVINCIALE 8 DI MONRUPINO 42 (CAVA DI COL)
+            "D3039",  // VIA DI MONRUPINO 85
             "D3040",  // VIA DI MONRUPINO 85
+            "03018",  // PIAZZA OBERDAN
             "D3024",  // VIA DI BASOVIZZA 7 (SCUOLA DI OPICINA)
+            "D8003",  // STRADA PROVINCIALE 8 DI MONRUPINO 50 (CIMITERO DI COL)
+            "D3023",  // STRADA PER VIENNA 9 (BAR)
+            "D3022",  // STRADA PER VIENNA 14
             "D3001",  // STRADA NUOVA PER OPICINA 37 (CAMPEGGIO OBELISCO)
-            "D3011",  // VIA DI PROSECCO 10 (ANGOLO VIA DOBERD�)
+            "D8004",  // STRADA PROVINCIALE 8 DI MONRUPINO 40 (MUNICIPIO DI COL)
+            "D8014",  // STRADA PROVINCIALE 8 DI MONRUPINO 40 (COL)
             "D3002",  // VIA NAZIONALE 4 (SOTTOPASSO NAPOLEONICA)
-            "D3010",  // VIA DI PROSECCO 44 (ANGOLO STRADA PROVINCIALE 1 DEL CARSO)
-            "D3009",  // STRADA PROVINCIALE 1 DEL CARSO (CASERMA)
-            "D3046",  // STRADA PROVINCIALE 1 DEL CARSO 1249 (OPICINA)
-            "D7058",  // LOCALIT� BORGO GROTTA GIGANTE (EX CASERMA DARDI)
-            "D7059",  // LOCALIT� BORGO GROTTA GIGANTE (EX CASERMA DARDI)
-            "D4010",  // MONTE GRISA
+            "D8011",  // STRADA PROVINCIALE 8 DI MONRUPINO 95 (GIRASOLI)
+            "D8005",  // STRADA PROVINCIALE 8 DI MONRUPINO 86 (CASA DELLA CULTURA)
+            "D8013",  // STRADA PROVINCIALE 8 DI MONRUPINO 87
+            "D8012",  // STRADA PROVINCIALE 8 DI MONRUPINO (MONUMENTO REPEN)
+            "D8006",  // STRADA PROVINCIALE 8 DI MONRUPINO (MONUMENTO DI REPEN)
+            "D8019",  // STRADA PROVINCIALE 8 DI MONRUPINO 103 (REPEN)
+            "D8020",  // STRADA PROVINCIALE 8 DI MONRUPINO 146
+            "D7019",  // STRADA PROVINCIALE 8 DI MONRUPINO (DIREZIONE OPICINA)
+            "D7016",  // STRADA PROVINCIALE 8 DI MONRUPINO (DIREZIONE TRIESTE)
             "D4046",  // DEVINCINA
             "D4044",  // DEVINCINA
             "D4015",  // PROSECCO
@@ -3128,9 +3136,107 @@ window.linesConfig = [
     {
         "code": "44",
         "label": "44",
-        "terminals": ["10011", "D6072", "D4044", "D6107", "D6055"],
+        "terminals": ["10011", "D6107", "24010"],
         "stops": [
-            "D6107",  // CARTIERA DEL TIMAVO
+            "D6055",  // SAN GIOVANNI DI DUINO (SS14, CHIESA)
+            "D6057",  // DUINO (FRONTE 81/C, SS14, BIVIO VILLAGGIO DEL PESCATORE)
+            "D6058",  // DUINO 72/I (ANGOLO STRADA STATALE 14, ALICE)
+            "D6059",  // DUINO 29 (CENTRO, INGRESSO CASTELLO)
+            "D6060",  // DUINO (FRONTE CIVICO 10, SENTIERO RILKE)
+            "D6061",  // DUINO (FONTE 5/F , SS14, SUPERMERCATO)
+            "D6062",  // SISTIANA 60 (SS14, CAMPEGGIO)
+            "D6063",  // SISTIANA, 55/E (SS14, FRONTE HOTEL)
+            "D6064",  // SISTIANA 43/C (SS14,CENTRO)
+            "D6065",  // STRADA PROVINCIALE 1 DEL CARSO 27/F (SISTIANA)
+            "D6066",  // STRADA PROVINCIALE 1 DEL CARSO 25/A (SISTIANA)
+            "D6067",  // STRADA PROVINCIALE 1 DEL CARSO (BIVIO BORGO SAN MAURO)
+            "D6068",  // STRADA PROVINCIALE 1 DEL CARSO 23/A
+            "D6069",  // STRADA PROVINCIALE 1 DEL CARSO 55
+            "D6070",  // STRADA PROVINCIALE 1 DEL CARSO 65
+            "D6071",  // LOCALIT� AURISINA CAVE 28 (STAZIONE FERROVIARIA)
+            "D6072",  // AURISINA MUNICIPIO
+            "D6073",  // LOCALIT� AURISINA CAVE 78
+            "D6074",  // STRADA PROVINCIALE 1 DEL CARSO 79/L (AURISINA CAVE)
+            "D6075",  // STRADA PROVINCIALE 1 DEL CARSO 85 (SCUOLA DI AURISINA)
+            "D6076",  // STRADA PROVINCIALE 1 DEL CARSO 129 (AURISINA)
+            "D6077",  // STRADA PROVINCIALE 1 DEL CARSO 139 (AURISINA)
+            "D6079",  // STRADA PROVINCIALE 1 DEL CARSO 151 (AURISINA)
+            "D6080",  // STRADA PROVINCIALE 1 DEL CARSO 168 (AURISINA)
+            "D6081",  // STRADA PROVINCIALE 5 DI SAN PELAGIO 173 (SCUOLA)
+            "D6082",  // STRADA PROVINCIALE 5 DI SAN PELAGIO 181/A
+            "D6083",  // STRADA PROVINCIALE 5 DI SAN PELAGIO 8
+            "D6084",  // STRADA PROVINCIALE 5 DI SAN PELAGIO 26 (SANATORIO)
+            "D6103",  // LOCALIT� AURISINA 40 (STAZIONE FERROVIARIA)
+            "D6018",  // STRADA PROVINCIALE 5 DI SAN PELAGIO 18 (SANATORIO)
+            "D6019",  // STRADA PROVINCIALE 5 DI SAN PELAGIO 10/B
+            "D6020",  // STRADA PROVINCIALE 5 DI SAN PELAGIO 181/A
+            "D6021",  // STRADA PROVINCIALE 5 DI SAN PELAGIO 173/A (SCUOLA)
+            "D6022",  // STRADA PROVINCIALE 1 DEL CARSO 167 (PIZZERIA, AURISINA)
+            "D6023",  // STRADA PROVINCIALE 1 DEL CARSO 142 (AURISINA)
+            "D6025",  // STRADA PROVINCIALE 1 DEL CARSO 125 (AURISINA)
+            "D6026",  // STRADA PROVINCIALE 1 DEL CARSO 85 (SCUOLA DI AURISINA)
+            "D6027",  // STRADA PROVINCIALE 1 DEL CARSO 82/M (STAZIONE CARABINIERI)
+            "D6028",  // LOCALIT� AURISINA CAVE 82
+            "D6029",  // LOCALIT� AURISINA CAVE 24/B (MUNICIPIO)
+            "D6030",  // LOCALIT� AURISINA CAVE 28 (BIVIO STAZIONE FERROVIARIA)
+            "D6031",  // STRADA PROVINCIALE 1 DEL CARSO 65
+            "D6032",  // STRADA PROVINCIALE 1 DEL CARSO 55
+            "D6033",  // STRADA PROVINCIALE 1 DEL CARSO 23/E
+            "D6034",  // STRADA PROVINCIALE 1 DEL CARSO (BIVIO BORGO SAN MAURO)
+            "D6035",  // STRADA PROVINCIALE 1 DEL CARSO 25/A (SISTIANA)
+            "D6036",  // STRADA PROVINCIALE 1 DEL CARSO 29/A (SISTIANA)
+            "D6041",  // SISTIANA 45 (SS14, CENTRO)
+            "D6042",  // SISTIANA, 54/F (SS14, HOTEL)
+            "D6043",  // SISTIANA 59 (SS14, CAMPEGGIO)
+            "D6044",  // DUINO 5/F (SS14 SUPERMERCATO)
+            "D6045",  // DUINO 10 (SENTIERO RILKE, DIREZIONE CARTIERA)
+            "D6046",  // DUINO 28 (SP 2, CENTRO)
+            "D6047",  // DUINO 76  (ANGOLO STRADA STATALE 14, ALICE)
+            "D6048",  // DUINO 81/C (SS14, BIVIO VILLAGGIO DEL PESCATORE)
+            "D6056",  // VILLAGGIO DEL PESCATORE (CENTRO)
+            "D6049",  // SAN GIOVANNI DI DUINO 11  (SS14)
+            "D6104",  // STRADA PROVINCIALE 1 DEL CARSO 1/H
+            "D4027",  // STRADA PROVINCIALE 1 DEL CARSO 354 (SCUOLA DI SANTA CROCE)
+            "D4028",  // LOCALIT� SANTA CROCE 4
+            "D4029",  // SANTA CROCE
+            "D7006",  // STRADA PROVINCIALE 1 DEL CARSO 16 (CHIOSCO)
+            "D7007",  // STRADA PROVINCIALE 1 DEL CARSO 24
+            "D7057",  // STRADA PROVINCIALE 1 DEL CARSO 8
+            "D7008",  // STRADA PROVINCIALE 1 DEL CARSO 15
+            "D7009",  // STRADA PROVINCIALE 1 DEL CARSO 14 (TRATTORIA AI PINI)
+            "D7010",  // STRADA PROVINCIALE 1 DEL CARSO 9
+            "D4030",  // STRADA PROVINCIALE 1 DEL CARSO 16 (CAMPO SACRO)
+            "D4031",  // STRADA PROVINCIALE 1 DEL CARSO (MOBILIFICIO)
+            "D4032",  // LOCALIT� PROSECCO 162 (FARMACIA)
+            "D4044",  // DEVINCINA
+            "D4020",  // PROSECCO
+            "D4016",  // LOCALIT� PROSECCO 186 (SCUOLA MEDIA)
+            "D4017",  // LOCALIT� CONTOVELLO 201
+            "D4018",  // STRADA DEL FRIULI 453 (LOCALIT� CONTOVELLO)
+            "D4019",  // STRADA DEL FRIULI 81 (LOCALIT� CONTOVELLO)
+            "D5021",  // STRADA DEL FRIULI (DIREZIONE TRIESTE)
+            "49009",  // STRADA DEL FRIULI 236/2 (EX DAZIO)
+            "49010",  // STRADA DEL FRIULI 230
+            "49021",  // STRADA DEL FRIULI 509
+            "49011",  // STRADA DEL FRIULI 216
+            "49012",  // STRADA DEL FRIULI 198
+            "49013",  // STRADA DEL FRIULI 194 (ANGOLO VIA MONCOLANO)
+            "49014",  // STRADA DEL FRIULI 166 (ANGOLO VIA DELLA MANDRIA)
+            "49015",  // STRADA DEL FRIULI 150
+            "49017",  // STRADA DEL FRIULI 124
+            "49018",  // STRADA DEL FRIULI 171
+            "49019",  // STRADA DEL FRIULI 106
+            "24046",  // STRADA DEL FRIULI 119 (FARO DELLA VITTORIA)
+            "24047",  // STRADA DEL FRIULI 86
+            "24048",  // STRADA DEL FRIULI 60
+            "24049",  // STRADA DEL FRIULI 38
+            "24010",  // STRADA DEL FRIULI 6 (ANGOLO VIA AQUILEIA)
+            "24011",  // SALITA DI GRETTA 34 (ANGOLO VIA DEL CISTERNONE)
+            "23011",  // SALITA DI GRETTA 1/1 (ANGOLO VIA DEI GIACINTI)
+            "23008",  // VIA SANTA TERESA 4 (LARGO ROIANO)
+            "12003",  // VIALE MIRAMARE 19 (VIA ARIOSTO)
+            "12004",  // VIALE MIRAMARE 5 (STAZIONE FERROVIARIA)
+            "04010",  // VIA GHEGA 9 (CONSERVATORIO TARTINI)
             "10011",  // PIAZZA OBERDAN
             "11007",  // VIALE MIRAMARE 5 (PIAZZA LIBERT�, STAZIONE FERROVIARIA)
             "11008",  // VIALE MIRAMARE 19 (ANGOLO VIA ARIOSTO)
@@ -3179,113 +3285,10 @@ window.linesConfig = [
             "D4025",  // LOCALIT� SANTA CROCE 4 (STRADA PROVINCIALE 1)
             "D4026",  // STRADA PROVINCIALE 1 DEL CARSO 354 (SCUOLA DI SANTA CROCE)
             "D6102",  // STRADA PROVINCIALE 1 DEL CARSO 1/F
-            "D6081",  // STRADA PROVINCIALE 5 DI SAN PELAGIO 173 (SCUOLA)
-            "D6082",  // STRADA PROVINCIALE 5 DI SAN PELAGIO 181/A
-            "D6083",  // STRADA PROVINCIALE 5 DI SAN PELAGIO 8
-            "D6084",  // STRADA PROVINCIALE 5 DI SAN PELAGIO 26 (SANATORIO)
-            "D6103",  // LOCALIT� AURISINA 40 (STAZIONE FERROVIARIA)
-            "D6018",  // STRADA PROVINCIALE 5 DI SAN PELAGIO 18 (SANATORIO)
-            "D6019",  // STRADA PROVINCIALE 5 DI SAN PELAGIO 10/B
-            "D6020",  // STRADA PROVINCIALE 5 DI SAN PELAGIO 181/A
-            "D6021",  // STRADA PROVINCIALE 5 DI SAN PELAGIO 173/A (SCUOLA)
-            "D6104",  // STRADA PROVINCIALE 1 DEL CARSO 1/H
-            "D4027",  // STRADA PROVINCIALE 1 DEL CARSO 354 (SCUOLA DI SANTA CROCE)
-            "D4028",  // LOCALIT� SANTA CROCE 4
-            "D4029",  // SANTA CROCE
-            "D7006",  // STRADA PROVINCIALE 1 DEL CARSO 16 (CHIOSCO)
-            "D7007",  // STRADA PROVINCIALE 1 DEL CARSO 24
-            "D7057",  // STRADA PROVINCIALE 1 DEL CARSO 8
-            "D7008",  // STRADA PROVINCIALE 1 DEL CARSO 15
-            "D7009",  // STRADA PROVINCIALE 1 DEL CARSO 14 (TRATTORIA AI PINI)
-            "D7010",  // STRADA PROVINCIALE 1 DEL CARSO 9
-            "D4030",  // STRADA PROVINCIALE 1 DEL CARSO 16 (CAMPO SACRO)
-            "D4031",  // STRADA PROVINCIALE 1 DEL CARSO (MOBILIFICIO)
-            "D4032",  // LOCALIT� PROSECCO 162 (FARMACIA)
-            "D4044",  // DEVINCINA
-            "D4020",  // PROSECCO
-            "D4016",  // LOCALIT� PROSECCO 186 (SCUOLA MEDIA)
-            "D4017",  // LOCALIT� CONTOVELLO 201
-            "D4018",  // STRADA DEL FRIULI 453 (LOCALIT� CONTOVELLO)
-            "D4019",  // STRADA DEL FRIULI 81 (LOCALIT� CONTOVELLO)
-            "D5021",  // STRADA DEL FRIULI (DIREZIONE TRIESTE)
-            "49009",  // STRADA DEL FRIULI 236/2 (EX DAZIO)
-            "49010",  // STRADA DEL FRIULI 230
-            "49021",  // STRADA DEL FRIULI 509
-            "49011",  // STRADA DEL FRIULI 216
-            "49012",  // STRADA DEL FRIULI 198
-            "49013",  // STRADA DEL FRIULI 194 (ANGOLO VIA MONCOLANO)
-            "49014",  // STRADA DEL FRIULI 166 (ANGOLO VIA DELLA MANDRIA)
-            "49015",  // STRADA DEL FRIULI 150
-            "49017",  // STRADA DEL FRIULI 124
-            "49018",  // STRADA DEL FRIULI 171
-            "49019",  // STRADA DEL FRIULI 106
-            "24046",  // STRADA DEL FRIULI 119 (FARO DELLA VITTORIA)
-            "24047",  // STRADA DEL FRIULI 86
-            "24048",  // STRADA DEL FRIULI 60
-            "24049",  // STRADA DEL FRIULI 38
-            "24010",  // STRADA DEL FRIULI 6 (ANGOLO VIA AQUILEIA)
-            "24011",  // SALITA DI GRETTA 34 (ANGOLO VIA DEL CISTERNONE)
-            "23011",  // SALITA DI GRETTA 1/1 (ANGOLO VIA DEI GIACINTI)
-            "23008",  // VIA SANTA TERESA 4 (LARGO ROIANO)
-            "12003",  // VIALE MIRAMARE 19 (VIA ARIOSTO)
-            "12004",  // VIALE MIRAMARE 5 (STAZIONE FERROVIARIA)
-            "04010",  // VIA GHEGA 9 (CONSERVATORIO TARTINI)
-            "D6022",  // STRADA PROVINCIALE 1 DEL CARSO 167 (PIZZERIA, AURISINA)
-            "D6023",  // STRADA PROVINCIALE 1 DEL CARSO 142 (AURISINA)
-            "D6025",  // STRADA PROVINCIALE 1 DEL CARSO 125 (AURISINA)
-            "D6026",  // STRADA PROVINCIALE 1 DEL CARSO 85 (SCUOLA DI AURISINA)
-            "D6027",  // STRADA PROVINCIALE 1 DEL CARSO 82/M (STAZIONE CARABINIERI)
-            "D6028",  // LOCALIT� AURISINA CAVE 82
-            "D6029",  // LOCALIT� AURISINA CAVE 24/B (MUNICIPIO)
-            "D6030",  // LOCALIT� AURISINA CAVE 28 (BIVIO STAZIONE FERROVIARIA)
-            "D6031",  // STRADA PROVINCIALE 1 DEL CARSO 65
-            "D6032",  // STRADA PROVINCIALE 1 DEL CARSO 55
-            "D6033",  // STRADA PROVINCIALE 1 DEL CARSO 23/E
-            "D6034",  // STRADA PROVINCIALE 1 DEL CARSO (BIVIO BORGO SAN MAURO)
-            "D6035",  // STRADA PROVINCIALE 1 DEL CARSO 25/A (SISTIANA)
-            "D6036",  // STRADA PROVINCIALE 1 DEL CARSO 29/A (SISTIANA)
-            "D6037",  // VISOGLIANO (STAZIONE)
-            "D6038",  // SP 4 DI MALCHINA 6/L (VISOGLIANO)
-            "D6039",  // SP 4 DI MALCHINA 6 (VISOGLIANO)
-            "D6040",  // SP 4 DI MALCHINA 11/B (VISOGLIANO)
-            "D6041",  // SISTIANA 45 (SS14, CENTRO)
-            "D6042",  // SISTIANA, 54/F (SS14, HOTEL)
-            "D6043",  // SISTIANA 59 (SS14, CAMPEGGIO)
-            "D6044",  // DUINO 5/F (SS14 SUPERMERCATO)
-            "D6045",  // DUINO 10 (SENTIERO RILKE, DIREZIONE CARTIERA)
-            "D6046",  // DUINO 28 (SP 2, CENTRO)
-            "D6047",  // DUINO 76  (ANGOLO STRADA STATALE 14, ALICE)
-            "D6048",  // DUINO 81/C (SS14, BIVIO VILLAGGIO DEL PESCATORE)
-            "D6056",  // VILLAGGIO DEL PESCATORE (CENTRO)
-            "D6057",  // DUINO (FRONTE 81/C, SS14, BIVIO VILLAGGIO DEL PESCATORE)
-            "D6058",  // DUINO 72/I (ANGOLO STRADA STATALE 14, ALICE)
-            "D6059",  // DUINO 29 (CENTRO, INGRESSO CASTELLO)
-            "D6060",  // DUINO (FRONTE CIVICO 10, SENTIERO RILKE)
-            "D6061",  // DUINO (FONTE 5/F , SS14, SUPERMERCATO)
-            "D6062",  // SISTIANA 60 (SS14, CAMPEGGIO)
-            "D6063",  // SISTIANA, 55/E (SS14, FRONTE HOTEL)
-            "D6064",  // SISTIANA 43/C (SS14,CENTRO)
-            "D6065",  // STRADA PROVINCIALE 1 DEL CARSO 27/F (SISTIANA)
-            "D6066",  // STRADA PROVINCIALE 1 DEL CARSO 25/A (SISTIANA)
-            "D6067",  // STRADA PROVINCIALE 1 DEL CARSO (BIVIO BORGO SAN MAURO)
-            "D6068",  // STRADA PROVINCIALE 1 DEL CARSO 23/A
-            "D6069",  // STRADA PROVINCIALE 1 DEL CARSO 55
-            "D6070",  // STRADA PROVINCIALE 1 DEL CARSO 65
-            "D6071",  // LOCALIT� AURISINA CAVE 28 (STAZIONE FERROVIARIA)
-            "D6072",  // AURISINA MUNICIPIO
-            "D6073",  // LOCALIT� AURISINA CAVE 78
-            "D6074",  // STRADA PROVINCIALE 1 DEL CARSO 79/L (AURISINA CAVE)
-            "D6075",  // STRADA PROVINCIALE 1 DEL CARSO 85 (SCUOLA DI AURISINA)
-            "D6076",  // STRADA PROVINCIALE 1 DEL CARSO 129 (AURISINA)
-            "D6077",  // STRADA PROVINCIALE 1 DEL CARSO 139 (AURISINA)
-            "D6079",  // STRADA PROVINCIALE 1 DEL CARSO 151 (AURISINA)
-            "D6080",  // STRADA PROVINCIALE 1 DEL CARSO 168 (AURISINA)
-            "D6049",  // SAN GIOVANNI DI DUINO 11  (SS14)
-            "D6055",  // SAN GIOVANNI DI DUINO (SS14, CHIESA)
             "D4011",  // STRADA VICENTINA (PER MONTE GRISA, DIREZIONE PROSECCO)
             "D4012",  // BORGO SAN NAZARIO
-            "D4013",  // BORGO SAN NAZARIO 100/1
             "D4046",  // DEVINCINA
+            "D4013",  // BORGO SAN NAZARIO 100/1
             "D4014",  // BORGO SAN NAZARIO 50 (SCUOLA DELL'INFANZIA)
             "D7020",  // STRADA PROVINCIALE 6 DI COMENO 37 (CAMPO SACRO)
             "D7021",  // STRADA PROVINCIALE 6 DI COMENO 61 (GABROVIZZA)
@@ -3294,34 +3297,37 @@ window.linesConfig = [
             "D7034",  // STRADA PROVINCIALE 6 DI COMENO 24
             "D7052",  // STRADA PROVINCIALE 6 DI COMENO 40
             "D6116",  // STRADA PROVINCIALE 6 DI COMENO 12 (TERNOVA)
-            "D6016",  // STRADA PROVINCIALE 5 DI SAN PELAGIO 64 (PASSAGGIO LIVELLO)
             "D6108",  // TERNOVA
-            "D6017",  // STRADA PROVINCIALE 5 DI SAN PELAGIO 54 (PASSAGGIO LIVELLO)
+            "D6016",  // STRADA PROVINCIALE 5 DI SAN PELAGIO 64 (PASSAGGIO LIVELLO)
             "D6015",  // STRADA PROVINCIALE 5 DI SAN PELAGIO 76
+            "D6017",  // STRADA PROVINCIALE 5 DI SAN PELAGIO 54 (PASSAGGIO LIVELLO)
             "D6093",  // PREPOTTO
             "D6014",  // STRADA PROVINCIALE 5 DI SAN PELAGIO 79
             "D6094",  // LOCALIT� PREPOTTO 3
-            "D6013",  // STRADA PROVINCIALE 5 DI SAN PELAGIO 1/B
             "D6110",  // STRADA PROVINCIALE 4 DI MALCHINA 45/D
+            "D6013",  // STRADA PROVINCIALE 5 DI SAN PELAGIO 1/B
             "D6012",  // STRADA PROVINCIALE 5 DI SAN PELAGIO 2
             "D6011",  // STRADA PROVINCIALE 5 DI SAN PELAGIO (SAN PELAGIO)
             "D6009",  // PRECENICO
             "D6008",  // STRADA PROVINCIALE 4 DI MALCHINA 17 (PRECENICO INFERIORE)
             "D6114",  // LOCALIT� AURISINA CAVE 62/D
             "D6111",  // SLIVIA
-            "D6106"  // BORGO SAN MAURO
+            "D6106",  // BORGO SAN MAURO
+            "D6037",  // VISOGLIANO (STAZIONE)
+            "D6040",  // SP 4 DI MALCHINA 11/B (VISOGLIANO)
+            "D6039",  // SP 4 DI MALCHINA 6 (VISOGLIANO)
+            "D6038",  // SP 4 DI MALCHINA 6/L (VISOGLIANO)
+            "D6107"  // CARTIERA DEL TIMAVO
         ],
         "directions": [
-            "DEVINCINA",
             "PIAZZA OBERDAN",
-            "AURISINA MUNICIPIO",
-            "SAN GIOVANNI AL TIMAVO"
+            "CARTIERA DEL TIMAVO"
         ]
     },
     {
         "code": "46",
         "label": "46",
-        "terminals": ["D4015", "D4020", "D7037", "D6072"],
+        "terminals": ["D4015", "D6072", "D7037"],
         "stops": [
             "D4015",  // PROSECCO
             "D4021",  // LOCALIT� PROSECCO 316 (FARMACIA)
@@ -3339,14 +3345,6 @@ window.linesConfig = [
             "D7018",  // STRADA PROVINCIALE 8 DI MONRUPINO 19/A (RUPINPICCOLO)
             "D7039",  // STRADA PROVINCIALE 8 DI MONRUPINO (CENTRO SPORTIVO)
             "D7062",  // STRADA PROVINCIALE 8 DI MONRUPINO 45 (MUNICIPIO DI SGONICO)
-            "D7048",  // STRADA PROVINCIALE 7 DI GABROVIZZA 43 (SGONICO)
-            "D7055",  // STRADA PROVINCIALE 7 DI GABROVIZZA 55 (CARSIANA)
-            "D7049",  // STRADA PROVINCIALE 7 DI GABROVIZZA 72
-            "D7013",  // STRADA PROVINCIALE 6 DI COMENO 1 (GABROVIZZA)
-            "D7050",  // STRADA PROVINCIALE 6 DI COMENO 25 (GABROVIZZA)
-            "D7051",  // STRADA PROVINCIALE 6 DI COMENO 1 (CAMPO SACRO)
-            "D4031",  // STRADA PROVINCIALE 1 DEL CARSO (MOBILIFICIO)
-            "D4035",  // LOCALIT� PROSECCO 430 (MONUMENTO AI CADUTI)
             "D7026",  // STRADA PROVINCIALE 28 DI MONRUPINO 45 (MUNICIPIO DI SGONICO)
             "D7027",  // STRADA PROVINCIALE 28 DI SGONICO PER SALES 60 (CIMITERO)
             "D7028",  // STRADA PROVINCIALE 28 DI SGONICO PER SALES (LATO COLLUDROZZA
@@ -3371,6 +3369,14 @@ window.linesConfig = [
             "D7045",  // STRADA PROVINCIALE 28 DI SGONICO 15
             "D7046",  // STRADA PROVINCIALE 28 DI SGONICO (LATO COLLUDROZZA)
             "D7047",  // STRADA PROVINCIALE 28 DI SGONICO 60 (CIMITERO SGONICO)
+            "D7048",  // STRADA PROVINCIALE 7 DI GABROVIZZA 43 (SGONICO)
+            "D7055",  // STRADA PROVINCIALE 7 DI GABROVIZZA 55 (CARSIANA)
+            "D7049",  // STRADA PROVINCIALE 7 DI GABROVIZZA 72
+            "D7013",  // STRADA PROVINCIALE 6 DI COMENO 1 (GABROVIZZA)
+            "D7050",  // STRADA PROVINCIALE 6 DI COMENO 25 (GABROVIZZA)
+            "D7051",  // STRADA PROVINCIALE 6 DI COMENO 1 (CAMPO SACRO)
+            "D4031",  // STRADA PROVINCIALE 1 DEL CARSO (MOBILIFICIO)
+            "D4035",  // LOCALIT� PROSECCO 430 (MONUMENTO AI CADUTI)
             "D6116",  // STRADA PROVINCIALE 6 DI COMENO 12 (TERNOVA)
             "D6108",  // TERNOVA
             "D6093",  // PREPOTTO
@@ -3688,8 +3694,9 @@ window.linesConfig = [
     {
         "code": "51",
         "label": "51",
-        "terminals": ["04014", "D3008", "D9055", "59901"],
+        "terminals": ["04014", "59901", "D3008", "D9055", "03001", "D0018"],
         "stops": [
+            "59901",  // VIA KETTE 10 (BASOVIZZA)
             "04014",  // STAZIONE FERROVIARIA
             "04002",  // VIA GHEGA 9 (CONSERVATORIO TARTINI)
             "03001",  // PIAZZA OBERDAN
@@ -3737,7 +3744,6 @@ window.linesConfig = [
             "D9054",  // STRADA PROVINCIALE 21 DI GROZZANA 2 (PESEK)
             "D9055",  // GROZZANA
             "D9056",  // STRADA PROVINCIALE 21 DI GROZZANA 2 (PESEK)
-            "59901",  // VIA KETTE 10 (BASOVIZZA)
             "59002",  // STRADA PROVINCIALE 1 DEL CARSO (PARCHEGGIO BASOVIZZA)
             "59003",  // STRADA PROVINCIALE 1 DEL CARSO (CIMITERO)
             "59012",  // STRADA PROVINCIALE 1 DEL CARSO 173 (PADRICIANO)
@@ -3794,7 +3800,9 @@ window.linesConfig = [
             "STAZIONE FERROVIARIA",
             "VIA KETTE 10 (BASOVIZZA)",
             "VILLA CARSIA",
-            "GROZZANA"
+            "GROZZANA",
+            "PIAZZA OBERDAN",
+            "AREA DI RICERCA"
         ]
     },
     {
@@ -3829,7 +3837,8 @@ window.linesConfig = [
             "42002"  // VIA PUCCINI
         ],
         "directions": [
-            "VALMAURA"
+            "VALMAURA",
+            "VIA ROSSI 36"
         ]
     },
     {
@@ -4173,7 +4182,7 @@ window.linesConfig = [
     {
         "code": "64",
         "label": "64",
-        "terminals": ["05012", "D3022"],
+        "terminals": ["05012", "D3022", "48009"],
         "stops": [
             "05012",  // PIAZZA TOMMASEO
             "01001",  // VIA FILZI 3 (PIAZZA SANT'ANTONIO NUOVO, PONTE ROSSO)
@@ -4223,7 +4232,7 @@ window.linesConfig = [
     {
         "code": "A",
         "label": "A",
-        "terminals": ["03006", "03011", "52012", "52018", "53017", "26001", "28001", "28002", "28003", "28004", "08003"],
+        "terminals": ["03011", "08003", "52012", "28003"],
         "stops": [
             "28003",  // VIALE CAMPI ELISI
             "26001",  // VIALE DEI CAMPI ELISI 95 (PONTE FERROVIA)
@@ -4330,7 +4339,7 @@ window.linesConfig = [
     {
         "code": "B",
         "label": "B",
-        "terminals": ["03004", "03011", "54007", "29016", "37013", "26006"],
+        "terminals": ["03011", "26006", "29016", "54007", "37013"],
         "stops": [
             "03004",  // PIAZZA GOLDONI
             "09002",  // VIA BATTISTI (GALLERIA FENICE)
@@ -4420,7 +4429,7 @@ window.linesConfig = [
     {
         "code": "C",
         "label": "C",
-        "terminals": ["03004", "03010", "03012", "50003", "41024", "52014"],
+        "terminals": ["03012", "52014", "50003", "41024"],
         "stops": [
             "03004",  // PIAZZA GOLDONI
             "10005",  // VIA CARDUCCI (REGIONE)
@@ -4567,7 +4576,7 @@ window.linesConfig = [
     {
         "code": "D",
         "label": "D",
-        "terminals": ["03011", "44003", "27017", "08003"],
+        "terminals": ["08003", "03011", "44003", "27017"],
         "stops": [
             "27017",  // VIA MURAT
             "27018",  // VIA HERMET (PIAZZA CARLO ALBERTO)
