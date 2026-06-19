@@ -258,6 +258,7 @@ window.linesConfig = [
         ],
         "directions": [
             "PIAZZA OBERDAN",
+            "PIAZZA TOMMASEO",
             "VILLA CARSIA"
         ]
     },
@@ -393,8 +394,9 @@ window.linesConfig = [
             "50003"  // BARCOLA
         ],
         "directions": [
-            "PIAZZALE GIOBERTI",
-            "GRIGNANO"
+            "GRIGNANO",
+            "PIAZZA OBERDAN",
+            "PIAZZALE GIOBERTI"
         ]
     },
     {
@@ -441,8 +443,8 @@ window.linesConfig = [
             "E0054"  // STRADA PROVINCIALE 17 DI CHIAMPORE 3/A (LOCALIT� ZINDIS)
         ],
         "directions": [
-            "MUGGIA",
-            "LAZZARETTO"
+            "LAZZARETTO",
+            "MUGGIA"
         ]
     },
     {
@@ -510,8 +512,10 @@ window.linesConfig = [
             "23003"  // PIAZZA TRA I RIVI 3 (ROIANO)
         ],
         "directions": [
-            "VALMAURA",
-            "ROIANO"
+            "VIALE CAMPI ELISI (EX PAM)",
+            "PIAZZALE VALMAURA",
+            "ROIANO",
+            "VIA SVEVO (ACEGAS)"
         ]
     },
     {
@@ -563,6 +567,8 @@ window.linesConfig = [
         ],
         "directions": [
             "LARGO IRNERI",
+            "Passeggio di Sant'Andrea (fr.p.e.413)",
+            "VIA BATTISTI (GALLERIA FENICE)",
             "PIAZZALE GIOBERTI"
         ]
     },
@@ -611,7 +617,7 @@ window.linesConfig = [
         ],
         "directions": [
             "PIAZZA TOMMASEO",
-            "PIAZZALE VALMAURA"
+            "VALMAURA"
         ]
     },
     {
@@ -718,8 +724,8 @@ window.linesConfig = [
         ],
         "directions": [
             "PIAZZALE GIOBERTI",
-            "SAN PELAGIO",
-            "SAN GIOVANNI"
+            "PARCO SAN GIOVANNI",
+            "BORGO SAN PELAGIO"
         ]
     },
     {
@@ -740,7 +746,7 @@ window.linesConfig = [
         ],
         "directions": [
             "RAUTE",
-            "CATTINARA OSPEDALE"
+            "CATTINARA (OSPEDALE)"
         ]
     },
     {
@@ -816,8 +822,8 @@ window.linesConfig = [
             "28009"  // VIA COLAUTTI 14/A (PIAZZALE DELLA RESISTENZA)
         ],
         "directions": [
-            "PIAZZA OBERDAN",
-            "VIA MURAT"
+            "VIA MURAT",
+            "PIAZZA OBERDAN"
         ]
     },
     {
@@ -857,8 +863,9 @@ window.linesConfig = [
             "28011"  // VIALE CAMPI ELISI (EX PAM)
         ],
         "directions": [
-            "PIAZZA OBERDAN",
-            "CAMPI ELISI"
+            "VIALE CAMPI ELISI",
+            "VIA VON BRUCK 30 (GIRONE)",
+            "PIAZZA OBERDAN"
         ]
     },
     {
@@ -941,6 +948,7 @@ window.linesConfig = [
             "46024"  // VIA VALERIO 38 (ANGOLO CLIVO ARTEMISIO)
         ],
         "directions": [
+            "VIA FABIO SEVERO 4 (TRIBUNALE)",
             "VIA DI CAMPO MARZIO",
             "SAN CILINO"
         ]
@@ -1045,6 +1053,7 @@ window.linesConfig = [
             "50003"  // BARCOLA
         ],
         "directions": [
+            "VIA DELL'ISTRIA 206 (CIMITERO)",
             "STAZIONE FERROVIARIA",
             "VIA PUCCINI"
         ]
@@ -1215,8 +1224,12 @@ window.linesConfig = [
             "27014"  // VIA DI CAMPO MARZIO 20
         ],
         "directions": [
+            "VIA DELL'ISTRIA 206 (CIMITERO)",
+            "PIAZZA GOLDONI",
             "STAZIONE FERROVIARIA",
-            "MUGGIA"
+            "BARCOLA",
+            "MUGGIA",
+            "VIA CARDUCCI (LUMINOSA)"
         ]
     },
     {
@@ -1371,7 +1384,7 @@ window.linesConfig = [
         ],
         "directions": [
             "STAZIONE FERROVIARIA",
-            "CATTINARA OSPEDALE"
+            "CATTINARA (OSPEDALE)"
         ]
     },
     {
@@ -1447,8 +1460,10 @@ window.linesConfig = [
             "42007"  // VIA FLAVIA 14 (PIAZZALE CAGNI)
         ],
         "directions": [
+            "PIAZZA GOLDONI",
             "STAZIONE FERROVIARIA",
-            "WARTSILA"
+            "VIA DELL'ISTRIA 206 (CIMITERO)",
+            "PIAZZALE WARTSILA"
         ]
     },
     {
@@ -1556,7 +1571,7 @@ window.linesConfig = [
         ],
         "directions": [
             "CORSO ITALIA",
-            "CATTINARA OSPEDALE"
+            "CATTINARA (OSPEDALE)"
         ]
     },
     {
@@ -1638,6 +1653,7 @@ window.linesConfig = [
         ],
         "directions": [
             "LARGO OSOPPO",
+            "CATTINARA (OSPEDALE)",
             "CHIADINO"
         ]
     },
@@ -1884,8 +1900,8 @@ window.linesConfig = [
             "07003"  // CORSO SABA
         ],
         "directions": [
-            "PIAZZA GOLDONI",
-            "VIA SVEVO"
+            "VIA SVEVO",
+            "PIAZZA GOLDONI"
         ]
     },
     {
@@ -1950,8 +1966,8 @@ window.linesConfig = [
             "23013"  // COLOGNA
         ],
         "directions": [
-            "STAZIONE FERROVIARIA",
-            "VIA LOCCHI"
+            "VIA LOCCHI",
+            "STAZIONE FERROVIARIA"
         ]
     },
     {
@@ -2098,8 +2114,10 @@ window.linesConfig = [
             "43004"  // VIA DELLE CAMPANELLE 203 (ANGOLO VIA ANTICO)
         ],
         "directions": [
+            "VIA DELLA BASTIA 1",
             "LARGO BARRIERA",
-            "CAMPANELLE"
+            "CAMPANELLE",
+            "VIA DELLE CAMPANELLE 150"
         ]
     },
     {
@@ -2152,6 +2170,7 @@ window.linesConfig = [
         ],
         "directions": [
             "LARGO BARRIERA",
+            "VIA DELL'ISTRIA 190 (PONTE VIA SONCINI)",
             "VIA PAISIELLO"
         ]
     },
@@ -2218,8 +2237,9 @@ window.linesConfig = [
             "03006"  // PIAZZA GOLDONI
         ],
         "directions": [
-            "VIA CARDUCCI",
-            "LONGERA"
+            "VIA CARDUCCI (REGIONE)",
+            "LONGERA",
+            "SOTTOLONGERA"
         ]
     },
     {
@@ -2275,7 +2295,7 @@ window.linesConfig = [
             "19003"  // VIA GIULIA 3/C (GIARDINO PUBBLICO, TEATRO ROSSETTI)
         ],
         "directions": [
-            "CASTELLO DI MIRAMARE",
+            "CASTELLO DI MIRAMARE (BIVIO)",
             "LARGO TOMIZZA"
         ]
     },
@@ -2362,8 +2382,9 @@ window.linesConfig = [
             "58014"  // VIA RIO STORTO (ANGOLO VIA DEL MONTASIO)
         ],
         "directions": [
+            "VIA DELL'ISTRIA 206 (CIMITERO)",
             "LARGO BARRIERA",
-            "CATTINARA OSPEDALE"
+            "CATTINARA (OSPEDALE)"
         ]
     },
     {
@@ -2412,8 +2433,8 @@ window.linesConfig = [
             "03018"  // PIAZZA OBERDAN
         ],
         "directions": [
-            "PIAZZA OBERDAN",
-            "VIA BONOMEA"
+            "VIA BONOMEA (SISSA)",
+            "PIAZZA OBERDAN"
         ]
     },
     {
@@ -2539,7 +2560,7 @@ window.linesConfig = [
             "D6106"  // BORGO SAN MAURO
         ],
         "directions": [
-            "CATTINARA OSPEDALE",
+            "CATTINARA (OSPEDALE)",
             "AURISINA MUNICIPIO"
         ]
     },
@@ -2641,6 +2662,7 @@ window.linesConfig = [
             "13005"  // RIVA SAURO 24 (ACQUARIO, MUSEO REVOLTELLA)
         ],
         "directions": [
+            "PIAZZALE VALMAURA",
             "STAZIONE FERROVIARIA",
             "DOLINA"
         ]
@@ -2779,9 +2801,11 @@ window.linesConfig = [
             "03001"  // PIAZZA OBERDAN
         ],
         "directions": [
+            "VIA DELL'ISTRIA 206 (CIMITERO)",
             "VALMAURA",
-            "SAN GIUSEPPE",
-            "BAGNOLI"
+            "STAZIONE FERROVIARIA",
+            "BAGNOLI",
+            "DOLINA"
         ]
     },
     {
@@ -2961,6 +2985,8 @@ window.linesConfig = [
         ],
         "directions": [
             "PIAZZA OBERDAN",
+            "DEVINCINA",
+            "BORGO SAN NAZARIO",
             "OPICINA"
         ]
     },
@@ -3286,8 +3312,10 @@ window.linesConfig = [
             "D6106"  // BORGO SAN MAURO
         ],
         "directions": [
+            "DEVINCINA",
             "PIAZZA OBERDAN",
-            "CARTIERA DEL TIMAVO"
+            "AURISINA MUNICIPIO",
+            "SAN GIOVANNI AL TIMAVO"
         ]
     },
     {
@@ -3455,6 +3483,7 @@ window.linesConfig = [
         ],
         "directions": [
             "PROSECCO",
+            "AURISINA MUNICIPIO",
             "SAMATORZA"
         ]
     },
@@ -3574,7 +3603,7 @@ window.linesConfig = [
         ],
         "directions": [
             "LARGO BARRIERA",
-            "CATTINARA OSPEDALE"
+            "CATTINARA (OSPEDALE)"
         ]
     },
     {
@@ -3653,7 +3682,7 @@ window.linesConfig = [
         ],
         "directions": [
             "MUGGIA",
-            "CATTINARA OSPEDALE"
+            "CATTINARA (OSPEDALE)"
         ]
     },
     {
@@ -3763,7 +3792,9 @@ window.linesConfig = [
         ],
         "directions": [
             "STAZIONE FERROVIARIA",
-            "VILLA CARSIA"
+            "VIA KETTE 10 (BASOVIZZA)",
+            "VILLA CARSIA",
+            "GROZZANA"
         ]
     },
     {
@@ -3798,8 +3829,7 @@ window.linesConfig = [
             "42002"  // VIA PUCCINI
         ],
         "directions": [
-            "VALMAURA",
-            "VIA ROSSI 36"
+            "VALMAURA"
         ]
     },
     {
@@ -4292,8 +4322,9 @@ window.linesConfig = [
         ],
         "directions": [
             "PIAZZA GOLDONI",
-            "CATTINARA",
-            "CAMPI ELISI"
+            "PONTE DELLA FABRA",
+            "CATTINARA (OSPEDALE)",
+            "VIALE CAMPI ELISI"
         ]
     },
     {
@@ -4380,8 +4411,10 @@ window.linesConfig = [
         ],
         "directions": [
             "PIAZZA GOLDONI",
+            "VIA ALBERTI",
+            "VIA SVEVO",
             "LONGERA",
-            "VIA SVEVO"
+            "SOTTOLONGERA"
         ]
     },
     {
@@ -4526,9 +4559,9 @@ window.linesConfig = [
         ],
         "directions": [
             "PIAZZA GOLDONI",
+            "CATTINARA (OSPEDALE)",
             "BARCOLA",
-            "VALMAURA",
-            "CATTINARA"
+            "VALMAURA"
         ]
     },
     {
@@ -4590,9 +4623,10 @@ window.linesConfig = [
             "03007"  // PIAZZA DELLA REPUBBLICA 2
         ],
         "directions": [
+            "PONTE DELLA FABRA",
             "PIAZZA GOLDONI",
             "VIA CUMANO",
-            "CAMPO MARZIO"
+            "VIA MURAT"
         ]
     },
     {
