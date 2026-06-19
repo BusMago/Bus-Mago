@@ -92,14 +92,13 @@ const LEGEND_GROUPS = {
     '17/': ['SAN CILINO'],
     '4': ['VILLA CARSIA'],
     '3': ['CONCONELLO'],
-    // 51: destinazioni verso il Carso/universita' (la stazione e Oberdan stanno in FS)
-    '51': ['VILLA CARSIA', 'GROZZANA', 'AREA DI RICERCA', 'VIA KETTE 10 (BASOVIZZA)']
+    '51': []   // array vuoto = mostra tutte le corse della 51 (nessun filtro destinazione)
   },
   FS: {
     '17/': ['STAZIONE FERROVIARIA'],
     '17': ['VIA DI CAMPO MARZIO'],
     '4': ['PIAZZA OBERDAN', 'PIAZZA TOMMASEO'],
-    '51': ['STAZIONE FERROVIARIA', 'PIAZZA OBERDAN'],
+    '51': [],   // array vuoto = mostra tutte le corse della 51 (nessun filtro destinazione)
     '3': ['STAZIONE FERROVIARIA']
   },
   BARCOLA: {
