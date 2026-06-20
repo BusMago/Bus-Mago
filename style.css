@@ -27,121 +27,72 @@ html, body, #map {
   color: #111;
 }
 
-.repo-link { 
+/* Controlli in basso a sinistra: Installa + GitHub (icone compatte) */
+.map-controls-bottom-left {
   position: absolute;
   bottom: 25px;
   left: 15px;
   z-index: 1000;
-  padding: 8px 12px;
-  border-radius: 10px;
-  background: rgba(30, 30, 30, 0.85);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-  transition: all 0.2s ease;
-}
-
-.install-banner {
-  position: absolute;
-  bottom: 75px; /* Above repo-link */
-  left: 15px;
-  z-index: 1000;
-  padding: 10px 14px;
-  border-radius: 12px;
-  background: rgba(30, 30, 30, 0.92);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
-  display: none; /* Managed by JS */
-  align-items: center;
-  gap: 10px;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  cursor: pointer;
-  max-width: calc(100vw - 30px);
-}
-
-.install-banner:hover {
-  background: rgba(45, 45, 45, 0.95);
-  transform: translateY(-2px);
-}
-
-.install-banner-content {
-  color: #fff;
-  font-size: 12px;
-  font-weight: 600;
   display: flex;
-  align-items: center;
-  gap: 8px;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
+  flex-direction: column;
+  gap: 12px;
 }
 
-.install-banner-close {
-  background: rgba(255, 255, 255, 0.1);
-  border: none;
-  color: #fff;
-  width: 24px;
-  height: 24px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  font-size: 14px;
-  transition: background 0.2s ease;
-}
-
-.install-banner-close:hover {
-  background: rgba(255, 255, 255, 0.2);
-}
-
-:root[data-theme="light"] .install-banner {
-  background: rgba(255, 255, 255, 0.95);
-  border-color: rgba(0, 0, 0, 0.08);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
-}
-
-:root[data-theme="light"] .install-banner-content {
-  color: #222;
-}
-
-:root[data-theme="light"] .install-banner-close {
-  background: rgba(0, 0, 0, 0.05);
-  color: #222;
-}
-
-.repo-link:hover {
-  background: rgba(50, 50, 50, 0.9);
-  transform: translateY(-2px);
-}
-
-.repo-link a { 
-  color: #eee; 
+.github-btn,
+.install-btn {
   text-decoration: none;
-  font-size: 11px;
-  font-weight: 600;
-  display: flex;
-  align-items: center;
-  letter-spacing: 0.3px;
-  text-transform: uppercase;
 }
 
-.external-icon {
-  margin-left: 6px;
-  font-size: 14px;
-  opacity: 0.7;
+.github-btn svg,
+.install-btn svg {
+  width: 22px;
+  height: 22px;
+  display: block;
+}
+
+/* Bottone Installa: colore primario per renderlo riconoscibile come azione */
+.install-btn {
+  background: rgba(0, 119, 255, 0.92);
+  border-color: rgba(0, 119, 255, 0.6);
+  color: #fff;
+  animation: install-pulse 2.6s ease-in-out infinite;
+}
+
+.install-btn:hover {
+  background: rgba(0, 119, 255, 1);
+}
+
+:root[data-theme="light"] .install-btn {
+  background: rgba(0, 119, 255, 0.95);
+  color: #fff;
+  border-color: rgba(0, 119, 255, 0.5);
+}
+
+@keyframes install-pulse {
+  0%, 100% { box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3); }
+  50% { box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3), 0 0 0 6px rgba(0, 119, 255, 0.16); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .install-btn { animation: none; }
+}
+
+/* Modale d'installazione (riusa gli stili .welcome-*) */
+.install-modal-badge {
+  font-size: 44px;
+  line-height: 1;
+}
+
+/* Glifo inline (es. icona Condividi iOS) dentro i passi della guida */
+.step-glyph {
+  width: 16px;
+  height: 16px;
+  vertical-align: -3px;
+  margin: 0 1px;
 }
 
 :root[data-theme="light"] body { background: #f8f8f8; color: #111; }
-:root[data-theme="light"] .repo-link { 
-  background: rgba(255, 255, 255, 0.92); 
-  border-color: rgba(0, 0, 0, 0.05);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-}
-:root[data-theme="light"] .repo-link a { color: #333; }
-:root[data-theme="light"] .leaflet-control-zoom a { 
+:root[data-theme="light"] .leaflet-control-zoom a {
   background: rgba(255, 255, 255, 0.92) !important; 
   color: #111 !important; 
   border-color: rgba(0, 0, 0, 0.1) !important;
@@ -247,7 +198,13 @@ html, body, #map {
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.refresh-btn.refreshing {
+.refresh-icon {
+  display: inline-block;
+  line-height: 1;
+}
+
+/* Gira solo la freccia interna, non l'intero pulsante */
+.refresh-btn.refreshing .refresh-icon {
   -webkit-animation: spin 0.8s linear infinite;
   animation: spin 0.8s linear infinite;
 }
@@ -296,9 +253,10 @@ html, body, #map {
   transform: scale(0.95);
 }
 
-.recenter-btn img {
+.recenter-btn svg {
   width: 24px;
   height: 24px;
+  display: block;
   opacity: 0.9;
 }
 
@@ -672,13 +630,6 @@ html, body, #map {
   margin-bottom: 12px;
 }
 
-.directions-panel {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  margin-bottom: 12px;
-}
-
 .selected-lines-panel {
   display: flex;
   flex-direction: column;
@@ -817,126 +768,6 @@ html, body, #map {
   background: rgba(0,0,0,0.18);
   border-color: rgba(255,255,255,0.40);
   box-shadow: 0 0 0 2px var(--selected-line-chip-ring);
-}
-
-.dir-line {
-  border-radius: 12px;
-  overflow: hidden;
-  border: 1px solid rgba(255,255,255,0.10);
-  background: rgba(0,0,0,0.18);
-}
-
-:root[data-theme="light"] .dir-line {
-  border-color: rgba(0,0,0,0.08);
-  background: rgba(0,0,0,0.04);
-}
-
-.dir-line-toggle {
-  width: 100%;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 10px 12px;
-  border: 0;
-  background: transparent;
-  color: var(--legend-tile-text);
-  cursor: pointer;
-}
-
-.dir-line-static {
-  width: 100%;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 10px 12px;
-  color: var(--legend-tile-text);
-  cursor: default;
-}
-
-.dir-line-toggle:active {
-  transform: scale(0.99);
-}
-
-.dir-line-badge {
-  min-width: 40px;
-  height: 24px;
-  padding: 0 10px;
-  border-radius: 999px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 800;
-  color: #fff;
-  font-size: 12px;
-  letter-spacing: 0.4px;
-}
-
-.dir-line-summary {
-  font-size: 12px;
-  opacity: 0.92;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  flex: 1 1 auto;
-  min-width: 0;
-}
-
-.dir-line-chevron {
-  width: 10px;
-  height: 10px;
-  margin-left: auto;
-  opacity: 0.75;
-  flex: 0 0 auto;
-  background: currentColor;
-  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M7 10l5 5 5-5' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center / contain no-repeat;
-  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M7 10l5 5 5-5' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center / contain no-repeat;
-  transition: transform 0.12s ease, opacity 0.12s ease;
-}
-
-.dir-line-toggle[aria-expanded="true"] .dir-line-chevron {
-  transform: rotate(180deg);
-  opacity: 0.95;
-}
-
-.dir-chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  padding: 0 12px 12px 12px;
-}
-
-.dir-chip {
-  border: 1px solid rgba(255,255,255,0.12);
-  background: rgba(255,255,255,0.06);
-  color: var(--legend-tile-text);
-  border-radius: 999px;
-  padding: 6px 10px;
-  font-size: 12px;
-  cursor: pointer;
-  user-select: none;
-}
-
-.dir-chip:hover {
-  filter: brightness(1.08);
-}
-
-.dir-chip:active {
-  transform: scale(0.98);
-}
-
-.dir-chip.is-active {
-  background: rgba(0,119,255,0.22);
-  border-color: rgba(0,119,255,0.72);
-}
-
-:root[data-theme="light"] .dir-chip {
-  border-color: rgba(0,0,0,0.10);
-  background: rgba(0,0,0,0.04);
-}
-
-:root[data-theme="light"] .dir-chip.is-active {
-  background: rgba(0,119,255,0.14);
-  border-color: rgba(0,119,255,0.55);
 }
 
 .legend-group-btn {
@@ -1176,7 +1007,7 @@ html, body, #map {
    Disabled while the user drags/zooms (see .map-interacting) so markers don't
    lag behind the map during gestures. */
 .bus-icon-wrapper {
-  transition: transform 1.2s linear;
+  transition: transform 1.2s cubic-bezier(0.4, 0, 0.2, 1);
   will-change: transform;
 }
 .leaflet-container.map-interacting .bus-icon-wrapper {
@@ -1324,20 +1155,6 @@ html, body, #map {
   transform: scale(0.98);
 }
 
-.legend label {
-  transition: background 0.2s ease;
-  padding: 6px 10px;
-  margin: 0 -10px;
-  border-radius: 8px;
-  display: flex;
-  align-items: center;
-  cursor: pointer;
-}
-
-.legend label:hover {
-  background: rgba(255,255,255,0.06);
-}
-
 .legend-search {
   width: 100%;
   box-sizing: border-box;
@@ -1356,14 +1173,6 @@ html, body, #map {
   border-color: #0077ff;
   background: rgba(0,0,0,0.35);
   box-shadow: 0 0 0 3px rgba(0, 119, 255, 0.2);
-}
-
-.legend input[type="checkbox"] {
-  accent-color: #0077ff;
-  width: 18px;
-  height: 18px;
-  cursor: pointer;
-  margin-right: 10px;
 }
 
 :root[data-theme="light"] .legend-search {
@@ -1439,10 +1248,6 @@ html, body, #map {
   background-color: rgba(220, 53, 69, 0.08);
   color: #670000;
   border-color: rgba(220, 53, 69, 0.2);
-}
-
-:root[data-theme="light"] .legend label:hover {
-  background: rgba(0,0,0,0.04);
 }
 
 :root[data-theme="light"] .legend-line-tile {
@@ -1527,13 +1332,6 @@ html, body, #map {
     -ms-overflow-style: none;
   }
   .legend::-webkit-scrollbar { display: none; }
-  .legend label {
-    padding: 10px 0;
-    display: flex;
-  }
-  .legend input[type="checkbox"] {
-    margin-right: 12px;
-  }
   .leaflet-control-zoom {
     display: none !important;
   }
@@ -1558,10 +1356,10 @@ html, body, #map {
   background-color: rgba(50, 50, 50, 0.9);
   color: #fff;
   padding: 12px 24px;
-  border-radius: 4px;
+  border-radius: 12px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
   z-index: 3000;
-  font-family: sans-serif;
+  font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
   font-size: 14px;
   opacity: 0;
   transition: opacity 0.3s ease-in-out;
@@ -1688,11 +1486,6 @@ html, body, #map {
 
 .welcome-close-btn:hover { background: #0066dd; }
 .welcome-close-btn:active { transform: scale(0.98); }
-
-/* Smooth Marker Transition */
-.leaflet-marker-icon.bus-icon-wrapper {
-  transition: transform 1.2s cubic-bezier(0.4, 0, 0.2, 1); /* Smoother and slightly longer */
-}
 
 /* Smooth Bateo Icon Transition */
 .leaflet-marker-icon.bateo-icon {

@@ -10,6 +10,20 @@ const CONFIG = {
     MANY_LINES_THRESHOLD: 10,
     TRACK_REFRESH_INTERVAL: 6
   },
+  SAMPLING: {
+    // Tetto pratico di fetch/ciclo: il budget viene diviso fra le linee attive,
+    // così a più linee corrispondono meno fermate per linea (i capolinea sono
+    // comunque sempre interrogati a parte). MAX limita la densità quando le linee
+    // sono poche; MIN evita di degradare troppo con molte linee. Il budget è
+    // tarato sul collo di bottiglia reale dell'API (~6 connessioni concorrenti,
+    // ~70-90ms/richiesta ⇒ ~60-65 req/s): con ~140 fermate/ciclo il ciclo si
+    // chiude in ~2s mantenendo le posizioni FRESCHE. Alzarlo a 200 raddoppierebbe
+    // i tempi senza catturare bus in più (oltre ~1 fermata ogni 2 del percorso il
+    // ritorno è marginale, vista la finestra di 2-4 corse di mrcruns).
+    FETCH_BUDGET: 140,
+    MIN_STOPS_PER_LINE: 10,
+    MAX_STOPS_PER_LINE: 40
+  },
   CACHE: {
     STOP_RUNS_TTL_MS: 5000
   },
@@ -167,9 +181,6 @@ class BusMagoApp {
         collapsed: false,
         storageKey: 'busmago:departuresCollapsed:v1'
       },
-      installBanner: {
-        dismissedKey: 'busmago:installBannerDismissed:v1'
-      },
       infoPanel: {
         selectedBus: null,
         selectedTrack: null,
@@ -211,6 +222,17 @@ class BusMagoApp {
     // Bindings
     this.refreshData = this.refreshData.bind(this);
     this.hardRefreshData = this.hardRefreshData.bind(this);
+  }
+
+  // Feedback aptico (solo dispositivi che supportano l'API Vibration, di fatto
+  // mobile Android/Chrome; iOS Safari la ignora silenziosamente). Avvolto in
+  // try/catch perché alcuni browser la espongono ma la bloccano senza gesto utente.
+  hapticFeedback(pattern) {
+    try {
+      if (typeof navigator !== 'undefined' && typeof navigator.vibrate === 'function') {
+        navigator.vibrate(pattern);
+      }
+    } catch {}
   }
 
   escapeHtmlAttribute(value) {
@@ -444,7 +466,7 @@ class BusMagoApp {
     this.loadDeparturesCollapsed();
     this.initMap();
     this.initToast();
-    this.initInstallBanner();
+    this.initInstall();
     this.initVisibility();
     this.loadActiveLines();
     this.loadLegendView();
@@ -544,50 +566,81 @@ class BusMagoApp {
     } catch {}
   }
 
-  initInstallBanner() {
-    const banner = document.getElementById('install-banner');
-    const closeBtn = document.getElementById('install-banner-close');
-    if (!banner || !closeBtn) return;
-
-    // Check if dismissed
-    const dismissed = localStorage.getItem(this.state.installBanner.dismissedKey);
-    if (dismissed === '1') return;
-
-    // Check if mobile (screen width <= 1024px)
-    if (window.innerWidth > 1024) return;
-
-    // Check if already in standalone mode (PWA installed)
-    const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
-    if (isStandalone) return;
+  initInstall() {
+    const installBtn = document.getElementById('install-btn');
+    const modal = document.getElementById('install-modal');
+    const modalClose = document.getElementById('install-modal-close');
+    const stepsEl = document.getElementById('install-steps');
+    if (!installBtn) return;
 
     const ua = navigator.userAgent || '';
     const isIOS = /iPad|iPhone|iPod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-    const isSafari = /^((?!chrome|android).)*safari/i.test(ua) || 'standalone' in window.navigator;
-    const bannerText = isIOS && isSafari 
-      ? '✨ Installa l\'app su iPhone: Condividi → Aggiungi alla Home'
-      : '✨ Installa l\'app su Android: Menu ⋮ → Aggiungi alla Home';
-    const linkAnchor = isIOS && isSafari ? '#installazione-ios' : '#installazione';
-    const contentEl = banner.querySelector('.install-banner-content span');
-    if (contentEl) contentEl.textContent = bannerText;
+    const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
 
-    // Show banner
-    banner.style.display = 'flex';
+    // Già aperta come app installata: nessun bottone d'installazione.
+    if (isStandalone) return;
 
-    banner.addEventListener('click', (e) => {
-      if (e.target === closeBtn) return;
-      // Redirect to README anchor
-      window.open(`https://github.com/BusMago/Bus-Mago${linkAnchor}`, '_blank');
-      // Mark as dismissed so it doesn't reappear
-      localStorage.setItem(this.state.installBanner.dismissedKey, '1');
-      banner.style.display = 'none';
+    let deferredPrompt = null;
+
+    // Android/Chrome (e desktop compatibili): intercettiamo il prompt nativo
+    // di installazione per offrirlo con UN TAP dal nostro bottone, invece di
+    // mandare l'utente a istruzioni esterne.
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      deferredPrompt = e;
+      installBtn.style.display = 'flex';
     });
 
-    closeBtn.addEventListener('click', (e) => {
+    window.addEventListener('appinstalled', () => {
+      deferredPrompt = null;
+      installBtn.style.display = 'none';
+      this.showToast('App installata! 🎉', 'success');
+    });
+
+    // iOS Safari non espone beforeinstallprompt (Apple non consente
+    // l'installazione automatica): mostriamo comunque il bottone, che apre la
+    // guida passo-passo in-app.
+    if (isIOS) installBtn.style.display = 'flex';
+
+    const shareGlyph = `<svg class="step-glyph" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 15V3"></path><path d="M8 7l4-4 4 4"></path><path d="M5 12v7a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-7"></path></svg>`;
+
+    const buildSteps = () => {
+      if (!stepsEl) return;
+      if (isIOS) {
+        stepsEl.innerHTML =
+          `<div class="welcome-step"><span class="welcome-step-icon">1</span><span class="welcome-step-text">In <strong>Safari</strong>, tocca il tasto <strong>Condividi</strong> ${shareGlyph} nella barra in basso</span></div>` +
+          `<div class="welcome-step"><span class="welcome-step-icon">2</span><span class="welcome-step-text">Scorri e scegli <strong>«Aggiungi alla schermata Home»</strong></span></div>` +
+          `<div class="welcome-step"><span class="welcome-step-icon">3</span><span class="welcome-step-text">Conferma con <strong>«Aggiungi»</strong>: l'icona comparirà tra le tue app</span></div>`;
+      } else {
+        stepsEl.innerHTML =
+          `<div class="welcome-step"><span class="welcome-step-icon">1</span><span class="welcome-step-text">In <strong>Chrome</strong>, apri il menu <strong>⋮</strong> in alto a destra</span></div>` +
+          `<div class="welcome-step"><span class="welcome-step-icon">2</span><span class="welcome-step-text">Tocca <strong>«Installa app»</strong> (o <strong>«Aggiungi a schermata Home»</strong>)</span></div>` +
+          `<div class="welcome-step"><span class="welcome-step-icon">3</span><span class="welcome-step-text">Conferma: Bus Mago si aprirà a schermo intero come un'app</span></div>`;
+      }
+    };
+
+    const openModal = () => { buildSteps(); if (modal) modal.style.display = 'flex'; };
+    const closeModal = () => { if (modal) modal.style.display = 'none'; };
+
+    installBtn.addEventListener('click', async (e) => {
       e.preventDefault();
       e.stopPropagation();
-      localStorage.setItem(this.state.installBanner.dismissedKey, '1');
-      banner.style.display = 'none';
+      if (deferredPrompt) {
+        // Percorso ottimale: dialog d'installazione nativo, un solo tap.
+        deferredPrompt.prompt();
+        try {
+          const choice = await deferredPrompt.userChoice;
+          if (choice && choice.outcome === 'accepted') installBtn.style.display = 'none';
+        } catch {}
+        deferredPrompt = null;
+      } else {
+        // Fallback (iOS o browser senza prompt nativo): guida in-app.
+        openModal();
+      }
     });
+
+    if (modalClose) modalClose.addEventListener('click', (e) => { e.preventDefault(); e.stopPropagation(); closeModal(); });
+    if (modal) modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
   }
 
   initMap() {
@@ -1262,11 +1315,11 @@ class BusMagoApp {
     const barcolaActive = groupKeys.has('BARCOLA');
     html += `<hr class="legend-grid-separator">`;
     html += `<div class="legend-group-row">
-              <button id="legend-group-uni" class="legend-action-btn legend-action-toggle legend-group-btn ${uniActive ? 'is-active' : ''}" type="button" aria-label="Gruppo UNI" aria-pressed="${uniActive ? 'true' : 'false'}"><img class="legend-group-icon" src="icona_uni.webp" alt=""></button>
-              <button id="legend-group-fs" class="legend-action-btn legend-action-toggle legend-group-btn ${fsActive ? 'is-active' : ''}" type="button" aria-label="Gruppo FS" aria-pressed="${fsActive ? 'true' : 'false'}"><img class="legend-group-icon" src="icona_fs.webp" alt=""></button>
+              <button id="legend-group-uni" class="legend-action-btn legend-action-toggle legend-group-btn ${uniActive ? 'is-active' : ''}" type="button" aria-label="Gruppo UNI" aria-pressed="${uniActive ? 'true' : 'false'}"><img class="legend-group-icon" src="img/icona_uni.webp" alt=""></button>
+              <button id="legend-group-fs" class="legend-action-btn legend-action-toggle legend-group-btn ${fsActive ? 'is-active' : ''}" type="button" aria-label="Gruppo FS" aria-pressed="${fsActive ? 'true' : 'false'}"><img class="legend-group-icon" src="img/icona_fs.webp" alt=""></button>
             </div>
             <div class="legend-group-row legend-group-row--centered">
-              <button id="legend-group-barcola" class="legend-action-btn legend-action-toggle legend-group-btn ${barcolaActive ? 'is-active' : ''}" type="button" aria-label="Gruppo BARCOLA" aria-pressed="${barcolaActive ? 'true' : 'false'}"><img class="legend-group-icon" src="barcola.webp" alt=""></button>
+              <button id="legend-group-barcola" class="legend-action-btn legend-action-toggle legend-group-btn ${barcolaActive ? 'is-active' : ''}" type="button" aria-label="Gruppo BARCOLA" aria-pressed="${barcolaActive ? 'true' : 'false'}"><img class="legend-group-icon" src="img/barcola.webp" alt=""></button>
             </div>`;
     html += `<hr class="legend-grid-separator">`;
 
@@ -1884,27 +1937,37 @@ class BusMagoApp {
     const requestId = ++this.state.refreshControl.requestSeq;
     this.state.refreshControl.inFlight = true;
 
+    // Salvaguardia anti-stallo: senza un timeout, se anche UNA sola fermata non
+    // risponde, Promise.all resterebbe appesa e il ciclo non si chiuderebbe,
+    // bloccando ogni refresh successivo fino al reset di sicurezza a 30s (cicli
+    // congelati, posizioni vecchie). Allo scadere abortiamo le richieste lente:
+    // fetchStopRuns intercetta l'AbortError e restituisce l'ultimo dato in cache,
+    // così il ciclo si chiude con i dati parziali già arrivati e riparte in tempo.
+    const cycleTimeoutMs = Math.max(3000, this.getRefreshIntervalMs() + 1500);
+    const cycleDeadline = setTimeout(() => {
+      try { controller.abort(); } catch {}
+    }, cycleTimeoutMs);
+
     try {
         const activeLineCount = Object.keys(this.state.lineVisibility).filter(k => this.state.lineVisibility[k] === true).length;
         
-        // Quante fermate interrogare per linea. lines.js ora contiene l'elenco
+        // Quante fermate interrogare per linea. lines.js contiene l'elenco
         // COMPLETO ordinato spazialmente (capolinea agli estremi), quindi va
         // SEMPRE campionato per non interrogarne centinaia. Il campionamento per
         // indice include sempre il primo e l'ultimo (= i due capolinea) piu'
         // alcuni intermedi distribuiti lungo il percorso: basta per intercettare
         // tutti i bus in servizio senza sovraccaricare l'API.
-        // Densita' di campionamento. Lo scenario tipico e' ~5 linee insieme:
-        // puntiamo alla massima precisione mantenendo il totale richieste entro
-        // limiti ragionevoli (~200/ciclo). I capolinea sono comunque sempre
-        // interrogati a parte (vedi sotto).
-        let stopsLimitPerLine;
-        if (activeLineCount > CONFIG.REFRESH.MANY_LINES_THRESHOLD) {
-            stopsLimitPerLine = 10;  // molte linee: copertura essenziale
-        } else if (activeLineCount > 5) {
-            stopsLimitPerLine = 22;
-        } else {
-            stopsLimitPerLine = 40;  // poche linee (caso tipico): copertura fitta
-        }
+        // Densita' di campionamento DERIVATA DA UN BUDGET: dividiamo il tetto di
+        // fetch/ciclo per il numero di linee attive (clamp fra MIN e MAX). Cosi'
+        // con ~5 linee (caso tipico) ogni linea ottiene la copertura massima,
+        // mentre salendo di linee le fermate per linea scendono in modo graduale
+        // mantenendo il totale entro ~FETCH_BUDGET. I capolinea sono comunque
+        // sempre interrogati a parte (vedi sotto).
+        const { FETCH_BUDGET, MIN_STOPS_PER_LINE, MAX_STOPS_PER_LINE } = CONFIG.SAMPLING;
+        const stopsLimitPerLine = Math.max(
+            MIN_STOPS_PER_LINE,
+            Math.min(MAX_STOPS_PER_LINE, Math.round(FETCH_BUDGET / Math.max(1, activeLineCount)))
+        );
 
         const uniqueStops = new Set();
         let hasActiveLines = false;
@@ -1916,10 +1979,15 @@ class BusMagoApp {
                 hasActiveLines = true;
                 
                 // Campiona le fermate lungo il percorso (ordinate spazialmente).
-                // Campionamento PESATO VERSO IL CENTRO: gli estremi sono i
-                // capolinea (gia' sempre interrogati sotto), mentre i bus "in
-                // mezzo" sfuggono al monitor dei capolinea, quindi serve piu'
-                // densita' nei tratti centrali.
+                // Campionamento UNIFORME: minimizza il gap massimo fra due fermate
+                // interrogate, che e' cio' che determina se un bus "sfugge" (mrcruns
+                // riporta una corsa solo se la fermata e' ancora davanti al bus, entro
+                // 2-4 corse). Una distribuzione uniforme garantisce la copertura
+                // peggiore migliore lungo TUTTO il percorso, inclusi i tratti subito
+                // dopo i capolinea (dove il bus appena partito non e' piu' davanti al
+                // capolinea di partenza). Garantiamo inoltre un numero di fermate
+                // DISTINTE pari al target: avanziamo all'indice libero piu' vicino in
+                // caso di collisione di arrotondamento (prima il Set ne perdeva diverse).
                 const src = Array.isArray(l.stops) ? l.stops : [];
                 let stopsToUse;
                 if (src.length <= stopsLimitPerLine) {
@@ -1927,17 +1995,18 @@ class BusMagoApp {
                 } else if (stopsLimitPerLine <= 1) {
                     stopsToUse = [src[0]];
                 } else {
-                    const picked = new Set();
                     const lastIdx = src.length - 1;
+                    const seen = new Set();
+                    const picked = [];
                     for (let i = 0; i < stopsLimitPerLine; i++) {
-                        const t = i / (stopsLimitPerLine - 1);      // 0..1 uniforme
-                        const s = 2 * t - 1;                         // -1..1
-                        // esponente >1 comprime i punti verso il centro
-                        const biased = Math.sign(s) * Math.pow(Math.abs(s), 1.6);
-                        const idx = Math.round((0.5 + 0.5 * biased) * lastIdx);
-                        picked.add(src[idx]);
+                        let idx = Math.round((i / (stopsLimitPerLine - 1)) * lastIdx);
+                        while (seen.has(idx) && idx < lastIdx) idx++;
+                        while (seen.has(idx) && idx > 0) idx--;
+                        if (seen.has(idx)) continue;
+                        seen.add(idx);
+                        picked.push(src[idx]);
                     }
-                    stopsToUse = Array.from(picked);
+                    stopsToUse = picked;
                 }
 
                 stopsToUse.forEach(s => uniqueStops.add(s));
@@ -1985,34 +2054,38 @@ class BusMagoApp {
         this.state.lastStopDataMap = stopDataMap;
 
         // 3. Process Vehicles
+        // Passata unica su tutte le fermate: la linea di ogni corsa viene risolta
+        // con una mappa O(1) per LineCode invece di re-iterare linesConfig per ogni
+        // corsa (prima era O(linee × fermate × corse)). La mappa e' costante e
+        // viene costruita una sola volta.
+        if (!this._lineByCode) {
+            this._lineByCode = new Map(linesConfig.map(l => [String(l.code).toUpperCase(), l]));
+        }
+        const lineByCode = this._lineByCode;
         const buses = [];
-        linesConfig.forEach(lineConf => {
-            const paletteColor = this.getLegendLineColor(lineConf.code);
-            Object.keys(stopDataMap).forEach(sCode => {
-                const runs = stopDataMap[sCode];
-                runs.forEach(r => {
-                    const code = (r.LineCode || "").toUpperCase();
-                    if (code === lineConf.code) {
-                        const lat = r.Latitude || 0;
-                        const lon = r.Longitude || 0;
-                        if (lat !== 0 && lon !== 0) {
-                            buses.push({
-                                coords: [lat, lon],
-                                vehicle: r.Vehicle || "",
-                                race: String(r.Race || ""),
-                                direction: r.Direction || "",
-                                destination: r.Destination || "",
-                                departure: r.Departure || "",
-                                note: r.Note || "",
-                                isStarted: r.IsStarted !== false,
-                                nextPasses: r.NextPasses || "",
-                                lineLabel: lineConf.label,
-                                lineColor: paletteColor,
-                                lineCode: lineConf.code,
-                                detectedAtStop: sCode
-                            });
-                        }
-                    }
+        Object.keys(stopDataMap).forEach(sCode => {
+            const runs = stopDataMap[sCode];
+            runs.forEach(r => {
+                const code = (r.LineCode || "").toUpperCase();
+                const lineConf = lineByCode.get(code);
+                if (!lineConf) return;
+                const lat = r.Latitude || 0;
+                const lon = r.Longitude || 0;
+                if (lat === 0 || lon === 0) return;
+                buses.push({
+                    coords: [lat, lon],
+                    vehicle: r.Vehicle || "",
+                    race: String(r.Race || ""),
+                    direction: r.Direction || "",
+                    destination: r.Destination || "",
+                    departure: r.Departure || "",
+                    note: r.Note || "",
+                    isStarted: r.IsStarted !== false,
+                    nextPasses: r.NextPasses || "",
+                    lineLabel: lineConf.label,
+                    lineColor: this.getLegendLineColor(lineConf.code),
+                    lineCode: lineConf.code,
+                    detectedAtStop: sCode
                 });
             });
         });
@@ -2072,6 +2145,9 @@ class BusMagoApp {
 
         if (selected && selected.key === this.state.selectedVehicleKey && selected.moved) {
           this.state.updateStatus.lastSelectedMoveAt = Date.now();
+          // aggiornamento posizione del bus seguito: micro-vibrazione discreta.
+          // Solo durante il follow attivo, per non disturbare a ogni ciclo.
+          if (this.state.isFollowing) this.hapticFeedback(12);
         }
 
         this.updateInfoFromBus(selected);
@@ -2083,6 +2159,7 @@ class BusMagoApp {
         this.showToast("Errore di connessione. Riprovo...", "error");
         this.renderInfoPanel();
     } finally {
+        clearTimeout(cycleDeadline);
         if (requestId >= this.state.refreshControl.lastAppliedRequestSeq) {
           this.state.refreshControl.lastAppliedRequestSeq = requestId;
         }
@@ -2454,6 +2531,7 @@ class BusMagoApp {
                  this.state.selectedVehicleKey = markerKey;
                  this.state.updateStatus.lastSelectedMoveAt = 0;
                  this.state.isFollowing = true;
+                 this.hapticFeedback(30); // selezione bus: vibrazione netta
                  this.requestWakeLock();
                  const cur = (this.state.vehicleState[markerKey] && this.state.vehicleState[markerKey].lastEnrichedBus) || null;
                  if (cur && cur.coords) this.state.map.panTo(cur.coords, { animate: true });
@@ -2568,9 +2646,10 @@ class BusMagoApp {
             // Create marker
             const startCoords = easterEggTrack777[0];
             const icon = L.icon({
-                iconUrl: 'icona_bateo_gambling.webp',
+                iconUrl: 'img/icona_bateo_gambling.webp',
                 iconSize: [40, 40],
-                iconAnchor: [20, 20]
+                iconAnchor: [20, 20],
+                className: 'bateo-icon' // abilita la transizione fluida 2s (CSS)
             });
 
             this.state.easterEgg.marker = L.marker(startCoords, { 
@@ -2661,8 +2740,8 @@ class BusMagoApp {
     badge.style.background = 'rgba(60, 180, 120, 0.15)';
     badge.style.border = '1px solid rgba(60, 180, 120, 0.4)';
 
-    if (timeSpan && base) {
-      const dt = new Date(base);
+    if (timeSpan && lastSuccessAt) {
+      const dt = new Date(lastSuccessAt);
       timeSpan.textContent = `${String(dt.getHours()).padStart(2, '0')}:${String(dt.getMinutes()).padStart(2, '0')}:${String(dt.getSeconds()).padStart(2, '0')}`;
     }
   }

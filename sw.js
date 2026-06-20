@@ -1,14 +1,14 @@
 // Incrementa questo valore ad ogni deploy per invalidare la cache degli utenti
-const CACHE_NAME = 'bus-mago-cache-v3';
+const CACHE_NAME = 'bus-mago-cache-v5';
 
 // Immagini: cache-first (cambiano raramente, utili offline)
 const STATIC_IMAGES = [
-  './icona_bus_mago.webp',
-  './icona_bus_mago.png',
-  './icona_centre_map.webp',
-  './icona_fs.webp',
-  './icona_uni.webp',
-  './icona_bateo_gambling.webp'
+  './img/icona_bus_mago.webp',
+  './img/icona_bus_mago.png',
+  './img/icona_fs.webp',
+  './img/icona_uni.webp',
+  './img/barcola.webp',
+  './img/icona_bateo_gambling.webp'
 ];
 
 // File app: network-first (aggiornati ad ogni push su GitHub)
