@@ -4,24 +4,30 @@ const linesConfig = window.linesConfig || [];
 // Configuration constants
 const CONFIG = {
   REFRESH: {
-    FOLLOWING_MS: 2000,
-    NORMAL_MS: 2000,
-    MANY_LINES_MS: 5000,
+    // Cadenze di refresh. Più sono basse, più la mappa è "fresca" ma più richieste
+    // si fanno all'API: l'API TPL FVG applica un rate-limit per IP e dopo qualche
+    // minuto di polling troppo aggressivo BLOCCA il client (le mrcruns iniziano a
+    // fallire e le vetture si "congelano" sull'ultima posizione in cache). Questi
+    // valori tengono il volume sostenibile anche su sessioni lunghe.
+    FOLLOWING_MS: 2500,   // quando segui un bus selezionato: reattivo ma non estremo
+    NORMAL_MS: 4000,      // panoramica (caso tipico, sessione lunga): conservativo
+    MANY_LINES_MS: 7000,  // molte linee: ancora più diluito
     MANY_LINES_THRESHOLD: 10,
-    TRACK_REFRESH_INTERVAL: 6
+    TRACK_REFRESH_INTERVAL: 50  // tracciati ~statici: rinfresco molto raro
   },
   SAMPLING: {
     // Tetto pratico di fetch/ciclo: il budget viene diviso fra le linee attive,
     // così a più linee corrispondono meno fermate per linea (i capolinea sono
     // comunque sempre interrogati a parte). MAX limita la densità quando le linee
-    // sono poche; MIN evita di degradare troppo con molte linee. Il budget è
-    // tarato sul collo di bottiglia reale dell'API (~6 connessioni concorrenti,
-    // ~70-90ms/richiesta ⇒ ~60-65 req/s): con ~140 fermate/ciclo il ciclo si
-    // chiude in ~2s mantenendo le posizioni FRESCHE. Alzarlo a 200 raddoppierebbe
-    // i tempi senza catturare bus in più (oltre ~1 fermata ogni 2 del percorso il
-    // ritorno è marginale, vista la finestra di 2-4 corse di mrcruns).
-    FETCH_BUDGET: 140,
-    MIN_STOPS_PER_LINE: 10,
+    // sono poche; MIN evita di degradare troppo con molte linee.
+    // ⚠️ Il budget è il principale regolatore del COMPROMESSO precisione/rate-limit:
+    // fermate/ciclo ÷ periodo = richieste/secondo verso l'API. Con FETCH_BUDGET=80
+    // e NORMAL_MS=4000 il volume sostenuto resta ~15 req/s (gestibile su sessioni
+    // lunghe). Alzarlo dà copertura spaziale leggermente migliore ma rischia il
+    // blocco IP dopo qualche minuto (vetture congelate). Non superare ~100 senza
+    // allungare anche gli intervalli in CONFIG.REFRESH.
+    FETCH_BUDGET: 80,
+    MIN_STOPS_PER_LINE: 8,
     MAX_STOPS_PER_LINE: 40
   },
   CACHE: {
@@ -2219,9 +2225,15 @@ class BusMagoApp {
             if (!this.state.trackRefreshCounters[trackKey]) this.state.trackRefreshCounters[trackKey] = 0;
             if (!this.state.lastRaces[trackKey]) this.state.lastRaces[trackKey] = "";
 
-            const prevRace = this.state.lastRaces[trackKey];
             const counter = this.state.trackRefreshCounters[trackKey] || 0;
-            const shouldFetch = race && (race !== prevRace || counter >= CONFIG.REFRESH.TRACK_REFRESH_INTERVAL || !this.state.routeLayers[trackKey]);
+            // La geometria del tracciato di una linea/direzione è STATICA: NON va
+            // riscaricata a ogni cambio di Race (prima il refetch su `race !==
+            // prevRace` causava decine di richieste LineGeoTrack sprecate, perché
+            // la corsa "più vicina" cambia di continuo mentre i bus avanzano).
+            // Scarichiamo una sola volta per trackKey, poi rinfreschiamo solo
+            // periodicamente (ogni TRACK_REFRESH_INTERVAL cicli) come sicurezza
+            // contro deviazioni/varianti di percorso.
+            const shouldFetch = race && (!this.state.routeLayers[trackKey] || counter >= CONFIG.REFRESH.TRACK_REFRESH_INTERVAL);
 
             if (!shouldFetch) {
                 this.state.trackRefreshCounters[trackKey] = counter + 1;

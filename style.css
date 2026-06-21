@@ -199,8 +199,10 @@ html, body, #map {
 }
 
 .refresh-icon {
-  display: inline-block;
+  display: block;
   line-height: 1;
+  transform-origin: 50% 50%;
+  will-change: transform;
 }
 
 /* Gira solo la freccia interna, non l'intero pulsante */
