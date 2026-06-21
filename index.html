@@ -4,7 +4,7 @@
 <meta charset="utf-8"/>
 <title>Bus Mago</title>
 <link rel="icon" type="image/webp" href="img/icona_bus_mago.webp"/>
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"/>
 <meta name="theme-color" content="#121212"/>
 <meta name="apple-mobile-web-app-capable" content="yes"/>
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
@@ -59,10 +59,10 @@
 </div>
 
 <div id="welcome-overlay" class="welcome-overlay" style="display:none;">
-  <div class="welcome-modal">
+  <div class="welcome-modal" role="dialog" aria-modal="true" aria-labelledby="welcome-title">
     <div class="welcome-header">
       <img src="img/icona_bus_mago.webp" alt="Bus Mago" class="welcome-logo">
-      <h1 class="welcome-title">Bus Mago</h1>
+      <h1 class="welcome-title" id="welcome-title">Bus Mago</h1>
       <p class="welcome-subtitle">Tracciamento in tempo reale dei bus di Trieste</p>
     </div>
     <div class="welcome-steps">
@@ -92,10 +92,10 @@
 </div>
 
 <div id="install-modal" class="welcome-overlay" style="display:none;">
-  <div class="welcome-modal">
+  <div class="welcome-modal" role="dialog" aria-modal="true" aria-labelledby="install-title">
     <div class="welcome-header">
       <div class="install-modal-badge">📲</div>
-      <h1 class="welcome-title">Installa Bus Mago</h1>
+      <h1 class="welcome-title" id="install-title">Installa Bus Mago</h1>
       <p class="welcome-subtitle">Aprila a schermo intero come un'app, con accesso rapido dalla schermata Home — niente store, niente account.</p>
     </div>
     <div class="welcome-steps" id="install-steps"></div>

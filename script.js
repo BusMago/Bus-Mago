@@ -241,6 +241,18 @@ class BusMagoApp {
     } catch {}
   }
 
+  // Vocabolario aptico semantico: pochi pattern riconoscibili e coerenti su tutta
+  // l'app, così ogni tipo di interazione "si sente" diverso (più intuitivo di una
+  // vibrazione unica). Tutti passano da hapticFeedback (no-op dove non supportato).
+  //   tap     → tocco leggero per i bottoni-icona dei controlli mappa
+  //   toggle  → accensione/spegnimento di una linea o di un preferito
+  //   select  → selezione "importante" (es. bus seguito), più netta
+  //   success → conferma di un'azione di gruppo (seleziona/azzera tutto, gruppi)
+  hapticTap()     { this.hapticFeedback(10); }
+  hapticToggle()  { this.hapticFeedback(18); }
+  hapticSelect()  { this.hapticFeedback(30); }
+  hapticSuccess() { this.hapticFeedback([14, 40, 22]); }
+
   escapeHtmlAttribute(value) {
     return String(value ?? '')
       .replace(/&/g, '&amp;')
@@ -367,6 +379,7 @@ class BusMagoApp {
   toggleLegendGroupKey(key) {
     const k = key === 'UNI' || key === 'FS' || key === 'BARCOLA' ? key : null;
     if (!k) return;
+    this.hapticSuccess();
     if (!(this.state.legend.groupKeys instanceof Set)) this.state.legend.groupKeys = new Set();
     
     const wasActive = this.state.legend.groupKeys.has(k);
@@ -540,6 +553,61 @@ class BusMagoApp {
     this.renderInfoPanel();
   }
 
+  // Rende un overlay modale accessibile da tastiera: Esc per chiudere, focus
+  // intrappolato al suo interno e ripristinato all'elemento di partenza alla
+  // chiusura. Ritorna { open, close } da agganciare a show/hide del modale.
+  _bindOverlayA11y(overlay, closeFn) {
+    if (!overlay) return { open() {}, close() {} };
+    const FOCUSABLE = 'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
+    let prevFocus = null;
+
+    const focusables = () => Array.from(overlay.querySelectorAll(FOCUSABLE))
+      .filter(el => el.offsetWidth || el.offsetHeight || el.getClientRects().length);
+
+    const onKeydown = (e) => {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        e.stopPropagation(); // non far chiudere anche la legenda dietro
+        closeFn();
+        return;
+      }
+      if (e.key !== 'Tab') return;
+      const nodes = focusables();
+      if (!nodes.length) { e.preventDefault(); return; }
+      const first = nodes[0];
+      const last = nodes[nodes.length - 1];
+      const active = document.activeElement;
+      if (e.shiftKey && (active === first || !overlay.contains(active))) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && (active === last || !overlay.contains(active))) {
+        e.preventDefault();
+        first.focus();
+      }
+    };
+
+    return {
+      open() {
+        prevFocus = document.activeElement;
+        overlay.addEventListener('keydown', onKeydown);
+        const nodes = focusables();
+        if (nodes.length) {
+          nodes[0].focus();
+        } else {
+          overlay.setAttribute('tabindex', '-1');
+          overlay.focus();
+        }
+      },
+      close() {
+        overlay.removeEventListener('keydown', onKeydown);
+        if (prevFocus && document.contains(prevFocus) && typeof prevFocus.focus === 'function') {
+          prevFocus.focus();
+        }
+        prevFocus = null;
+      }
+    };
+  }
+
   initWelcome() {
     const WELCOME_KEY = 'busmago:welcomed:v1';
     const overlay = document.getElementById('welcome-overlay');
@@ -547,12 +615,15 @@ class BusMagoApp {
     const helpBtn = document.getElementById('help-btn');
     if (!overlay || !closeBtn) return;
 
+    const a11y = this._bindOverlayA11y(overlay, () => dismiss());
+
     const dismiss = () => {
       overlay.style.display = 'none';
+      a11y.close();
       try { localStorage.setItem(WELCOME_KEY, '1'); } catch {}
     };
 
-    const show = () => { overlay.style.display = 'flex'; };
+    const show = () => { overlay.style.display = 'flex'; a11y.open(); };
 
     closeBtn.addEventListener('click', dismiss);
     overlay.addEventListener('click', (e) => {
@@ -625,8 +696,9 @@ class BusMagoApp {
       }
     };
 
-    const openModal = () => { buildSteps(); if (modal) modal.style.display = 'flex'; };
-    const closeModal = () => { if (modal) modal.style.display = 'none'; };
+    const a11y = this._bindOverlayA11y(modal, () => closeModal());
+    const openModal = () => { buildSteps(); if (modal) { modal.style.display = 'flex'; a11y.open(); } };
+    const closeModal = () => { if (modal) { modal.style.display = 'none'; a11y.close(); } };
 
     installBtn.addEventListener('click', async (e) => {
       e.preventDefault();
@@ -810,6 +882,7 @@ class BusMagoApp {
   toggleFavorite(key) {
     if (this.state.favorites.set.has(key)) this.state.favorites.set.delete(key);
     else this.state.favorites.set.add(key);
+    this.hapticToggle();
     this.saveFavorites();
     this.renderLegend();
   }
@@ -913,6 +986,7 @@ class BusMagoApp {
       themeBtn.addEventListener('click', (e) => {
         e.preventDefault();
         e.stopPropagation();
+        this.hapticTap();
         this.setTheme(this.state.theme.mode === 'dark' ? 'light' : 'dark');
       });
     }
@@ -922,6 +996,7 @@ class BusMagoApp {
       refreshBtn.addEventListener('click', (e) => {
         e.preventDefault();
         e.stopPropagation();
+        this.hapticTap();
         this.hardRefreshData();
       });
     }
@@ -957,9 +1032,21 @@ class BusMagoApp {
               e.preventDefault();
               e.stopPropagation();
             }
+            this.hapticTap();
             const willShow = !this.isLegendVisible();
             this.legendDiv.style.display = willShow ? 'block' : 'none';
             if (willShow) this.renderLegend();
+        });
+
+        // Esc chiude la legenda e riporta il focus sul toggle. I modali
+        // (welcome/install) fermano la propagazione dell'Esc, quindi questo
+        // handler scatta solo quando nessun modale è aperto.
+        document.addEventListener('keydown', (e) => {
+            if (e.key !== 'Escape') return;
+            if (this.isLegendVisible()) {
+                this.legendDiv.style.display = 'none';
+                menuToggle.focus();
+            }
         });
     }
 
@@ -1272,6 +1359,7 @@ class BusMagoApp {
           e.preventDefault();
           e.stopPropagation();
           if (lastLat !== null && lastLon !== null) {
+            this.hapticTap();
             this.suppressMenuAutoCloseUntilMapSettles();
             this.state.map.setView([lastLat, lastLon], 15);
           } else {
@@ -1648,6 +1736,7 @@ class BusMagoApp {
         clearAllBtn.addEventListener('click', (e) => {
             e.preventDefault();
             e.stopPropagation();
+            this.hapticSuccess();
             if (this.state.legend.groupKeys instanceof Set) this.state.legend.groupKeys.clear();
             this.recomputeGroupDefaultFilters();
             this.saveLegendGroupKeys();
@@ -1678,6 +1767,7 @@ class BusMagoApp {
         e.preventDefault();
         e.stopPropagation();
 
+        this.hapticSuccess();
         const allSelectedNext = !Object.keys(this.state.lineVisibility)
           .filter(k => k !== '777')
           .every(k => this.state.lineVisibility[k] === true);
@@ -1723,6 +1813,7 @@ class BusMagoApp {
         const k = btn.getAttribute('data-key');
         if (!k) return;
 
+        this.hapticToggle();
         this.preserveLegendScrollByLineKey(k, () => {
           const next = !this.state.lineVisibility[k];
           this.state.lineVisibility[k] = next;
@@ -2543,10 +2634,13 @@ class BusMagoApp {
                  this.state.selectedVehicleKey = markerKey;
                  this.state.updateStatus.lastSelectedMoveAt = 0;
                  this.state.isFollowing = true;
-                 this.hapticFeedback(30); // selezione bus: vibrazione netta
+                 this.hapticSelect(); // selezione bus: vibrazione netta
                  this.requestWakeLock();
                  const cur = (this.state.vehicleState[markerKey] && this.state.vehicleState[markerKey].lastEnrichedBus) || null;
-                 if (cur && cur.coords) this.state.map.panTo(cur.coords, { animate: true });
+                 if (cur && cur.coords) {
+                   this.state.lastFollowCoords = [cur.coords[0], cur.coords[1]];
+                   this.state.map.panTo(cur.coords, { animate: true });
+                 }
                  this.updateInfoFromBus(cur);
                  if (this.legendDiv.style.display === 'block') {
                      this.legendDiv.style.display = 'none';
@@ -2555,16 +2649,22 @@ class BusMagoApp {
              });
         }
 
-        // Follow logic: only re-center when the bus drifts into the outer
-        // margin of the viewport, instead of panning on every refresh.
+        // Follow logic: la mappa scorre INSIEME al bus seguito non appena si
+        // muove, tenendolo centrato. Per non litigare con la gente che trascina
+        // la mappa, ripaniamo solo quando le coordinate del bus CAMBIANO davvero
+        // rispetto all'ultima posizione su cui abbiamo centrato (un refresh in
+        // cui il bus è fermo non sposta la vista). La micro-soglia evita pan
+        // inutili per oscillazioni GPS sotto il metro.
         if (isSelected && this.state.isFollowing && !this.state.selectedVehicleKey.startsWith("TRACK_")) {
             const map = this.state.map;
-            const size = map.getSize();
-            const pt = map.latLngToContainerPoint(b.coords);
-            const marginX = size.x * 0.25;
-            const marginY = size.y * 0.25;
-            const outside = pt.x < marginX || pt.x > size.x - marginX || pt.y < marginY || pt.y > size.y - marginY;
-            if (outside) map.panTo(b.coords, { animate: true });
+            const last = this.state.lastFollowCoords;
+            const moved = !last ||
+                Math.abs(last[0] - b.coords[0]) > 1e-5 ||
+                Math.abs(last[1] - b.coords[1]) > 1e-5;
+            if (moved) {
+                this.state.lastFollowCoords = [b.coords[0], b.coords[1]];
+                map.panTo(b.coords, { animate: true, duration: 0.8, easeLinearity: 0.25 });
+            }
         }
       });
     }

@@ -5,9 +5,79 @@ html, body, #map {
   overflow: hidden;
   background: #111; 
   color: #eee; 
-  touch-action: manipulation; 
+  touch-action: manipulation;
   overscroll-behavior: none;
-  font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+:root {
+  /* Stack di sistema nativo cross-platform: system-ui risolve a Segoe UI su
+     Windows (nessuna regressione), San Francisco su iOS/macOS, Roboto su
+     Android — rendering nativo e zero caricamento font su ogni piattaforma. */
+  --font-sans: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+
+  /* Curve di decelerazione naturale per le entrate (niente bounce/elastic). */
+  --ease-out-quart: cubic-bezier(0.25, 1, 0.5, 1);
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+
+  /* Accento brand (blu Bus Mago) */
+  --brand: #0077ff;
+  --brand-rgb: 0, 119, 255;   /* per rgba(var(--brand-rgb), α) */
+  --brand-strong: #0066dd;    /* hover / pressed */
+
+  /* Accento "warn" (note ambra). Override scuro in tema chiaro per restare
+     sopra il 4.5:1 AA (#e6a817 ≈ 7.9:1 su vetro scuro, #8a5a00 ≈ 5.9:1 su bianco). */
+  --accent-warn: #e6a817;
+
+  /* Stati semantici. Un solo verde "live/ok" (prima erano tre toni diversi per
+     lo stesso concetto: running dot, toast success, pulse badge), un solo rosso
+     "danger" (azioni distruttive/errori), un oro "preferito". */
+  --ok: #2e9e5b;
+  --ok-rgb: 46, 158, 91;
+  --danger: #dc3545;
+  --danger-rgb: 220, 53, 69;
+  --fav: #ffd700;
+
+  /* Scala z-index semantica. Resta sopra i pane interni di Leaflet (≤ ~800):
+     controlli < pannelli < toggle legenda < toast < modale. */
+  --z-map-controls: 1000;
+  --z-panel: 1000;
+  --z-legend: 2000;
+  --z-legend-toggle: 2100;
+  --z-toast: 3000;
+  --z-modal: 9000;
+
+  /* Metriche dei controlli mappa: da qui si DERIVA l'offset del controllo zoom
+     Leaflet, invece di inseguirlo con un magic number che si rompe se cambia il
+     numero di bottoni nel cluster in basso a destra. */
+  --ctrl-size: 44px;
+  --ctrl-gap: 12px;
+  --ctrl-bottom: 25px;
+  --ctrl-count-br: 4;   /* refresh, tema, posizione, aiuto */
+}
+
+:root[data-theme="light"] {
+  --accent-warn: #8a5a00;
+}
+
+/* Anello di focus da tastiera coerente su ogni controllo. :focus-visible non
+   scatta col mouse, solo con tastiera — completa la gestione del focus dei
+   modali (focus-trap) con un indicatore visibile, requisito WCAG 2.4.7.
+   Gli outline moderni seguono il border-radius, quindi va bene anche sui tondi. */
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+[tabindex]:focus-visible {
+  outline: 2px solid var(--brand);
+  outline-offset: 2px;
+}
+
+/* La ricerca ha già il suo anello (box-shadow): niente doppio bordo. */
+.legend-search:focus-visible {
+  outline: none;
 }
 
 /* Glassmorphism Common Styles */
@@ -32,7 +102,7 @@ html, body, #map {
   position: absolute;
   bottom: 25px;
   left: 15px;
-  z-index: 1000;
+  z-index: var(--z-map-controls);
   display: flex;
   flex-direction: column;
   gap: 12px;
@@ -52,29 +122,40 @@ html, body, #map {
 
 /* Bottone Installa: colore primario per renderlo riconoscibile come azione */
 .install-btn {
-  background: rgba(0, 119, 255, 0.92);
-  border-color: rgba(0, 119, 255, 0.6);
+  background: rgba(var(--brand-rgb),0.92);
+  border-color: rgba(var(--brand-rgb),0.6);
   color: #fff;
   animation: install-pulse 2.6s ease-in-out infinite;
 }
 
 .install-btn:hover {
-  background: rgba(0, 119, 255, 1);
+  background: rgba(var(--brand-rgb),1);
 }
 
 :root[data-theme="light"] .install-btn {
-  background: rgba(0, 119, 255, 0.95);
+  background: rgba(var(--brand-rgb),0.95);
   color: #fff;
-  border-color: rgba(0, 119, 255, 0.5);
+  border-color: rgba(var(--brand-rgb),0.5);
 }
 
 @keyframes install-pulse {
   0%, 100% { box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3); }
-  50% { box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3), 0 0 0 6px rgba(0, 119, 255, 0.16); }
+  50% { box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3), 0 0 0 6px rgba(var(--brand-rgb),0.16); }
 }
 
 @media (prefers-reduced-motion: reduce) {
+  /* Disattiva la motion decorativa e gli spostamenti animati (i marker che
+     scorrono sono un trigger vestibolare reale). Lo spinner di refresh resta:
+     è un indicatore di stato funzionale, il caso in cui chi riduce la motion
+     si aspetta comunque il feedback. */
   .install-btn { animation: none; }
+  #info-update-badge.online { animation: none; }
+  .bus-icon-wrapper { transition: none; }
+  .leaflet-marker-icon.bateo-icon { transition: none; }
+  /* Entrate di pannelli/modali: comparsa istantanea, niente scala/sfumatura. */
+  .legend,
+  .welcome-overlay,
+  .welcome-modal { animation: none; }
 }
 
 /* Modale d'installazione (riusa gli stili .welcome-*) */
@@ -106,9 +187,9 @@ html, body, #map {
   background: rgba(30, 30, 30, 0.88); 
   padding: 12px 16px; 
   border-radius: 16px; 
-  font-size: 14px; 
-  z-index: 1000; 
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4); 
+  font-size: 14px;
+  z-index: var(--z-panel);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
   display: none; 
   color: #eee;
   border: 1px solid rgba(255, 255, 255, 0.12);
@@ -186,7 +267,7 @@ html, body, #map {
   position: absolute;
   bottom: 25px;
   right: 15px;
-  z-index: 1000;
+  z-index: var(--z-map-controls);
   display: flex;
   flex-direction: column;
   gap: 12px;
@@ -278,7 +359,15 @@ html, body, #map {
   border: none !important;
   box-shadow: none !important; /* Box shadow moved to buttons */
   margin-right: 15px !important;
-  margin-bottom: 205px !important;
+  /* Sopra il cluster in basso a destra: offset = bottom del cluster + sua
+     altezza (N bottoni + interspazi) + un gap. Cambi il numero di bottoni in
+     --ctrl-count-br e lo zoom si riposiziona da solo. */
+  margin-bottom: calc(
+    var(--ctrl-bottom)
+    + var(--ctrl-count-br) * var(--ctrl-size)
+    + (var(--ctrl-count-br) - 1) * var(--ctrl-gap)
+    + var(--ctrl-gap)
+  ) !important;
 }
 
 .leaflet-control-zoom a {
@@ -359,15 +448,18 @@ html, body, #map {
 
 .info-value {
   font-weight: 500;
+  /* Cifre a larghezza fissa: orari, velocità e minuti restano allineati
+     nella griglia e non "ballano" a ogni aggiornamento. */
+  font-variant-numeric: tabular-nums;
 }
 
 .info-note-label {
-  color: #e6a817;
+  color: var(--accent-warn);
 }
 
 .info-note-value {
   font-size: 12px;
-  color: #e6a817;
+  color: var(--accent-warn);
   font-style: italic;
   font-weight: 400;
 }
@@ -375,7 +467,7 @@ html, body, #map {
 .departures-note {
   margin-top: 3px;
   font-size: 11px;
-  color: #e6a817;
+  color: var(--accent-warn);
   font-style: italic;
 }
 
@@ -383,11 +475,11 @@ html, body, #map {
   display: inline-block;
   width: 7px;
   height: 7px;
-  background: #4caf50;
+  background: var(--ok);
   border-radius: 50%;
   vertical-align: middle;
   margin-right: 5px;
-  box-shadow: 0 0 5px rgba(76, 175, 80, 0.55);
+  box-shadow: 0 0 5px rgba(var(--ok-rgb), 0.55);
   font-size: 0;
   line-height: 0;
 }
@@ -502,6 +594,7 @@ html, body, #map {
   margin-top: 2px;
   font-size: 12px;
   color: rgba(255,255,255,0.70);
+  font-variant-numeric: tabular-nums;
 }
 
 .departures-times {
@@ -509,6 +602,7 @@ html, body, #map {
   font-size: 13px;
   font-weight: 600;
   color: rgba(255,255,255,0.92);
+  font-variant-numeric: tabular-nums;
   word-break: break-word;
 }
 
@@ -804,7 +898,7 @@ html, body, #map {
 .legend-action-btn.legend-group-btn.is-active {
   background-color: #ffffff;
   border-color: transparent;
-  box-shadow: 0 0 0 2px #0077ff;
+  box-shadow: 0 0 0 2px var(--brand);
 }
 
 .legend-action-btn.legend-group-btn.is-active:hover {
@@ -845,7 +939,7 @@ html, body, #map {
 }
 
 #legend-group-barcola.is-active {
-  box-shadow: 0 0 0 2px #0077ff !important;
+  box-shadow: 0 0 0 2px var(--brand) !important;
   border-color: transparent !important;
 }
 
@@ -994,7 +1088,7 @@ html, body, #map {
 }
 
 .legend-line-fav.is-favorite {
-  color: #ffd700;
+  color: var(--fav);
   text-shadow: 0 1px 2px rgba(0,0,0,0.35);
 }
 
@@ -1002,7 +1096,17 @@ html, body, #map {
   filter: brightness(1.05);
 }
 /* Base styles for bus icons */
-.bus-icon { background: #0077ff; border-radius: 50% 50% 50% 0; transform-origin: 50% 50%; box-shadow: 0 0 4px rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; color: #ffffff; font-weight: bold; }
+.bus-icon {
+  background: var(--brand);
+  border-radius: 50% 50% 50% 0;
+  transform-origin: 50% 50%;
+  box-shadow: 0 0 4px rgba(0,0,0,0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff;
+  font-weight: bold;
+}
 .bus-icon span { transition: opacity 0.18s ease; }
 
 /* Smooth gliding: animate the marker's position transform between refreshes.
@@ -1023,16 +1127,24 @@ html, body, #map {
 /* Small icons (>= 10 lines) */
 .bus-icon-wrapper.small { width: 28px; height: 28px; }
 .bus-icon.small { width: 25px; height: 25px; font-size: 9px; }
-.legend { 
-  position: absolute; 
-  top: 70px; 
-  right: 15px; 
-  background: rgba(30,30,30,0.92); 
-  padding: 16px; 
-  border-radius: 16px; 
-  font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; 
-  font-size: 14px; 
-  z-index: 2000; 
+@keyframes legend-in {
+  from { opacity: 0; transform: scale(0.96) translateY(-6px); }
+  to   { opacity: 1; transform: none; }
+}
+
+.legend {
+  position: absolute;
+  top: 70px;
+  right: 15px;
+  background: rgba(30,30,30,0.92);
+  padding: 16px;
+  border-radius: 16px;
+  font-family: var(--font-sans);
+  font-size: 14px;
+  /* Si apre dal toggle in alto a destra: scala+sfuma da quell'angolo. */
+  transform-origin: top right;
+  animation: legend-in 180ms var(--ease-out-quart);
+  z-index: var(--z-legend);
   box-shadow: 0 8px 32px rgba(0,0,0,0.45); 
   width: min(320px, calc(100vw - 30px));
   max-height: calc(100% - 100px); 
@@ -1073,7 +1185,7 @@ html, body, #map {
   position: absolute; 
   top: 15px; 
   right: 15px; 
-  z-index: 2100; 
+  z-index: var(--z-legend-toggle);
   background: rgba(30,30,30,0.9); 
   color: #fff; 
   border: 1px solid rgba(255,255,255,0.1);
@@ -1107,9 +1219,9 @@ html, body, #map {
   width: 100%;
   margin-bottom: 12px;
   padding: 10px;
-  background-color: rgba(220, 53, 69, 0.15);
+  background-color: rgba(var(--danger-rgb),0.15);
   color: #fdd6d6;
-  border: 1px solid rgba(220, 53, 69, 0.3);
+  border: 1px solid rgba(var(--danger-rgb),0.3);
   border-radius: 10px;
   cursor: pointer;
   font-weight: 600;
@@ -1120,16 +1232,16 @@ html, body, #map {
 }
 
 #clear-all-lines:hover {
-  background-color: rgba(220, 53, 69, 0.25);
+  background-color: rgba(var(--danger-rgb),0.25);
 }
 
 .legend-action-btn {
   width: 100%;
   margin-bottom: 12px;
   padding: 10px;
-  background-color: rgba(0, 119, 255, 0.10);
+  background-color: rgba(var(--brand-rgb),0.10);
   color: rgba(230, 245, 255, 0.95);
-  border: 1px solid rgba(0, 119, 255, 0.22);
+  border: 1px solid rgba(var(--brand-rgb),0.22);
   border-radius: 10px;
   cursor: pointer;
   font-weight: 600;
@@ -1140,17 +1252,17 @@ html, body, #map {
 }
 
 .legend-action-btn:hover {
-  background-color: rgba(0, 119, 255, 0.16);
+  background-color: rgba(var(--brand-rgb),0.16);
 }
 
 .legend-action-btn.is-active {
-  background-color: rgba(0, 119, 255, 0.42);
-  border-color: rgba(0, 119, 255, 0.75);
+  background-color: rgba(var(--brand-rgb),0.42);
+  border-color: rgba(var(--brand-rgb),0.75);
   color: #ffffff;
 }
 
 .legend-action-btn.is-active:hover {
-  background-color: rgba(0, 119, 255, 0.50);
+  background-color: rgba(var(--brand-rgb),0.50);
 }
 
 .legend-action-btn:active {
@@ -1172,9 +1284,9 @@ html, body, #map {
 }
 
 .legend-search:focus {
-  border-color: #0077ff;
+  border-color: var(--brand);
   background: rgba(0,0,0,0.35);
-  box-shadow: 0 0 0 3px rgba(0, 119, 255, 0.2);
+  box-shadow: 0 0 0 3px rgba(var(--brand-rgb),0.2);
 }
 
 :root[data-theme="light"] .legend-search {
@@ -1187,23 +1299,23 @@ html, body, #map {
 }
 
 :root[data-theme="light"] .legend-action-btn {
-  background-color: rgba(0, 119, 255, 0.06);
-  border-color: rgba(0, 119, 255, 0.18);
+  background-color: rgba(var(--brand-rgb),0.06);
+  border-color: rgba(var(--brand-rgb),0.18);
   color: rgba(0, 70, 160, 0.95);
 }
 
 :root[data-theme="light"] .legend-action-btn:hover {
-  background-color: rgba(0, 119, 255, 0.10);
+  background-color: rgba(var(--brand-rgb),0.10);
 }
 
 :root[data-theme="light"] .legend-action-btn.is-active {
-  background-color: rgba(0, 119, 255, 0.22);
-  border-color: rgba(0, 119, 255, 0.45);
+  background-color: rgba(var(--brand-rgb),0.22);
+  border-color: rgba(var(--brand-rgb),0.45);
   color: rgba(0, 45, 110, 0.98);
 }
 
 :root[data-theme="light"] .legend-action-btn.is-active:hover {
-  background-color: rgba(0, 119, 255, 0.28);
+  background-color: rgba(var(--brand-rgb),0.28);
 }
 
 :root[data-theme="light"] .legend-action-btn.legend-group-btn {
@@ -1219,7 +1331,7 @@ html, body, #map {
 :root[data-theme="light"] .legend-action-btn.legend-group-btn.is-active {
   background-color: #ffffff;
   border-color: transparent;
-  box-shadow: 0 0 0 2px #0077ff;
+  box-shadow: 0 0 0 2px var(--brand);
 }
 
 :root[data-theme="light"] .legend-action-btn.legend-group-btn.is-active:hover {
@@ -1247,9 +1359,9 @@ html, body, #map {
 }
 
 :root[data-theme="light"] #clear-all-lines {
-  background-color: rgba(220, 53, 69, 0.08);
+  background-color: rgba(var(--danger-rgb),0.08);
   color: #670000;
-  border-color: rgba(220, 53, 69, 0.2);
+  border-color: rgba(var(--danger-rgb),0.2);
 }
 
 :root[data-theme="light"] .legend-line-tile {
@@ -1274,17 +1386,15 @@ html, body, #map {
   border-top-color: rgba(0,0,0,0.08);
 }
 
-.leaflet-control-zoom a { background: rgba(30,30,30,0.9); color: #eee; border: 1px solid #444; }
-
 /* Dark mode tiles filter */
 .dark-mode-tiles {
   filter: invert(100%) hue-rotate(180deg) brightness(85%) contrast(90%);
 }
 
 @keyframes badge-pulse {
-  0%   { box-shadow: 0 0 0 0 rgba(60, 180, 120, 0.5); }
-  60%  { box-shadow: 0 0 0 5px rgba(60, 180, 120, 0); }
-  100% { box-shadow: 0 0 0 0 rgba(60, 180, 120, 0); }
+  0%   { box-shadow: 0 0 0 0 rgba(var(--ok-rgb), 0.5); }
+  60%  { box-shadow: 0 0 0 5px rgba(var(--ok-rgb), 0); }
+  100% { box-shadow: 0 0 0 0 rgba(var(--ok-rgb), 0); }
 }
 
 #info-update-badge.online {
@@ -1337,15 +1447,34 @@ html, body, #map {
   .leaflet-control-zoom {
     display: none !important;
   }
-}
 
-@media (min-width: 601px) {
-  .map-controls-bottom-right {
-    bottom: 25px;
+  /* Thumb-zone ergonomics: il pannello linee è l'azione primaria a inizio
+     sessione, quindi sul telefono il toggle scende nel pollice (in basso a
+     destra) invece di restare nell'angolo alto irraggiungibile a una mano.
+     Tutti i controlli rispettano la safe-area (home indicator iOS in PWA). */
+  .menu-toggle {
+    top: auto;
+    bottom: calc(25px + env(safe-area-inset-bottom, 0px));
+    right: calc(15px + env(safe-area-inset-right, 0px));
+    width: 52px;
+    height: 52px;
+    font-size: 26px;
   }
 
-  .leaflet-control-zoom {
-    margin-bottom: 255px !important;
+  .map-controls-bottom-right {
+    /* Sopra il toggle primario: 52px + 14px di gap. */
+    bottom: calc(25px + 52px + 14px + env(safe-area-inset-bottom, 0px));
+    right: calc(15px + env(safe-area-inset-right, 0px));
+  }
+
+  .map-controls-bottom-left {
+    bottom: calc(25px + env(safe-area-inset-bottom, 0px));
+    left: calc(15px + env(safe-area-inset-left, 0px));
+  }
+
+  /* Angolo in alto a destra liberato: il pannello info usa tutta la larghezza. */
+  .info {
+    right: 12px;
   }
 }
 
@@ -1360,9 +1489,10 @@ html, body, #map {
   padding: 12px 24px;
   border-radius: 12px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-  z-index: 3000;
-  font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  z-index: var(--z-toast);
+  font-family: var(--font-sans);
   font-size: 14px;
+  font-weight: 600;
   opacity: 0;
   transition: opacity 0.3s ease-in-out;
   pointer-events: none;
@@ -1373,19 +1503,39 @@ html, body, #map {
   opacity: 1;
 }
 
+/* Sul telefono i controlli salgono nel pollice: il toast si solleva sopra di
+   loro e limita la larghezza per non finire mai sotto i cluster d'angolo. */
+@media (max-width: 600px) {
+  .toast-notification {
+    bottom: calc(96px + env(safe-area-inset-bottom, 0px));
+    max-width: calc(100vw - 32px);
+    box-sizing: border-box;
+  }
+}
+
 .toast-notification.error {
-  background-color: rgba(220, 53, 69, 0.9);
+  background-color: rgba(var(--danger-rgb),0.9);
 }
 
 .toast-notification.success {
-  background-color: rgba(40, 167, 69, 0.9);
+  background-color: rgba(var(--ok-rgb), 0.9);
 }
 
 /* Welcome Overlay */
+@keyframes overlay-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes modal-in {
+  from { opacity: 0; transform: scale(0.96) translateY(8px); }
+  to   { opacity: 1; transform: none; }
+}
+
 .welcome-overlay {
   position: fixed;
   inset: 0;
-  z-index: 9000;
+  z-index: var(--z-modal);
   background: rgba(0, 0, 0, 0.72);
   backdrop-filter: blur(6px);
   -webkit-backdrop-filter: blur(6px);
@@ -1394,6 +1544,8 @@ html, body, #map {
   justify-content: center;
   padding: 16px;
   box-sizing: border-box;
+  /* Lo sfondo sfuma all'apertura (display none→flex avvia l'animazione). */
+  animation: overlay-in 200ms var(--ease-out-quart);
 }
 
 .welcome-modal {
@@ -1407,6 +1559,8 @@ html, body, #map {
   display: flex;
   flex-direction: column;
   gap: 20px;
+  /* Il modale entra con una leggera salita + scala (240ms, decisa). */
+  animation: modal-in 240ms var(--ease-out-expo);
 }
 
 :root[data-theme="light"] .welcome-modal {
@@ -1475,7 +1629,7 @@ html, body, #map {
 .welcome-close-btn {
   width: 100%;
   padding: 14px;
-  background: #0077ff;
+  background: var(--brand);
   color: #fff;
   border: none;
   border-radius: 12px;
@@ -1486,7 +1640,7 @@ html, body, #map {
   letter-spacing: 0.3px;
 }
 
-.welcome-close-btn:hover { background: #0066dd; }
+.welcome-close-btn:hover { background: var(--brand-strong); }
 .welcome-close-btn:active { transform: scale(0.98); }
 
 /* Smooth Bateo Icon Transition */
