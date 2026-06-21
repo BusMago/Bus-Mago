@@ -115,30 +115,37 @@ input:focus-visible,
 .leaflet-container.map-interacting .bus-icon-wrapper {
   transition: none;
 }
-.bus-marker-wrap { transition: transform 0.5s ease; }
-.leaflet-container.map-interacting .bus-marker-wrap { transition: none; }
+.bus-marker-wrap,
+.bus-drop span { transition: transform 0.5s ease; }
+.leaflet-container.map-interacting .bus-marker-wrap,
+.leaflet-container.map-interacting .bus-drop span { transition: none; }
 
-.bus-icon-wrapper.large { width: 88px; height: 43px; }
-.bus-icon-wrapper.small { width: 56px; height: 28px; }
+.bus-icon-wrapper.large { width: 44px; height: 44px; }
+.bus-icon-wrapper.small { width: 30px; height: 30px; }
 
+/* Wrapper rotates (toward heading) + scales (with zoom) */
 .bus-marker-wrap {
-  display: flex; flex-direction: column; align-items: center;
+  width: 100%; height: 100%;
+  display: flex; align-items: center; justify-content: center;
+  transform-origin: center center;
   will-change: transform;
 }
 
-.bus-tail-arrow { display: block; margin: 0 auto; flex-shrink: 0; }
-
-.bus-pill-marker {
+/* Teardrop ("goccia") — glossy gradient, pointed corner faces travel direction */
+.bus-drop {
+  width: 100%; height: 100%;
   display: flex; align-items: center; justify-content: center;
-  gap: 3px; padding: 0 8px;
-  font-weight: 800; color: #fff; white-space: nowrap;
+  color: #fff; font-weight: 800;
   box-shadow: 0 3px 10px rgba(0,0,0,0.32), 0 1px 3px rgba(0,0,0,0.2);
-  box-sizing: border-box; overflow: hidden;
   text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+  box-sizing: border-box;
 }
-.bus-pill-marker span { line-height: 1; font-variant-numeric: tabular-nums; }
-.bus-pill-marker.large { width: 88px; height: 34px; font-size: 13px; border-radius: 17px; }
-.bus-pill-marker.small { width: 56px; height: 22px; font-size: 10px; border-radius: 11px; }
+.bus-drop span {
+  line-height: 1; font-variant-numeric: tabular-nums;
+  will-change: transform;
+}
+.bus-drop.large { font-size: 15px; }
+.bus-drop.small { font-size: 11px; }
 
 /* Route line endpoints */
 .endpoint-icon {
@@ -746,7 +753,7 @@ input:focus-visible,
   width: 100%; border: 0;
   background: transparent; color: var(--text-primary);
   display: flex; flex-direction: row; align-items: center;
-  height: 52px; padding: 0 14px; gap: 12px;
+  min-height: 58px; padding: 8px 46px 8px 12px; gap: 13px;
   cursor: pointer; user-select: none;
   transition: background 0.12s ease;
 }
@@ -788,10 +795,28 @@ input:focus-visible,
 }
 
 .legend-lines--grid .legend-line-code { width: 48px; height: 48px; border-radius: 50%; }
-.legend-lines--list .legend-line-code { width: 36px; height: 36px; border-radius: 8px; font-size: 14px; }
+.legend-lines--list .legend-line-code { width: 44px; height: 44px; border-radius: 50%; font-size: 15px; }
 
-/* Label below badge — hidden in both grid and list (badge only) */
-.legend-line-meta { display: none !important; }
+/* Line meta label: hidden in grid (badge only), shown in list (fills empty space) */
+.legend-line-meta { display: none; }
+.legend-lines--list .legend-line-meta {
+  display: flex; flex-direction: column; gap: 2px;
+  flex: 1 1 auto; min-width: 0;
+  text-align: left; line-height: 1.25;
+}
+.legend-lines--list .legend-line-name {
+  font-size: 13.5px; font-weight: 700;
+  color: var(--text-primary);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.legend-lines--list .legend-line-dirs {
+  font-size: 11.5px; font-weight: 500;
+  color: var(--text-secondary);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.legend-lines--list .legend-line-tile:not(.active-line) .legend-line-name {
+  color: var(--text-secondary);
+}
 
 /* Favourite star */
 .legend-line-fav {
@@ -1065,6 +1090,7 @@ input:focus-visible,
   #info-update-badge.online       { animation: none; }
   .bus-icon-wrapper               { transition: none; }
   .bus-marker-wrap                { transition: none; }
+  .bus-drop span                  { transition: none; }
   .leaflet-marker-icon.bateo-icon { transition: none; }
   .legend, .welcome-overlay, .welcome-modal { animation: none; }
 }

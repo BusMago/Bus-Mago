@@ -1607,10 +1607,18 @@ class BusMagoApp {
       const title = this.escapeHtmlAttribute(l.label || l.code);
       const pressed = this.state.lineVisibility[l.code] ? 'true' : 'false';
       const tileColor = this.getLegendLineColor(l.code);
+      const dirsArr = directionsList(l.directions);
+      const dirsText = dirsArr.join(' • ');
+      const hasLabel = l.label && l.label !== l.code;
+      const lineName = hasLabel ? l.label : (dirsText || l.code);
+      const subText = hasLabel ? dirsText : '';
+      const listMeta = viewMode === 'list'
+        ? `<span class="legend-line-meta"><span class="legend-line-name">${this.escapeHtmlAttribute(lineName)}</span>${subText ? `<span class="legend-line-dirs">${this.escapeHtmlAttribute(subText)}</span>` : ''}</span>`
+        : '';
       html += `<div class="legend-line-tile ${activeClass}" style="--line-color:${tileColor};" title="${title}">
                 <button type="button" class="legend-line-select" data-key="${safeKey}" aria-pressed="${pressed}">
                   <span class="legend-line-code">${this.escapeHtmlAttribute(l.code)}</span>
-                  ${viewMode === 'grid' ? `<span class="legend-line-meta">${this.escapeHtmlAttribute(directionsList(l.directions).length ? directionsList(l.directions).join(' • ') : (l.label || l.code))}</span>` : ''}
+                  ${listMeta}
                 </button>
                 <button type="button" class="fav-btn legend-line-fav ${favClass}" data-fav="${safeKey}" aria-label="Preferito ${title}">${favSymbol}</button>
               </div>`;
@@ -2557,15 +2565,11 @@ class BusMagoApp {
 
     const activeLineCount = Object.keys(this.state.lineVisibility).filter(k => this.state.lineVisibility[k] === true).length;
     const useSmallIcons = activeLineCount >= CONFIG.UI.SMALL_ICON_THRESHOLD;
-    // Pill dims: large = 88×34, small = 56×22; tail points in heading direction
-    const pillH = useSmallIcons ? 22 : 34;
-    const tailH = useSmallIcons ? 6 : 9;
-    const tailW = useSmallIcons ? 10 : 15;
-    const pillW = useSmallIcons ? 56 : 88;
-    const iconSize = [pillW, pillH + tailH];
-    const iconAnchor = [Math.floor(pillW / 2), tailH + Math.floor(pillH / 2)];
+    // Teardrop ("goccia") marker — square box, border-radius makes the drop shape
+    const dropSize = useSmallIcons ? 30 : 44;
+    const iconSize = [dropSize, dropSize];
+    const iconAnchor = [Math.floor(dropSize / 2), Math.floor(dropSize / 2)];
     const sizeClass = useSmallIcons ? 'small' : 'large';
-    const busSvg = `<svg viewBox="0 0 24 24" width="11" height="11" fill="currentColor" aria-hidden="true" style="flex-shrink:0;opacity:0.88"><path d="M4 16c0 .88.39 1.67 1 2.22V20a1 1 0 001 1h1a1 1 0 001-1v-1h8v1a1 1 0 001 1h1a1 1 0 001-1v-1.78c.61-.55 1-1.34 1-2.22V6c0-3.5-3.58-4-8-4s-8 .5-8 4v10zm3.5 1a1.5 1.5 0 110-3 1.5 1.5 0 010 3zm9 0a1.5 1.5 0 110-3 1.5 1.5 0 010 3zM5 11V7h14v4H5z"/></svg>`;
 
     if (buses && buses.length > 0) {
       buses.forEach(b => {
@@ -2591,16 +2595,17 @@ class BusMagoApp {
         const opacity = (this.state.selectedVehicleKey && !isSelected) ? 0.3 : 1.0;
         const heading = typeof b.heading === 'number' ? b.heading : 0;
         const hasHeading = typeof b.heading === 'number';
-        const pillCenterY = tailH + Math.floor(pillH / 2);
         const selectionBorderColor = this.state.theme.mode === 'light' ? '#111' : '#FFF';
         const borderStyle = isSelected ? `border: 3px solid ${selectionBorderColor};` : '';
         const labelText = showLabel ? b.lineLabel : '';
-        const pillIcon = !useSmallIcons ? busSvg : '';
-        const pillBg = `radial-gradient(120% 120% at 32% 22%, rgba(255,255,255,0.4) 0%, rgba(255,255,255,0) 46%), linear-gradient(150deg, color-mix(in srgb, ${paletteColor} 76%, #fff) 0%, ${paletteColor} 54%, color-mix(in srgb, ${paletteColor} 86%, #000) 100%)`;
-        // Directional tail (above the pill): triangle pointing in heading direction;
-        // the whole wrapper rotates+scales, the pill counter-rotates to stay upright.
-        const tailSvg = `<svg class="bus-tail-arrow" viewBox="0 0 10 7" width="${tailW}" height="${tailH}" style="opacity:${hasHeading ? 1 : 0}" fill="${paletteColor}"><polygon points="5,0 10,7 0,7"/></svg>`;
-        const iconHtml = `<div class="bus-marker-wrap" style="transform:rotate(${heading}deg) scale(${zoomScale});transform-origin:50% ${pillCenterY}px;opacity:${opacity}">${tailSvg}<div class="bus-pill-marker ${sizeClass}" style="background:${pillBg};transform:rotate(${-heading}deg);${borderStyle}">${pillIcon}<span style="color:${labelTextColor};">${labelText}</span></div></div>`;
+        const dropBg = `radial-gradient(120% 120% at 32% 22%, rgba(255,255,255,0.4) 0%, rgba(255,255,255,0) 46%), linear-gradient(150deg, color-mix(in srgb, ${paletteColor} 76%, #fff) 0%, ${paletteColor} 54%, color-mix(in srgb, ${paletteColor} 86%, #000) 100%)`;
+        // Teardrop: border-radius 50% 50% 50% 0 has a sharp corner at bottom-left
+        // (pointing SW = 225°). Rotating by heading+135° aims that point toward the
+        // travel direction. With no heading we keep a plain circle (no false point).
+        // The wrapper rotates+scales; the number counter-rotates to stay upright.
+        const dropRot = hasHeading ? (heading + 135) : 0;
+        const dropRadius = hasHeading ? '50% 50% 50% 0' : '50%';
+        const iconHtml = `<div class="bus-marker-wrap" style="transform:rotate(${dropRot}deg) scale(${zoomScale});opacity:${opacity}"><div class="bus-drop ${sizeClass}" style="background:${dropBg};border-radius:${dropRadius};${borderStyle}"><span style="transform:rotate(${-dropRot}deg);color:${labelTextColor};">${labelText}</span></div></div>`;
 
         let marker;
         if (this.state.busMarkers[b.key]) {
@@ -2620,22 +2625,18 @@ class BusMagoApp {
                 const el = marker.getElement();
                 if (el) {
                     const wrap = el.querySelector('.bus-marker-wrap');
-                    const iconDiv = wrap && wrap.querySelector('.bus-pill-marker');
+                    const iconDiv = wrap && wrap.querySelector('.bus-drop');
                     if (wrap && iconDiv) {
-                        wrap.style.transform = `rotate(${heading}deg) scale(${zoomScale})`;
+                        wrap.style.transform = `rotate(${dropRot}deg) scale(${zoomScale})`;
                         wrap.style.opacity = opacity;
-                        iconDiv.style.background = pillBg;
-                        iconDiv.style.transform = `rotate(${-heading}deg)`;
+                        iconDiv.style.background = dropBg;
+                        iconDiv.style.borderRadius = dropRadius;
                         iconDiv.style.border = isSelected ? `3px solid ${selectionBorderColor}` : '';
                         const span = iconDiv.querySelector('span');
                         if (span) {
                             if (span.textContent !== labelText) span.textContent = labelText;
+                            span.style.transform = `rotate(${-dropRot}deg)`;
                             span.style.color = labelTextColor;
-                        }
-                        const tail = wrap.querySelector('.bus-tail-arrow');
-                        if (tail) {
-                            tail.setAttribute('fill', paletteColor);
-                            tail.style.opacity = hasHeading ? 1 : 0;
                         }
                         updated = true;
                     }
