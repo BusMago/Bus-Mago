@@ -721,12 +721,18 @@ class BusMagoApp {
     if (modal) modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
   }
 
+  getCartoTileUrl(mode) {
+    return mode === 'dark'
+      ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
+      : 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png';
+  }
+
   initMap() {
     this.state.map = L.map('map', { zoomControl: false, preferCanvas: true }).setView(CONFIG.MAP.DEFAULT_CENTER, CONFIG.MAP.DEFAULT_ZOOM);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { 
-      maxZoom: 19, 
-      attribution: '&copy; OpenStreetMap contributors',
-      className: this.state.theme.mode === 'dark' ? 'dark-mode-tiles' : '',
+    this.tileLayer = L.tileLayer(this.getCartoTileUrl(this.state.theme.mode), {
+      maxZoom: 19,
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+      subdomains: 'abcd',
       keepBuffer: 15,
       updateWhenIdle: false,
       updateWhenZooming: false,
@@ -766,17 +772,8 @@ class BusMagoApp {
     const btn = document.getElementById('theme-toggle-btn');
     if (btn) btn.textContent = mode === 'dark' ? '🌙' : '☀️';
 
-    const map = this.state.map;
-    if (map) {
-      map.eachLayer(layer => {
-        if (layer && layer.options && typeof layer.setUrl === 'function') {
-          layer.options.className = mode === 'dark' ? 'dark-mode-tiles' : '';
-          if (layer.getContainer) {
-            const c = layer.getContainer();
-            if (c) c.className = layer.options.className;
-          }
-        }
-      });
+    if (this.tileLayer) {
+      this.tileLayer.setUrl(this.getCartoTileUrl(mode));
     }
 
     this.renderLegend();
@@ -1038,9 +1035,6 @@ class BusMagoApp {
             if (willShow) this.renderLegend();
         });
 
-        // Esc chiude la legenda e riporta il focus sul toggle. I modali
-        // (welcome/install) fermano la propagazione dell'Esc, quindi questo
-        // handler scatta solo quando nessun modale è aperto.
         document.addEventListener('keydown', (e) => {
             if (e.key !== 'Escape') return;
             if (this.isLegendVisible()) {
@@ -1048,6 +1042,42 @@ class BusMagoApp {
                 menuToggle.focus();
             }
         });
+    }
+
+    // Floating search bar — opens legend and filters lines
+    const mapSearchInput = document.getElementById('map-search-input');
+    if (mapSearchInput) {
+      mapSearchInput.addEventListener('input', (e) => {
+        this.state.legend.filterText = e.target.value;
+        if (!this.isLegendVisible()) {
+          this.legendDiv.style.display = 'block';
+        }
+        this.renderLegend({ skipInfoPanel: true });
+      });
+      mapSearchInput.addEventListener('focus', () => {
+        if (!this.isLegendVisible()) {
+          this.legendDiv.style.display = 'block';
+          this.renderLegend();
+        }
+      });
+    }
+
+    // Custom zoom buttons (replace Leaflet built-in)
+    const zoomInBtn = document.getElementById('zoom-in-btn');
+    if (zoomInBtn) {
+      zoomInBtn.addEventListener('click', (e) => {
+        e.preventDefault(); e.stopPropagation();
+        this.hapticTap();
+        if (this.state.map) this.state.map.zoomIn();
+      });
+    }
+    const zoomOutBtn = document.getElementById('zoom-out-btn');
+    if (zoomOutBtn) {
+      zoomOutBtn.addEventListener('click', (e) => {
+        e.preventDefault(); e.stopPropagation();
+        this.hapticTap();
+        if (this.state.map) this.state.map.zoomOut();
+      });
     }
 
     // Handle app visibility changes:
@@ -1377,7 +1407,7 @@ class BusMagoApp {
     const wasSearchFocused = !!(activeEl && activeEl.id === 'legend-search');
     const searchSelStart = wasSearchFocused ? activeEl.selectionStart : null;
     const searchSelEnd = wasSearchFocused ? activeEl.selectionEnd : null;
-    let html = "";
+    let html = '<div class="sheet-handle" aria-hidden="true"></div>';
     if (this.state.uiTimers.directionsStatusTimeout) {
       clearTimeout(this.state.uiTimers.directionsStatusTimeout);
       this.state.uiTimers.directionsStatusTimeout = null;
@@ -1392,9 +1422,7 @@ class BusMagoApp {
     const svgList = `<svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><g fill="currentColor"><circle cx="6" cy="6" r="1.5"/><rect x="9" y="5" width="12" height="2" rx="1"/><circle cx="6" cy="12" r="1.5"/><rect x="9" y="11" width="12" height="2" rx="1"/><circle cx="6" cy="18" r="1.5"/><rect x="9" y="17" width="12" height="2" rx="1"/></g></svg>`;
     const iconSvg = iconTarget === 'list' ? svgList : svgGrid;
 
-    html += `<div class="legend-search-row">
-              <input id="legend-search" type="text" placeholder="Cerca linea..." value="${this.escapeHtmlAttribute(filterValue)}" class="legend-search">
-            </div>`;
+    // Search is handled by the external #map-search-input in the floating search bar
 
     html += `<button id="favorites-only-btn" class="legend-action-btn legend-action-toggle ${favoritesOnly ? 'is-active' : ''}" type="button" aria-pressed="${favoritesOnly ? 'true' : 'false'}">PREFERITI</button>`;
 
@@ -2530,9 +2558,10 @@ class BusMagoApp {
 
     const activeLineCount = Object.keys(this.state.lineVisibility).filter(k => this.state.lineVisibility[k] === true).length;
     const useSmallIcons = activeLineCount >= CONFIG.UI.SMALL_ICON_THRESHOLD;
-    const iconSize = useSmallIcons ? [28, 28] : [40, 40];
-    const iconAnchor = useSmallIcons ? [14, 14] : [20, 20];
+    const iconSize = useSmallIcons ? [40, 20] : [64, 28];
+    const iconAnchor = useSmallIcons ? [20, 10] : [32, 14];
     const sizeClass = useSmallIcons ? 'small' : 'large';
+    const busSvg = `<svg viewBox="0 0 24 24" width="11" height="11" fill="currentColor" aria-hidden="true" style="flex-shrink:0;opacity:0.88"><path d="M4 16c0 .88.39 1.67 1 2.22V20a1 1 0 001 1h1a1 1 0 001-1v-1h8v1a1 1 0 001 1h1a1 1 0 001-1v-1.78c.61-.55 1-1.34 1-2.22V6c0-3.5-3.58-4-8-4s-8 .5-8 4v10zm3.5 1a1.5 1.5 0 110-3 1.5 1.5 0 010 3zm9 0a1.5 1.5 0 110-3 1.5 1.5 0 010 3zM5 11V7h14v4H5z"/></svg>`;
 
     if (buses && buses.length > 0) {
       buses.forEach(b => {
@@ -2561,7 +2590,8 @@ class BusMagoApp {
         const borderStyle = isSelected ? `border: 3px solid ${selectionBorderColor};` : '';
         const opacityStyle = `opacity: ${opacity};`;
         const labelText = showLabel ? b.lineLabel : '';
-        const iconHtml = `<div class="bus-icon ${sizeClass}" style="background-color: ${paletteColor}; transform: rotate(${heading + 135}deg) scale(${zoomScale}); ${borderStyle} ${opacityStyle}"><span style="display:inline-block; transform: rotate(${-(heading + 135)}deg); color: ${labelTextColor}; opacity: ${showLabel ? 1 : 0};">${labelText}</span></div>`;
+        const pillIcon = !useSmallIcons ? busSvg : '';
+        const iconHtml = `<div class="bus-pill-marker ${sizeClass}" style="background-color: ${paletteColor}; transform: scale(${zoomScale}); ${borderStyle} ${opacityStyle}">${pillIcon}<span style="color: ${labelTextColor};">${labelText}</span></div>`;
 
         let marker;
         if (this.state.busMarkers[b.key]) {
@@ -2580,21 +2610,16 @@ class BusMagoApp {
             if (isSameSize) {
                 const el = marker.getElement();
                 if (el) {
-                    const iconDiv = el.querySelector('.bus-icon');
+                    const iconDiv = el.querySelector('.bus-pill-marker');
                     if (iconDiv) {
-                        // Update styles directly
                         iconDiv.style.backgroundColor = paletteColor;
-                        iconDiv.style.transform = `rotate(${heading + 135}deg) scale(${zoomScale})`;
+                        iconDiv.style.transform = `scale(${zoomScale})`;
                         iconDiv.style.opacity = opacity;
                         iconDiv.style.border = isSelected ? `3px solid ${selectionBorderColor}` : '';
-                        
-                        // Update text content (only if changed)
                         const span = iconDiv.querySelector('span');
                         if (span) {
                             if (span.textContent !== labelText) span.textContent = labelText;
-                            span.style.transform = `rotate(${-(heading + 135)}deg)`;
                             span.style.color = labelTextColor;
-                            span.style.opacity = showLabel ? '1' : '0';
                         }
                         updated = true;
                     }
