@@ -783,7 +783,8 @@ class BusMagoApp {
   updateRefreshButtonVisual() {
     const btn = document.getElementById('refresh-btn');
     if (!btn) return;
-    if (this.state.isHardRefreshing || this.state.isRefreshing) {
+    // Spin ONLY on a user-triggered hard refresh, never on silent auto-refresh.
+    if (this.state.isHardRefreshing) {
       btn.classList.add('refreshing');
     } else {
       btn.classList.remove('refreshing');
@@ -1437,11 +1438,9 @@ class BusMagoApp {
     const barcolaActive = groupKeys.has('BARCOLA');
     html += `<hr class="legend-grid-separator">`;
     html += `<div class="legend-group-row">
-              <button id="legend-group-uni" class="legend-action-btn legend-action-toggle legend-group-btn ${uniActive ? 'is-active' : ''}" type="button" aria-label="Gruppo UNI" aria-pressed="${uniActive ? 'true' : 'false'}"><img class="legend-group-icon" src="img/icona_uni.webp" alt=""></button>
-              <button id="legend-group-fs" class="legend-action-btn legend-action-toggle legend-group-btn ${fsActive ? 'is-active' : ''}" type="button" aria-label="Gruppo FS" aria-pressed="${fsActive ? 'true' : 'false'}"><img class="legend-group-icon" src="img/icona_fs.webp" alt=""></button>
-            </div>
-            <div class="legend-group-row legend-group-row--centered">
-              <button id="legend-group-barcola" class="legend-action-btn legend-action-toggle legend-group-btn ${barcolaActive ? 'is-active' : ''}" type="button" aria-label="Gruppo BARCOLA" aria-pressed="${barcolaActive ? 'true' : 'false'}"><img class="legend-group-icon" src="img/barcola.webp" alt=""></button>
+              <button id="legend-group-uni" class="legend-group-btn ${uniActive ? 'is-active' : ''}" type="button" aria-label="Gruppo UNI" aria-pressed="${uniActive ? 'true' : 'false'}"><img class="legend-group-icon" src="img/icona_uni.webp" alt=""></button>
+              <button id="legend-group-fs" class="legend-group-btn ${fsActive ? 'is-active' : ''}" type="button" aria-label="Gruppo FS" aria-pressed="${fsActive ? 'true' : 'false'}"><img class="legend-group-icon" src="img/icona_fs.webp" alt=""></button>
+              <button id="legend-group-barcola" class="legend-group-btn ${barcolaActive ? 'is-active' : ''}" type="button" aria-label="Gruppo BARCOLA" aria-pressed="${barcolaActive ? 'true' : 'false'}"><img class="legend-group-icon" src="img/barcola.webp" alt=""></button>
             </div>`;
     html += `<hr class="legend-grid-separator">`;
 
@@ -2930,9 +2929,10 @@ class BusMagoApp {
     });
     const entries = Object.entries(byLine);
     if (!entries.length) return '';
-    const chips = entries.map(([label, { count, color }]) =>
-      `<span class="fleet-chip" style="background:${color}"><span class="fleet-chip-code">${this.escapeHtmlAttribute(label)}</span><span class="fleet-chip-count">${count}</span></span>`
-    ).join('');
+    const chips = entries.map(([label, { count, color }]) => {
+      const bg = `radial-gradient(120% 120% at 30% 20%, rgba(255,255,255,0.35) 0%, rgba(255,255,255,0) 48%), linear-gradient(150deg, color-mix(in srgb, ${color} 78%, #fff) 0%, ${color} 58%, color-mix(in srgb, ${color} 88%, #000) 100%)`;
+      return `<span class="fleet-chip" style="background:${bg}"><span class="fleet-chip-code">${this.escapeHtmlAttribute(label)}</span><span class="fleet-chip-count">${count}</span></span>`;
+    }).join('');
     return `<div class="fleet-chips-wrap"><div class="fleet-chips-bar">${chips}</div></div>`;
   }
 
@@ -3020,9 +3020,9 @@ class BusMagoApp {
     const track = this.state.infoPanel && this.state.infoPanel.selectedTrack ? this.state.infoPanel.selectedTrack : null;
     if (track) {
       return `
-        <div class="vehicle-info">
+        <div class="vehicle-info vehicle-info--glossy" style="--line-color: ${this.getLegendLineColor(track.lineCode)}">
           <div class="info-header" style="border-bottom: none; margin-bottom: 0; padding-bottom: 0;">
-            <div class="info-line-badge" style="background-color: ${this.getLegendLineColor(track.lineCode)}">${this.escapeHtmlAttribute(track.lineLabel)}</div>
+            <div class="info-line-badge" style="--line-color: ${this.getLegendLineColor(track.lineCode)}">${this.escapeHtmlAttribute(track.lineLabel)}</div>
             <div class="info-destination">${this.escapeHtmlAttribute(track.destination)}</div>
           </div>
         </div>
@@ -3033,7 +3033,7 @@ class BusMagoApp {
       return `
         <div class="vehicle-info">
           <div class="info-header" style="border-bottom-color: rgba(220, 53, 69, 0.3)">
-            <div class="info-line-badge" style="background-color: #666">⚠</div>
+            <div class="info-line-badge" style="--line-color: #777">⚠</div>
             <div class="info-destination" style="color: #ff6b6b">Corsa terminata</div>
           </div>
           <div class="info-body">
@@ -3067,9 +3067,9 @@ class BusMagoApp {
     const lineLabel = bus.lineLabel || (bus.lineCode || '-');
 
     return `
-      <div class="vehicle-info">
+      <div class="vehicle-info vehicle-info--glossy" style="--line-color: ${lineBadgeColor}">
         <div class="info-header">
-          <div class="info-line-badge" style="background-color: ${lineBadgeColor}">${this.escapeHtmlAttribute(lineLabel)}</div>
+          <div class="info-line-badge" style="--line-color: ${lineBadgeColor}">${this.escapeHtmlAttribute(lineLabel)}</div>
           <div class="info-destination">${this.escapeHtmlAttribute(bus.destination || '-')}</div>
         </div>
         <div class="info-body">
@@ -3106,7 +3106,15 @@ class BusMagoApp {
     let body = '';
 
     if (items.length === 0) {
-      body = `<div class="departures-empty">In attesa dati…</div>`;
+      // Only show "waiting for data" while data has genuinely not loaded yet.
+      // Once data is present, hide the section entirely — the selected lines are
+      // still represented by the fleet chips, so we never show a stale placeholder.
+      const hasData = !!(this.state.lastStopDataMap && typeof this.state.lastStopDataMap === 'object');
+      if (!hasData) {
+        body = `<div class="departures-empty">In attesa dati…</div>`;
+      } else {
+        return '';
+      }
     } else {
       body = items.map(it => {
         const badgeColor = this.getLegendLineColor(it.lineCode);
