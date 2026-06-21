@@ -345,11 +345,6 @@ input:focus-visible,
   scrollbar-color: var(--legend-scroll-thumb) var(--legend-scroll-track);
   scrollbar-gutter: stable both-edges;
 }
-/* Wide screens: align info panel with the search bar height */
-@media (min-width: 900px) {
-  .info { top: 14px; max-height: calc(100dvh - 30px); }
-  .info.info--departures-only.info--departures-collapsed { top: 14px; }
-}
 
 .info::-webkit-scrollbar       { width: 6px; }
 .info::-webkit-scrollbar-track { background: var(--legend-scroll-track); border-radius: 8px; }
@@ -376,6 +371,14 @@ input:focus-visible,
   background: transparent; box-shadow: none;
   display: flex; align-items: center; justify-content: center;
   padding: 0; text-indent: -1px;
+}
+
+/* Wide screens: align info panel with the search bar height — applies to both
+   the expanded and the collapsed states. Placed after the collapsed rule so it
+   wins in the cascade at >=900px. */
+@media (min-width: 900px) {
+  .info { top: 14px; max-height: calc(100dvh - 30px); }
+  .info.info--departures-only.info--departures-collapsed { top: 14px; }
 }
 
 .info-header {
@@ -664,15 +667,16 @@ input:focus-visible,
 }
 #clear-all-lines:hover { background: rgba(var(--danger-rgb), 0.15); }
 
-/* Group buttons — three large circles in one row */
+/* Group buttons — three large circles filling the full menu width */
 .legend-group-row {
-  display: flex; gap: 16px; margin-bottom: 14px;
-  justify-content: center; align-items: center;
+  display: flex; gap: 14px; margin-bottom: 14px;
+  justify-content: space-between; align-items: center;
 }
 
 .legend-group-btn {
-  flex: 0 0 auto;
-  width: 66px; height: 66px;
+  flex: 1 1 0;
+  width: auto; height: auto;
+  aspect-ratio: 1 / 1;
   padding: 0; margin: 0;
   overflow: hidden;
   background: #ffffff;

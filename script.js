@@ -2996,7 +2996,11 @@ class BusMagoApp {
     let lineCodes = baseLineCodes;
     let forcedDestinationKeyByLine = null;
     const selectedBus = this.state.infoPanel ? this.state.infoPanel.selectedBus : null;
-    if (selectedBus && selectedBus.lineCode) {
+    // Only force the filter to a single line when a vehicle is GENUINELY selected.
+    // Without this guard a stale selectedBus would pin the panel to one line even
+    // after deselection — when nothing is selected we want all active lines shown.
+    const vehicleSelected = !!this.state.selectedVehicleKey && !this.state.selectedVehicleKey.startsWith('TRACK_');
+    if (vehicleSelected && selectedBus && selectedBus.lineCode) {
       const lc = String(selectedBus.lineCode);
       if (this.state.lineVisibility[lc] === true) {
         lineCodes = [lc];
@@ -3046,7 +3050,10 @@ class BusMagoApp {
       `;
     }
 
-    const bus = this.state.infoPanel ? this.state.infoPanel.selectedBus : null;
+    // Only show the vehicle card when a vehicle is genuinely selected; a stale
+    // selectedBus must not render a highlighted card after deselection.
+    const vehicleSelected = !!this.state.selectedVehicleKey && !this.state.selectedVehicleKey.startsWith('TRACK_');
+    const bus = (vehicleSelected && this.state.infoPanel) ? this.state.infoPanel.selectedBus : null;
     if (!bus) return '';
 
     const now = Date.now();
