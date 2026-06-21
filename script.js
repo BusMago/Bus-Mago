@@ -36,7 +36,7 @@ const CONFIG = {
   UI: {
     TOAST_DURATION_MS: 3000,
     SMALL_ICON_THRESHOLD: 10,
-    BUS_ICON_SCALE_MAX: 1.2,
+    BUS_ICON_SCALE_MAX: 0.92,
     DIRECTIONS_EMPTY_AFTER_MS: 30000,
   },
   MAP: {
@@ -2558,9 +2558,10 @@ class BusMagoApp {
 
     const activeLineCount = Object.keys(this.state.lineVisibility).filter(k => this.state.lineVisibility[k] === true).length;
     const useSmallIcons = activeLineCount >= CONFIG.UI.SMALL_ICON_THRESHOLD;
-    // Pill dims: large = 88×34, small = 56×22; tail = 7px/5px → wrapper total height = 41/27
+    // Pill dims: large = 88×34, small = 56×22; tail points in heading direction
     const pillH = useSmallIcons ? 22 : 34;
-    const tailH = useSmallIcons ? 5 : 7;
+    const tailH = useSmallIcons ? 6 : 9;
+    const tailW = useSmallIcons ? 10 : 15;
     const pillW = useSmallIcons ? 56 : 88;
     const iconSize = [pillW, pillH + tailH];
     const iconAnchor = [Math.floor(pillW / 2), tailH + Math.floor(pillH / 2)];
@@ -2596,10 +2597,11 @@ class BusMagoApp {
         const borderStyle = isSelected ? `border: 3px solid ${selectionBorderColor};` : '';
         const labelText = showLabel ? b.lineLabel : '';
         const pillIcon = !useSmallIcons ? busSvg : '';
-        // Directional tail: triangle pointing in heading direction via wrapper rotation
-        const tailW = useSmallIcons ? 8 : 12;
-        const tailSvg = `<svg class="bus-tail-arrow" viewBox="0 0 10 7" width="${tailW}" height="${tailH}" style="display:block;margin:0 auto;opacity:${hasHeading ? 1 : 0}" fill="${paletteColor}"><polygon points="5,0 10,7 0,7"/></svg>`;
-        const iconHtml = `<div class="bus-marker-wrap" style="transform:rotate(${heading}deg);transform-origin:50% ${pillCenterY}px;opacity:${opacity}">${tailSvg}<div class="bus-pill-marker ${sizeClass}" style="background-color:${paletteColor};transform:rotate(${-heading}deg) scale(${zoomScale});${borderStyle}">${pillIcon}<span style="color:${labelTextColor};">${labelText}</span></div></div>`;
+        const pillBg = `radial-gradient(120% 120% at 32% 22%, rgba(255,255,255,0.4) 0%, rgba(255,255,255,0) 46%), linear-gradient(150deg, color-mix(in srgb, ${paletteColor} 76%, #fff) 0%, ${paletteColor} 54%, color-mix(in srgb, ${paletteColor} 86%, #000) 100%)`;
+        // Directional tail (above the pill): triangle pointing in heading direction;
+        // the whole wrapper rotates+scales, the pill counter-rotates to stay upright.
+        const tailSvg = `<svg class="bus-tail-arrow" viewBox="0 0 10 7" width="${tailW}" height="${tailH}" style="opacity:${hasHeading ? 1 : 0}" fill="${paletteColor}"><polygon points="5,0 10,7 0,7"/></svg>`;
+        const iconHtml = `<div class="bus-marker-wrap" style="transform:rotate(${heading}deg) scale(${zoomScale});transform-origin:50% ${pillCenterY}px;opacity:${opacity}">${tailSvg}<div class="bus-pill-marker ${sizeClass}" style="background:${pillBg};transform:rotate(${-heading}deg);${borderStyle}">${pillIcon}<span style="color:${labelTextColor};">${labelText}</span></div></div>`;
 
         let marker;
         if (this.state.busMarkers[b.key]) {
@@ -2621,10 +2623,10 @@ class BusMagoApp {
                     const wrap = el.querySelector('.bus-marker-wrap');
                     const iconDiv = wrap && wrap.querySelector('.bus-pill-marker');
                     if (wrap && iconDiv) {
-                        wrap.style.transform = `rotate(${heading}deg)`;
+                        wrap.style.transform = `rotate(${heading}deg) scale(${zoomScale})`;
                         wrap.style.opacity = opacity;
-                        iconDiv.style.backgroundColor = paletteColor;
-                        iconDiv.style.transform = `rotate(${-heading}deg) scale(${zoomScale})`;
+                        iconDiv.style.background = pillBg;
+                        iconDiv.style.transform = `rotate(${-heading}deg)`;
                         iconDiv.style.border = isSelected ? `3px solid ${selectionBorderColor}` : '';
                         const span = iconDiv.querySelector('span');
                         if (span) {
@@ -3285,7 +3287,7 @@ class BusMagoApp {
     const tRaw = (z - base) / (max - base);
     const t = Math.max(0, Math.min(1, tRaw));
     const eased = 1 - Math.pow(1 - t, 3);
-    const minScale = 0.56;
+    const minScale = 0.64;
     const maxScale = Math.max(minScale, Number(CONFIG.UI.BUS_ICON_SCALE_MAX) || 1.0);
     return minScale + (maxScale - minScale) * eased;
   }
