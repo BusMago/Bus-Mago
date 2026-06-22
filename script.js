@@ -190,7 +190,8 @@ class BusMagoApp {
       infoPanel: {
         selectedBus: null,
         selectedTrack: null,
-        finishedTrip: false
+        finishedTrip: false,
+        selectedInfoLine: null
       },
       lastStopDataMap: null,
       legendPaletteIndexByCode: {},
@@ -1119,11 +1120,30 @@ class BusMagoApp {
     if (this.infoDiv) {
       this.infoDiv.addEventListener('click', (e) => {
         const t = e && e.target ? e.target : null;
-        const btn = t && t.closest ? t.closest('#departures-toggle') : null;
-        if (!btn) return;
-        e.preventDefault();
-        e.stopPropagation();
-        this.toggleDeparturesCollapsed();
+        const chipBtn = t && t.closest ? t.closest('.info-line-chip[data-info-line]') : null;
+        if (chipBtn) {
+          e.preventDefault();
+          e.stopPropagation();
+          const lc = chipBtn.dataset.infoLine;
+          if (lc === this.state.infoPanel.selectedInfoLine) {
+            this.clearInfoLine();
+          } else {
+            this.selectInfoLine(lc);
+          }
+          return;
+        }
+        if (t && t.closest && t.closest('#departures-toggle')) {
+          e.preventDefault();
+          e.stopPropagation();
+          this.toggleDeparturesCollapsed();
+          return;
+        }
+        if (t && t.closest && (t.closest('#vehicle-deselect-btn') || t.closest('#departures-deselect-btn'))) {
+          e.preventDefault();
+          e.stopPropagation();
+          this.deselectVehicle();
+          return;
+        }
       });
     }
   }
@@ -1324,6 +1344,7 @@ class BusMagoApp {
         this.state.infoPanel.selectedBus = null;
         this.state.infoPanel.selectedTrack = null;
         this.state.infoPanel.finishedTrip = false;
+        this.state.infoPanel.selectedInfoLine = null;
       }
       this.renderInfoPanel();
       this.updateBusMarkers(this.state.lastEnrichedBuses);
@@ -1571,26 +1592,34 @@ class BusMagoApp {
 
     // Lines
     html += `<div class="legend-lines legend-lines--${viewMode}">`;
-    let separatorAdded = false;
-    const orderedLines = Array.isArray(linesConfig) ? [...linesConfig] : [];
-    const idx17 = orderedLines.findIndex(l => l && l.code === '17');
-    const idx17s = orderedLines.findIndex(l => l && l.code === '17/');
+    const NIGHT_CODES = ["A", "B", "C", "D"];
+    const nowHour = new Date().getHours();
+    const isNightTime = nowHour >= 22 || nowHour < 6;
+    const rawLines = Array.isArray(linesConfig) ? [...linesConfig] : [];
+    const idx17 = rawLines.findIndex(l => l && l.code === '17');
+    const idx17s = rawLines.findIndex(l => l && l.code === '17/');
     if (idx17 !== -1 && idx17s !== -1 && idx17 > idx17s) {
-      const tmp = orderedLines[idx17];
-      orderedLines[idx17] = orderedLines[idx17s];
-      orderedLines[idx17s] = tmp;
+      const tmp = rawLines[idx17]; rawLines[idx17] = rawLines[idx17s]; rawLines[idx17s] = tmp;
     }
+    // At night, move night lines to the top; by day keep them at the bottom
+    const nightLines = rawLines.filter(l => l && NIGHT_CODES.includes(l.code));
+    const dayLines   = rawLines.filter(l => l && !NIGHT_CODES.includes(l.code) && l.code !== "777");
+    const orderedLines = isNightTime ? [...nightLines, ...dayLines] : [...dayLines, ...nightLines];
 
+    let separatorAdded = false;
     orderedLines.forEach(l => {
-      // Add separator before night lines
-      if (!separatorAdded && ["A", "B", "C", "D"].includes(l.code)) {
-        html += '<hr class="legend-grid-separator">';
-        separatorAdded = true;
-      }
-      
-      // Add separator before 777
-      if (l.code === "777") {
+      if (l.code === "777") return; // Easter egg line hidden from menu
+      // Separator between night and day lines
+      if (isNightTime) {
+        if (!separatorAdded && !NIGHT_CODES.includes(l.code)) {
           html += '<hr class="legend-grid-separator">';
+          separatorAdded = true;
+        }
+      } else {
+        if (!separatorAdded && NIGHT_CODES.includes(l.code)) {
+          html += '<hr class="legend-grid-separator">';
+          separatorAdded = true;
+        }
       }
 
       const isFavorite = this.state.favorites.set.has(l.code);
@@ -1613,7 +1642,7 @@ class BusMagoApp {
       const lineName = hasLabel ? l.label : (dirsText || l.code);
       const subText = hasLabel ? dirsText : '';
       const listMeta = viewMode === 'list'
-        ? `<span class="legend-line-meta"><span class="legend-line-name">${this.escapeHtmlAttribute(lineName)}</span>${subText ? `<span class="legend-line-dirs">${this.escapeHtmlAttribute(subText)}</span>` : ''}</span>`
+        ? `<span class="legend-line-meta"><span class="legend-line-name"><span>${this.escapeHtmlAttribute(lineName)}</span></span>${subText ? `<span class="legend-line-dirs"><span>${this.escapeHtmlAttribute(subText)}</span></span>` : ''}</span>`
         : '';
       html += `<div class="legend-line-tile ${activeClass}" style="--line-color:${tileColor};" title="${title}">
                 <button type="button" class="legend-line-select" data-key="${safeKey}" aria-pressed="${pressed}">
@@ -1645,6 +1674,40 @@ class BusMagoApp {
     // Add Listeners
     this.setupLegendListeners();
     if (!skipInfoPanel) this.renderInfoPanel();
+    if (viewMode === 'list') this._initMarqueeItems();
+  }
+
+  _initMarqueeItems() {
+    // Continuous ticker: duplicate text so the loop is seamless (span = [text][gap][text]),
+    // animate translateX(0 → -50%) at a fixed pixel/s speed so all items scroll equally fast.
+    const SPEED_PX_S = 38;   // pixels per second — same for every item
+    const GAP = '    •    '; // "    •    "
+    requestAnimationFrame(() => {
+      const wrappers = this.legendDiv
+        ? this.legendDiv.querySelectorAll('.legend-line-name, .legend-line-dirs')
+        : [];
+      wrappers.forEach(wrapper => {
+        const span = wrapper.querySelector('span');
+        if (!span) return;
+        // Reset to plain text before measuring (strip any previous duplication)
+        if (span._tickerOriginal !== undefined) {
+          span.textContent = span._tickerOriginal;
+        }
+        span.classList.remove('scrolling');
+        span.style.removeProperty('--ticker-dur');
+        const textW = span.scrollWidth;
+        const containerW = wrapper.clientWidth;
+        if (textW <= containerW + 4) return; // fits — no ticker needed
+        // Store original and duplicate: [text][gap][text]
+        span._tickerOriginal = span.textContent;
+        span.textContent = span._tickerOriginal + GAP + span._tickerOriginal;
+        // One "cycle" = scrollWidth/2 pixels (one copy + one gap)
+        const oneCycleW = span.scrollWidth / 2;
+        const dur = oneCycleW / SPEED_PX_S;
+        span.style.setProperty('--ticker-dur', `${dur.toFixed(2)}s`);
+        span.classList.add('scrolling');
+      });
+    });
   }
 
   preserveLegendScroll(anchorEl, action) {
@@ -2592,7 +2655,10 @@ class BusMagoApp {
             }
         }
 
-        const opacity = (this.state.selectedVehicleKey && !isSelected) ? 0.3 : 1.0;
+        let opacity = (this.state.selectedVehicleKey && !isSelected) ? 0.3 : 1.0;
+        if (this.state.infoPanel.selectedInfoLine && b.lineCode !== this.state.infoPanel.selectedInfoLine) {
+          opacity = 0.35;
+        }
         const heading = typeof b.heading === 'number' ? b.heading : 0;
         const hasHeading = typeof b.heading === 'number';
         const selectionBorderColor = this.state.theme.mode === 'light' ? '#111' : '#FFF';
@@ -2628,7 +2694,7 @@ class BusMagoApp {
                     const iconDiv = wrap && wrap.querySelector('.bus-drop');
                     if (wrap && iconDiv) {
                         wrap.style.transform = `rotate(${dropRot}deg) scale(${zoomScale})`;
-                        wrap.style.opacity = opacity;
+                        wrap.style.opacity = String(opacity);
                         iconDiv.style.background = dropBg;
                         iconDiv.style.borderRadius = dropRadius;
                         iconDiv.style.border = isSelected ? `3px solid ${selectionBorderColor}` : '';
@@ -2776,6 +2842,10 @@ class BusMagoApp {
             } else {
                 layer.bringToFront();
             }
+        } else if (this.state.infoPanel.selectedInfoLine && lineCode !== this.state.infoPanel.selectedInfoLine) {
+            opacity = 0.35;
+        } else if (this.state.infoPanel.selectedInfoLine && lineCode === this.state.infoPanel.selectedInfoLine) {
+            layer.bringToFront();
         }
 
         layer.setStyle({ color: paletteColor, opacity: opacity, weight: 3 });
@@ -2937,23 +3007,123 @@ class BusMagoApp {
     return `<div class="fleet-chips-wrap"><div class="fleet-chips-bar">${chips}</div></div>`;
   }
 
+  selectInfoLine(lineCode) {
+    this.state.infoPanel.selectedInfoLine = lineCode || null;
+    this.renderInfoPanel();
+    this.updateBusMarkers(this.state.lastEnrichedBuses);
+  }
+
+  clearInfoLine() {
+    this.state.infoPanel.selectedInfoLine = null;
+    this.renderInfoPanel();
+    this.updateBusMarkers(this.state.lastEnrichedBuses);
+  }
+
+  buildInfoChipsHtml(selectedInfoLine) {
+    const buses = this.state.lastEnrichedBuses || [];
+    const byLine = {};
+    buses.forEach(b => {
+      if (this.state.lineVisibility[b.lineCode] !== true) return;
+      const lc = b.lineCode;
+      if (!byLine[lc]) byLine[lc] = { count: 0, color: this.getLegendLineColor(lc), label: b.lineLabel || lc };
+      byLine[lc].count++;
+    });
+    const entries = Object.entries(byLine);
+    if (!entries.length) return '';
+    const chips = entries.map(([lc, { count, color, label }]) => {
+      const isSelected = lc === selectedInfoLine;
+      const bg = `radial-gradient(120% 120% at 30% 20%, rgba(255,255,255,0.35) 0%, rgba(255,255,255,0) 48%), linear-gradient(150deg, color-mix(in srgb, ${color} 78%, #fff) 0%, ${color} 58%, color-mix(in srgb, ${color} 88%, #000) 100%)`;
+      const selectedClass = isSelected ? ' info-chip--selected' : '';
+      return `<button type="button" class="info-line-chip${selectedClass}" data-info-line="${this.escapeHtmlAttribute(lc)}" style="background:${bg}" aria-pressed="${isSelected}">
+      <span class="info-line-chip-code">${this.escapeHtmlAttribute(label)}</span>
+      <span class="info-line-chip-count">${count}</span>
+    </button>`;
+    }).join('');
+    return `<div class="info-chips-row">${chips}</div>`;
+  }
+
+  buildDeparturesForLine(lineCode) {
+    const lc = String(lineCode);
+    const collapsed = !!(this.state.departures && this.state.departures.collapsed);
+    const btnLabel = collapsed ? 'Apri' : 'Chiudi';
+    const icon = collapsed ? '▾' : '▴';
+    const bodyStyle = collapsed ? 'display:none;' : '';
+    const items = this.getDeparturesItems([lc], null);
+    if (!items.length) {
+      const hasData = !!(this.state.lastStopDataMap && typeof this.state.lastStopDataMap === 'object');
+      if (!hasData) {
+        return `<div class="departures-section"><div class="departures-header"><div class="departures-title">Prossime partenze</div></div><div class="departures-body"><div class="departures-empty">In attesa dati…</div></div></div>`;
+      }
+      return '';
+    }
+    const body = items.map(it => {
+      const badgeColor = this.getLegendLineColor(it.lineCode);
+      const times = it.times && it.times.length ? it.times.map(t => this.escapeHtmlAttribute(t)).join(' · ') : '';
+      const destLabel = it.destinationLabel ? this.escapeHtmlAttribute(it.destinationLabel) : this.escapeHtmlAttribute(it.destinationKey || '');
+      const meta = it.originLabel ? `Da: ${this.escapeHtmlAttribute(it.originLabel)}` : '';
+      const runningDot = it.isStarted === true ? `<span class="departures-running-dot" title="Bus in servizio"></span>` : '';
+      const right = times
+        ? `<div class="departures-times">${runningDot}${times}</div>`
+        : `<div class="departures-times departures-times--empty">${this.escapeHtmlAttribute(it.message || 'In attesa dati…')}</div>`;
+      return `<div class="departures-line">
+      <div class="departures-line-badge" style="background-color:${badgeColor};">${this.escapeHtmlAttribute(it.lineCode)}</div>
+      <div class="departures-line-main">
+        <div class="departures-dest">${destLabel}</div>
+        ${meta ? `<div class="departures-meta">${meta}</div>` : ''}
+        ${it.note ? `<div class="departures-note">${this.escapeHtmlAttribute(it.note)}</div>` : ''}
+        ${right}
+      </div>
+    </div>`;
+    }).join('');
+    return `<div class="departures-section">
+    <div class="departures-header">
+      <div class="departures-title">Prossime partenze</div>
+      <button id="departures-toggle" class="departures-toggle" type="button" aria-label="${btnLabel}" aria-expanded="${collapsed ? 'false' : 'true'}">${icon}</button>
+    </div>
+    <div class="departures-body" style="${bodyStyle}">${body}</div>
+  </div>`;
+  }
+
   renderInfoPanel() {
     if (!this.infoDiv) return;
 
-    const vehicleHtml = this.buildVehicleInfoHtml();
-    const departuresHtml = this.buildDeparturesHtml();
-    const fleetHtml = this.buildFleetChipsHtml();
+    const vehicleSelected = !!this.state.selectedVehicleKey && !this.state.selectedVehicleKey.startsWith('TRACK_');
+    const selectedInfoLine = this.state.infoPanel.selectedInfoLine;
     const activeLineCodes = Object.keys(this.state.lineVisibility).filter(k => this.state.lineVisibility[k] === true);
+
+    // Build content based on mode
+    let combined = '';
+
+    if (vehicleSelected || (this.state.selectedVehicleKey && this.state.selectedVehicleKey.startsWith('TRACK_'))) {
+      // MODE 3: vehicle/track selected — existing behavior
+      const vehicleHtml = this.buildVehicleInfoHtml();
+      const departuresHtml = this.buildDeparturesHtml();
+      const busSection = `${vehicleHtml || ''}${vehicleHtml && departuresHtml ? '<div class="info-section-divider"></div>' : ''}${departuresHtml || ''}`;
+      combined = busSection;
+    } else {
+      // MODE 1 or 2: no vehicle selected
+      const chipsHtml = this.buildInfoChipsHtml(selectedInfoLine);
+      if (!chipsHtml) {
+        this.infoDiv.style.display = 'none';
+        this.infoDiv.innerHTML = '';
+        this.infoDiv.classList.remove('info--departures-only', 'info--departures-collapsed');
+        return;
+      }
+      const departuresHtml = selectedInfoLine ? this.buildDeparturesForLine(selectedInfoLine) : '';
+      combined = `<div class="info-header-row">
+      <div class="info-section-label">Informazioni</div>
+    </div>
+    ${chipsHtml}
+    ${departuresHtml ? '<div class="info-section-divider"></div>' + departuresHtml : ''}`;
+    }
+
+    // Signature check to avoid unnecessary DOM writes
     const vehicleSig = this.getVehicleInfoSignature();
-    const departuresSig = this.getDeparturesSignature(activeLineCodes);
     const fleetSig = (this.state.lastEnrichedBuses || []).filter(b => this.state.lineVisibility[b.lineCode] === true).length;
-    const signature = `${vehicleSig}|${departuresSig}|${this.state.departures.collapsed ? 1 : 0}|${activeLineCodes.join(',')}|${this.state.directions.lastKnownSignature || ''}|${this.state.selectedVehicleKey || ''}|${this.state.updateStatus.lastSuccessAt || 0}|${this.state.updateStatus.lastErrorAt || 0}|${fleetSig}`;
+    const depSig = selectedInfoLine ? `L:${selectedInfoLine}` : (vehicleSelected ? `V:${this.state.selectedVehicleKey}` : '');
+    const signature = `${vehicleSig}|${depSig}|${this.state.departures.collapsed ? 1 : 0}|${activeLineCodes.join(',')}|${this.state.directions.lastKnownSignature || ''}|${this.state.selectedVehicleKey || ''}|${selectedInfoLine || ''}|${this.state.updateStatus.lastSuccessAt || 0}|${fleetSig}`;
     if (signature === this.state.lastInfoSignature) return;
     this.state.lastInfoSignature = signature;
-
-    const busSection = `${vehicleHtml || ''}${vehicleHtml && departuresHtml ? `<div class="info-section-divider"></div>` : ''}${departuresHtml || ''}`;
-    const fleetSection = fleetHtml ? `${busSection ? '<div class="info-section-divider"></div>' : ''}${fleetHtml}` : '';
-    const combined = busSection + fleetSection;
 
     if (!combined) {
       this.infoDiv.style.display = 'none';
@@ -2962,9 +3132,7 @@ class BusMagoApp {
       return;
     }
 
-    const departuresOnly = !vehicleHtml && !!departuresHtml;
-    this.infoDiv.classList.toggle('info--departures-only', departuresOnly);
-    this.infoDiv.classList.toggle('info--departures-collapsed', departuresOnly && !!(this.state.departures && this.state.departures.collapsed));
+    this.infoDiv.classList.remove('info--departures-only', 'info--departures-collapsed');
     this.infoDiv.innerHTML = combined;
     this.infoDiv.style.display = 'block';
   }
@@ -3079,6 +3247,9 @@ class BusMagoApp {
         <div class="info-header">
           <div class="info-line-badge" style="--line-color: ${lineBadgeColor}">${this.escapeHtmlAttribute(lineLabel)}</div>
           <div class="info-destination">${this.escapeHtmlAttribute(bus.destination || '-')}</div>
+          <button id="vehicle-deselect-btn" class="vehicle-deselect-btn" type="button" aria-label="Chiudi info vettura" title="Chiudi">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </button>
         </div>
         <div class="info-body">
           <div class="info-label">Partenza</div><div class="info-value">${this.escapeHtmlAttribute(bus.departure || '-')}</div>
@@ -3130,7 +3301,7 @@ class BusMagoApp {
         const destLabel = it.destinationLabel ? this.escapeHtmlAttribute(it.destinationLabel) : this.escapeHtmlAttribute(it.destinationKey || '');
 
         const meta = it.originLabel ? `Da: ${this.escapeHtmlAttribute(it.originLabel)}` : '';
-        const runningDot = it.isStarted === true ? `<span class="departures-running-dot" title="Bus in servizio">●</span>` : '';
+        const runningDot = it.isStarted === true ? `<span class="departures-running-dot" title="Bus in servizio"></span>` : '';
         const right = times
           ? `<div class="departures-times">${runningDot}${times}</div>`
           : `<div class="departures-times departures-times--empty">${this.escapeHtmlAttribute(it.message || 'In attesa dati…')}</div>`;
@@ -3149,10 +3320,20 @@ class BusMagoApp {
       }).join('');
     }
 
+    const isFiltered = activeLineCodes.length === 1 && activeLineCodes.length < baseActiveLineCodes.length;
+    const filteredLine = isFiltered ? activeLineCodes[0] : null;
+    const filterBadge = filteredLine
+      ? `<button id="departures-deselect-btn" class="departures-filter-badge" type="button" title="Mostra tutte le linee" aria-label="Rimuovi filtro linea ${filteredLine}">
+           <span class="departures-filter-badge-code" style="background:${this.getLegendLineColor(filteredLine)}">${this.escapeHtmlAttribute(filteredLine)}</span>
+           <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+         </button>`
+      : '';
+
     return `
       <div class="departures-section">
         <div class="departures-header">
           <div class="departures-title">Prossime partenze</div>
+          ${filterBadge}
           <button id="departures-toggle" class="departures-toggle" type="button" aria-label="${btnLabel}" aria-expanded="${collapsed ? 'false' : 'true'}">${icon}</button>
         </div>
         <div class="departures-body" style="${bodyStyle}">

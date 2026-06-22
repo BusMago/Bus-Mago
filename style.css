@@ -432,6 +432,19 @@ input:focus-visible,
 }
 
 .info-destination { font-weight: 600; font-size: 15px; flex: 1; }
+.vehicle-deselect-btn {
+  flex: 0 0 auto;
+  width: 28px; height: 28px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(255,255,255,0.12);
+  color: var(--text-secondary);
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  padding: 0; margin-left: 6px;
+  transition: background 0.15s, color 0.15s;
+}
+.vehicle-deselect-btn:hover { background: rgba(255,255,255,0.22); color: var(--text-primary); }
 
 .info-body {
   display: grid;
@@ -465,11 +478,31 @@ input:focus-visible,
 
 .departures-section { margin-top: 0; }
 .departures-header  {
-  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  display: flex; align-items: center; gap: 8px;
 }
 .departures-title {
   font-weight: 700; font-size: 12px; letter-spacing: 0.6px;
   text-transform: uppercase; color: var(--text-secondary);
+  flex: 1 1 auto;
+}
+/* Badge linea attiva con X per deselezionare (solo quando filtro attivo) */
+.departures-filter-badge {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 3px 7px 3px 3px;
+  border-radius: 20px;
+  background: var(--surface-inactive);
+  border: 1px solid var(--border);
+  cursor: pointer; color: var(--text-secondary);
+  font-size: 11px; font-weight: 600;
+  transition: background 0.15s, color 0.15s;
+  flex: 0 0 auto;
+}
+.departures-filter-badge:hover { background: var(--surface-hover); color: var(--text-primary); }
+.departures-filter-badge-code {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-width: 22px; height: 22px; border-radius: 50%;
+  padding: 0 4px;
+  color: #fff; font-size: 11px; font-weight: 800;
 }
 .departures-toggle {
   width: 32px; height: 28px; border-radius: 8px;
@@ -805,20 +838,41 @@ input:focus-visible,
 .legend-line-meta { display: none; }
 .legend-lines--list .legend-line-meta {
   display: flex; flex-direction: column; gap: 2px;
-  flex: 1 1 auto; min-width: 0;
+  flex: 1 1 auto; min-width: 0; overflow: hidden;
   text-align: left; line-height: 1.25;
 }
-.legend-lines--list .legend-line-name {
+
+/* Continuous ticker — always left, fixed speed, seamless loop */
+@keyframes ticker-loop {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-50%); }
+}
+.legend-lines--list .legend-line-name,
+.legend-lines--list .legend-line-dirs {
+  display: block;
+  white-space: nowrap;
+  overflow: hidden;
+}
+.legend-lines--list .legend-line-name > span,
+.legend-lines--list .legend-line-dirs > span {
+  display: inline-block;
+  white-space: nowrap;
+}
+/* JS adds .scrolling + sets --ticker-dur based on content px width / speed */
+.legend-lines--list .legend-line-name > span.scrolling,
+.legend-lines--list .legend-line-dirs > span.scrolling {
+  animation: ticker-loop var(--ticker-dur, 8s) linear infinite;
+}
+
+.legend-lines--list .legend-line-name > span {
   font-size: 13.5px; font-weight: 700;
   color: var(--text-primary);
-  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
-.legend-lines--list .legend-line-dirs {
+.legend-lines--list .legend-line-dirs > span {
   font-size: 11.5px; font-weight: 500;
   color: var(--text-secondary);
-  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
-.legend-lines--list .legend-line-tile:not(.active-line) .legend-line-name {
+.legend-lines--list .legend-line-tile:not(.active-line) .legend-line-name > span {
   color: var(--text-secondary);
 }
 
@@ -947,6 +1001,43 @@ input:focus-visible,
   border-radius: 10px; padding: 1px 5px;
   font-size: 11px; font-weight: 700;
   min-width: 16px; text-align: center; line-height: 1.4;
+}
+
+/* ── Info panel: Informazioni chips ─────────────────── */
+.info-header-row {
+  display: flex; align-items: center; gap: 8px;
+  margin-bottom: 10px;
+}
+.info-section-label {
+  font-weight: 700; font-size: 12px; letter-spacing: 0.6px;
+  text-transform: uppercase; color: var(--text-secondary);
+  flex: 1 1 auto;
+}
+.info-chips-row {
+  display: flex; flex-wrap: wrap; gap: 8px;
+}
+.info-line-chip {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 6px 10px 6px 6px;
+  border-radius: 24px;
+  border: 2px solid transparent;
+  cursor: pointer;
+  transition: transform 0.12s, border-color 0.15s, box-shadow 0.15s;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.22);
+}
+.info-line-chip:hover { transform: scale(1.06); }
+.info-line-chip.info-chip--selected {
+  border-color: rgba(255,255,255,0.7);
+  box-shadow: 0 0 0 3px rgba(255,255,255,0.25), 0 2px 8px rgba(0,0,0,0.22);
+}
+.info-line-chip-code {
+  font-size: 13px; font-weight: 800; color: #fff;
+  min-width: 22px; text-align: center;
+}
+.info-line-chip-count {
+  font-size: 11px; font-weight: 700; color: rgba(255,255,255,0.85);
+  background: rgba(0,0,0,0.18); border-radius: 10px;
+  padding: 1px 6px;
 }
 
 /* =====================================================
@@ -1107,8 +1198,9 @@ input:focus-visible,
 
   .ctrl-pill {
     right: 10px;
-    top: 50%;
-    transform: translateY(-50%);
+    top: auto;
+    bottom: calc(20px + env(safe-area-inset-bottom, 0px));
+    transform: none;
   }
 
   .map-controls-bottom-left {
