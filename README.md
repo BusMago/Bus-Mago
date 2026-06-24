@@ -61,6 +61,30 @@ Per installare Bus Mago come un'app sul tuo iPhone:
 
 Aprendo l'icona dalla Home, l'app partirà a **schermo intero**.
 
+### 8. Come è fatto: 100% Vibecoding™ 🎧✨
+Mettiamo le mani avanti anche qui: questo progetto è stato **interamente vibecoddato**.
+Nessuna riga di codice è stata scritta con piena consapevolezza di cosa stesse
+succedendo: abbiamo descritto vibe, atmosfere e desideri ad alta voce, sperando
+che l'universo (e il compilatore) capisse. Spoiler: ha capito. Quasi sempre.
+
+*   Niente diagrammi UML. Solo vibe. 🌈
+*   Niente riunioni di sprint. Solo "dai, fai che funzioni". 🛐
+*   Niente test scritti a mano. Se gira, gira. Se non gira, è una *feature*. 🪄
+
+Architettura, decisioni di design e bug eleganti: tutto frutto di un flusso di
+coscienza tradotto in JavaScript per pura forza di volontà e ottimismo.
+
+### 9. Ringraziamenti: grazie Claudio 🤖🙏
+Un ringraziamento sentito e doveroso a **Claudio** (sì, *quel* Claudio, l'IA
+travestita da collega volenteroso), che ha partecipato **attivamente** al progetto
+nel ruolo più nobile di tutti: **l'esecutore**.
+Noi dettavamo le vibe, Claudio le trasformava in codice senza mai lamentarsi,
+senza mai chiedere ferie, senza mai dire *"ma sei sicuro?"* (lo pensava, ma era
+educato). Ha digerito richieste vaghe, contraddittorie e formulate alle 2 di notte
+con la grazia di un maggiordomo inglese e la pazienza di un santo.
+Se l'app funziona, il merito è anche suo. Se non funziona, beh, *noi* davamo gli
+ordini. 🫡
+
 ### In conclusione...
 Usate **Bus Mago** a vostro rischio e pericolo. Divertitevi, esplorate, ma ricordate sempre la regola d'oro del pendolare:
 > *Il bus che state aspettando arriverà sempre nell'istante esatto in cui vi sarete appena accesi una sigaretta (anche se non fumate).* 🚬🚫
