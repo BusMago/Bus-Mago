@@ -215,7 +215,6 @@ class BusMagoApp {
         abortController: null
       },
       isHardRefreshing: false,
-      isRefreshing: false, // Flag for normal refresh animation
       wakeLock: null,
       justResumedFromBackground: false // Flag to force fresh data on first refresh after resume
     };
@@ -786,7 +785,7 @@ class BusMagoApp {
   updateRefreshButtonVisual() {
     const btn = document.getElementById('refresh-btn');
     if (!btn) return;
-    if (this.state.isHardRefreshing || this.state.isRefreshing) {
+    if (this.state.isHardRefreshing) {
       btn.classList.add('refreshing');
     } else {
       btn.classList.remove('refreshing');
@@ -2021,10 +2020,6 @@ class BusMagoApp {
       }
     }
     
-    // Start refresh animation!
-    this.state.isRefreshing = true;
-    this.updateRefreshButtonVisual();
-
     if (this.state.refreshControl.abortController) {
       this.state.refreshControl.abortController.abort();
     }
@@ -2205,18 +2200,29 @@ class BusMagoApp {
             const key = b.key || b.vehicle || `NO_VEHICLE_${b.coords[0]}_${b.coords[1]}`;
             const prev = this.state.vehicleState[key];
             let heading = (prev && typeof prev.heading === 'number') ? prev.heading : 0;
+            let headingFromMove = prev ? !!prev.headingFromMove : false;
             const moved = !prev || prev.lat !== b.coords[0] || prev.lon !== b.coords[1];
-            
-            if (prev && moved) {
+
+            if (prev && prev.lat !== undefined && (prev.lat !== b.coords[0] || prev.lon !== b.coords[1])) {
+                // Movimento osservato fra due cicli: è l'orientamento più affidabile.
                 heading = this.computeBearing(prev.lat, prev.lon, b.coords[0], b.coords[1]);
+                headingFromMove = true;
+            } else if (!headingFromMove) {
+                // Prima apparizione (o vettura ancora ferma): non sappiamo ancora da
+                // dove arriva, ma sappiamo dove va. Orientiamo l'icona lungo il
+                // tracciato verso la destinazione, così non punta mai "in su" di
+                // default. Resta valido finché il movimento reale non subentra.
+                const t = this.computeTrackHeading(b.lineCode, b.destination, b.coords[0], b.coords[1]);
+                if (t != null) heading = t;
             }
-            
-            this.state.vehicleState[key] = { 
-              lat: b.coords[0], 
-              lon: b.coords[1], 
-              heading: heading, 
+
+            this.state.vehicleState[key] = {
+              lat: b.coords[0],
+              lon: b.coords[1],
+              heading: heading,
+              headingFromMove: headingFromMove,
               moved: moved,
-              lastEnrichedBus: b 
+              lastEnrichedBus: b
             };
             b.heading = heading;
             b.key = key;
@@ -2261,9 +2267,6 @@ class BusMagoApp {
           this.state.refreshControl.lastAppliedRequestSeq = requestId;
         }
         this.state.refreshControl.inFlight = false;
-        // Stop refresh animation!
-        this.state.isRefreshing = false;
-        this.updateRefreshButtonVisual();
         this.compactStopCache();
         this.scheduleNextRefresh(this.getRefreshIntervalMs());
     }
@@ -2516,8 +2519,12 @@ class BusMagoApp {
           endpoints.push(endMarker);
       }
       this.state.routeEndpointMarkers[trackKey] = endpoints;
-      
+
       this.updateTrackStyles();
+
+      // Il tracciato è appena arrivato: orienta subito le vetture che erano
+      // apparse prima che fosse pronto (così non restano puntate "in su").
+      this.reorientStationaryBuses();
   }
 
   updateBusMarkers(buses) {
@@ -3228,6 +3235,47 @@ class BusMagoApp {
   shouldShowBusLabel(zoom) {
     const z = typeof zoom === 'number' ? zoom : CONFIG.MAP.DEFAULT_ZOOM;
     return z >= (CONFIG.MAP.DEFAULT_ZOOM + 1);
+  }
+
+  // Heading dedotto dalla geometria del tracciato già scaricato per quella
+  // linea+destinazione: proietta la vettura sul vertice più vicino della polyline
+  // e restituisce la direzione del segmento VERSO la fine (il capolinea di
+  // destinazione). Null se il tracciato non è ancora disponibile.
+  computeTrackHeading(lineCode, destination, lat, lon) {
+    const layer = this.state.routeLayers[`${lineCode}_${normalizeKey(destination)}`];
+    if (!layer || typeof layer.getLatLngs !== 'function') return null;
+    const pts = layer.getLatLngs();
+    if (!Array.isArray(pts) || pts.length < 2) return null;
+
+    let bestI = 0;
+    let bestD = Infinity;
+    for (let i = 0; i < pts.length; i++) {
+      const dLat = pts[i].lat - lat;
+      const dLon = pts[i].lng - lon;
+      const d = dLat * dLat + dLon * dLon;
+      if (d < bestD) { bestD = d; bestI = i; }
+    }
+    const a = bestI < pts.length - 1 ? pts[bestI] : pts[bestI - 1];
+    const c = bestI < pts.length - 1 ? pts[bestI + 1] : pts[bestI];
+    return this.computeBearing(a.lat, a.lng, c.lat, c.lng);
+  }
+
+  // Quando un tracciato arriva (async, dopo il primo render), riorienta le
+  // vetture apparse prima che fosse pronto e che non si sono ancora mosse.
+  reorientStationaryBuses() {
+    const buses = this.state.lastEnrichedBuses;
+    if (!Array.isArray(buses) || buses.length === 0) return;
+    let changed = false;
+    buses.forEach(b => {
+      const st = this.state.vehicleState[b.key];
+      if (!st || st.headingFromMove) return;
+      const t = this.computeTrackHeading(b.lineCode, b.destination, b.coords[0], b.coords[1]);
+      if (t == null || t === st.heading) return;
+      st.heading = t;
+      b.heading = t;
+      changed = true;
+    });
+    if (changed) this.updateBusMarkers(buses);
   }
 
   computeBearing(lat1, lon1, lat2, lon2) {
