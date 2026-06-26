@@ -1,0 +1,182 @@
+/* =====================================================
+   Bus Mago — CLASSIC skin
+   Re-skin visivo (look storico/main) attivato da
+   <html data-skin="classic">. Caricato DOPO style.css:
+   le regole qui, prefissate con [data-skin="classic"],
+   vincono per specificità + ordine di sorgente.
+   Struttura/HTML e comportamenti restano quelli moderni.
+   ===================================================== */
+
+/* ---- Variabili (dark, default) ---- */
+:root[data-skin="classic"] {
+  /* Brand storico (blu Bus Mago) */
+  --brand:        #0077ff;
+  --brand-rgb:    0, 119, 255;
+  --brand-strong: #0066dd;
+
+  /* Stati semantici come sul main */
+  --ok:         #2e9e5b;
+  --ok-rgb:     46, 158, 91;
+  --danger:     #dc3545;
+  --danger-rgb: 220, 53, 69;
+  --fav:        #ffd700;
+  --accent-warn: #e6a817;
+
+  /* Superfici "glass" scure */
+  --bg:               #111111;
+  --surface:          rgba(28, 28, 30, 0.92);
+  --surface-card:     rgba(40, 40, 44, 0.92);
+  --surface-hover:    rgba(255, 255, 255, 0.12);
+  --surface-inactive: rgba(255, 255, 255, 0.08);
+  --border:           rgba(255, 255, 255, 0.12);
+  --text-primary:     #eeeeee;
+  --text-secondary:   #b0b0b0;
+  --text-muted:       #888888;
+
+  --legend-scroll-track:       rgba(255,255,255,0.06);
+  --legend-scroll-thumb:       rgba(255,255,255,0.22);
+  --legend-scroll-thumb-hover: rgba(255,255,255,0.34);
+  --legend-tile-text:          #ffffff;
+  --legend-active-ring:        rgba(255,255,255,0.9);
+}
+
+/* ---- Variabili (light) ---- */
+:root[data-skin="classic"][data-theme="light"] {
+  --bg:               #f3f4f6;
+  --surface:          rgba(255, 255, 255, 0.92);
+  --surface-card:     rgba(248, 249, 250, 0.96);
+  --surface-hover:    rgba(0, 0, 0, 0.06);
+  --surface-inactive: rgba(0, 0, 0, 0.05);
+  --border:           rgba(0, 0, 0, 0.12);
+  --text-primary:     #111827;
+  --text-secondary:   #555b66;
+  --text-muted:       #8a8f98;
+  --accent-warn:      #8a5a00;
+
+  --legend-scroll-track:       rgba(0,0,0,0.05);
+  --legend-scroll-thumb:       rgba(0,0,0,0.20);
+  --legend-scroll-thumb-hover: rgba(0,0,0,0.30);
+  --legend-tile-text:          #ffffff;
+  --legend-active-ring:        rgba(0,0,0,0.72);
+}
+
+/* =====================================================
+   Pannelli vetro (blur) — come il glassmorphism del main
+   ===================================================== */
+:root[data-skin="classic"] .info,
+:root[data-skin="classic"] .legend,
+:root[data-skin="classic"] .ctrl-pill,
+:root[data-skin="classic"] .map-search-bar,
+:root[data-skin="classic"] .welcome-modal,
+:root[data-skin="classic"] .toast-notification {
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+/* =====================================================
+   Badge linee — tinta piena, niente glossy, forma squadrata
+   ===================================================== */
+:root[data-skin="classic"] .legend-line-code {
+  background: var(--line-color);
+  box-shadow: none;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+}
+:root[data-skin="classic"] .legend-lines--grid .legend-line-code,
+:root[data-skin="classic"] .legend-lines--list .legend-line-code {
+  border-radius: 12px;
+}
+/* Sul main le linee non selezionate restano a colore pieno (no pastello) */
+:root[data-skin="classic"] .legend-line-tile:not(.active-line) .legend-line-code {
+  filter: none;
+  opacity: 1;
+}
+:root[data-skin="classic"] .legend-line-tile:not(.active-line):hover .legend-line-code {
+  filter: brightness(1.06);
+  opacity: 1;
+}
+:root[data-skin="classic"] .legend-line-tile.active-line .legend-line-code {
+  box-shadow: 0 0 0 3px var(--legend-active-ring);
+}
+
+/* Tile linee selezionate (pannello SELEZIONATE) */
+:root[data-skin="classic"] .selected-line-tile {
+  border-radius: 14px;
+  background: var(--line-color);
+  box-shadow: 0 4px 14px rgba(0,0,0,0.28);
+}
+:root[data-skin="classic"] .selected-line-code {
+  border-radius: 10px;
+  background: rgba(255,255,255,0.22);
+}
+
+/* Chip pannello Informazioni (sfondo inline reso solido dal JS) — forma piatta */
+:root[data-skin="classic"] .info-line-chip {
+  border-radius: 12px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.25);
+}
+:root[data-skin="classic"] .info-line-chip.info-chip--selected {
+  border-color: var(--legend-active-ring);
+  box-shadow: 0 0 0 2px var(--legend-active-ring);
+}
+
+/* Fleet chip + badge partenze */
+:root[data-skin="classic"] .fleet-chip { border-radius: 12px; box-shadow: none; }
+:root[data-skin="classic"] .departures-line-badge { border-radius: 8px; }
+:root[data-skin="classic"] .departures-line-badge::before { display: none; }
+
+/* =====================================================
+   Card vettura selezionata — niente gradiente glossy
+   ===================================================== */
+:root[data-skin="classic"] .vehicle-info--glossy {
+  background: var(--surface-card);
+  border: 1px solid var(--border);
+  box-shadow: none;
+}
+:root[data-skin="classic"] .vehicle-info--glossy .info-header { border-bottom-color: var(--border); }
+:root[data-skin="classic"] .vehicle-info--glossy .info-footer { border-top-color: var(--border); }
+:root[data-skin="classic"] .info-line-badge {
+  background: var(--line-color);
+  border-radius: 10px;
+}
+
+/* =====================================================
+   Controlli — pulsanti a tinta piena (no gradienti lucidi)
+   ===================================================== */
+:root[data-skin="classic"] .map-search-menu-btn {
+  background: var(--brand);
+  box-shadow: 0 2px 6px rgba(var(--brand-rgb), 0.4);
+}
+:root[data-skin="classic"] .map-search-menu-btn:hover { filter: brightness(1.08); }
+
+/* =====================================================
+   Modali (benvenuto / installa) — superficie piatta
+   ===================================================== */
+:root[data-skin="classic"] .welcome-modal {
+  background: var(--surface);
+}
+:root[data-skin="classic"] .welcome-step-icon {
+  background: rgba(var(--brand-rgb), 0.18);
+  border: 1px solid rgba(var(--brand-rgb), 0.30);
+}
+:root[data-skin="classic"] .welcome-close-btn {
+  background: var(--brand);
+  box-shadow: 0 4px 12px rgba(var(--brand-rgb), 0.4);
+}
+
+/* =====================================================
+   Marker bus — la goccia a tinta piena è gestita dal JS
+   (dropBg = colore linea quando skin=classic). Qui solo
+   un'ombra più semplice, in stile main.
+   ===================================================== */
+:root[data-skin="classic"] .bus-drop {
+  box-shadow: 0 0 4px rgba(0,0,0,0.5);
+}
+
+/* =====================================================
+   Tile OSM scurite in tema notte (come sul main).
+   La classe è applicata al tile layer solo in classic+dark.
+   ===================================================== */
+.dark-mode-tiles {
+  filter: invert(100%) hue-rotate(180deg) brightness(85%) contrast(90%);
+}
+:root[data-theme="light"] .dark-mode-tiles { filter: none; }

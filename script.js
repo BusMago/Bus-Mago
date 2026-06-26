@@ -167,6 +167,10 @@ class BusMagoApp {
         key: 'busmago:theme:v1',
         mode: 'dark'
       },
+      skin: {
+        key: 'busmago:skin:v1',
+        mode: 'classic' // 'classic' (look storico/main, default) | 'modern' (Google 2026 glossy)
+      },
       legend: {
         filterText: '',
         viewMode: 'grid',
@@ -482,6 +486,7 @@ class BusMagoApp {
 
   init() {
     this.loadTheme();
+    this.loadSkin();
     this.loadFavorites();
     this.loadDeparturesCollapsed();
     this.initMap();
@@ -722,23 +727,48 @@ class BusMagoApp {
     if (modal) modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
   }
 
-  getCartoTileUrl(mode) {
-    return mode === 'dark'
+  getTileUrl(themeMode, skinMode) {
+    const skin = skinMode || this.state.skin.mode;
+    // Classic skin → tile OSM standard (come sul main, niente variante dark).
+    if (skin === 'classic') {
+      return 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
+    }
+    return themeMode === 'dark'
       ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
       : 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png';
   }
 
-  initMap() {
-    this.state.map = L.map('map', { zoomControl: false, preferCanvas: true }).setView(CONFIG.MAP.DEFAULT_CENTER, CONFIG.MAP.DEFAULT_ZOOM);
-    this.tileLayer = L.tileLayer(this.getCartoTileUrl(this.state.theme.mode), {
+  applyTileLayer() {
+    if (!this.state.map) return;
+    const isClassic = this.state.skin.mode === 'classic';
+    const isDark = this.state.theme.mode === 'dark';
+    const url = this.getTileUrl(this.state.theme.mode, this.state.skin.mode);
+    const attribution = isClassic
+      ? '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+      : '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>';
+    // Classic usa tile OSM (nessuna variante dark nativa): in tema scuro le
+    // scuriamo via filtro CSS, come sul main. Modern usa già le tile CartoDB
+    // dark/light, quindi nessun filtro.
+    const className = (isClassic && isDark) ? 'dark-mode-tiles' : '';
+    if (this.tileLayer) {
+      this.state.map.removeLayer(this.tileLayer);
+      this.tileLayer = null;
+    }
+    this.tileLayer = L.tileLayer(url, {
       maxZoom: 19,
-      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
-      subdomains: 'abcd',
+      attribution,
+      className,
+      subdomains: isClassic ? 'abc' : 'abcd',
       keepBuffer: 15,
       updateWhenIdle: false,
       updateWhenZooming: false,
       fadeAnimation: false
     }).addTo(this.state.map);
+  }
+
+  initMap() {
+    this.state.map = L.map('map', { zoomControl: false, preferCanvas: true }).setView(CONFIG.MAP.DEFAULT_CENTER, CONFIG.MAP.DEFAULT_ZOOM);
+    this.applyTileLayer();
     L.control.zoom({ position: 'bottomright' }).addTo(this.state.map);
 
     // Smooth bus gliding: disable the CSS transition while the map is moving
@@ -773,10 +803,32 @@ class BusMagoApp {
     const btn = document.getElementById('theme-toggle-btn');
     if (btn) btn.textContent = mode === 'dark' ? '🌙' : '☀️';
 
-    if (this.tileLayer) {
-      this.tileLayer.setUrl(this.getCartoTileUrl(mode));
+    this.applyTileLayer();
+
+    this.renderLegend();
+    this.updateBusMarkers(this.state.lastEnrichedBuses);
+  }
+
+  loadSkin() {
+    try {
+      const raw = localStorage.getItem(this.state.skin.key);
+      if (raw === 'classic' || raw === 'modern') this.state.skin.mode = raw;
+    } catch {
+    }
+    document.documentElement.dataset.skin = this.state.skin.mode;
+  }
+
+  setSkin(mode) {
+    if (mode !== 'classic' && mode !== 'modern') return;
+    if (this.state.skin.mode === mode) return;
+    this.state.skin.mode = mode;
+    document.documentElement.dataset.skin = mode;
+    try {
+      localStorage.setItem(this.state.skin.key, mode);
+    } catch {
     }
 
+    this.applyTileLayer();
     this.renderLegend();
     this.updateBusMarkers(this.state.lastEnrichedBuses);
   }
@@ -1446,6 +1498,16 @@ class BusMagoApp {
 
     // Search is handled by the external #map-search-input in the floating search bar
 
+    // Aspetto (skin) toggle: Moderno | Classico
+    const skinMode = this.state.skin.mode === 'classic' ? 'classic' : 'modern';
+    html += `<div class="legend-skin-row">
+              <span class="legend-skin-label">Aspetto</span>
+              <div class="legend-skin-toggle" role="group" aria-label="Scegli aspetto">
+                <button type="button" class="legend-skin-opt ${skinMode === 'classic' ? 'is-active' : ''}" data-skin-opt="classic" aria-pressed="${skinMode === 'classic' ? 'true' : 'false'}">Classico</button>
+                <button type="button" class="legend-skin-opt ${skinMode === 'modern' ? 'is-active' : ''}" data-skin-opt="modern" aria-pressed="${skinMode === 'modern' ? 'true' : 'false'}">Glossy</button>
+              </div>
+            </div>`;
+
     html += `<button id="favorites-only-btn" class="legend-action-btn legend-action-toggle ${favoritesOnly ? 'is-active' : ''}" type="button" aria-pressed="${favoritesOnly ? 'true' : 'false'}">PREFERITI</button>`;
 
     const filterText = (this.state.legend.filterText || '').trim().toLowerCase();
@@ -1779,6 +1841,14 @@ class BusMagoApp {
         this.renderLegend({ skipInfoPanel: true });
       });
     }
+
+    this.legendDiv.querySelectorAll('[data-skin-opt]').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        this.setSkin(btn.dataset.skinOpt);
+      });
+    });
 
     const favoritesOnlyBtn = document.getElementById('favorites-only-btn');
     if (favoritesOnlyBtn) {
@@ -2664,7 +2734,10 @@ class BusMagoApp {
         const selectionBorderColor = this.state.theme.mode === 'light' ? '#111' : '#FFF';
         const borderStyle = isSelected ? `border: 3px solid ${selectionBorderColor};` : '';
         const labelText = showLabel ? b.lineLabel : '';
-        const dropBg = `radial-gradient(120% 120% at 32% 22%, rgba(255,255,255,0.4) 0%, rgba(255,255,255,0) 46%), linear-gradient(150deg, color-mix(in srgb, ${paletteColor} 76%, #fff) 0%, ${paletteColor} 54%, color-mix(in srgb, ${paletteColor} 86%, #000) 100%)`;
+        // Classic skin: goccia a tinta piena (niente glossy). Modern: gradiente lucido.
+        const dropBg = this.state.skin.mode === 'classic'
+          ? paletteColor
+          : `radial-gradient(120% 120% at 32% 22%, rgba(255,255,255,0.4) 0%, rgba(255,255,255,0) 46%), linear-gradient(150deg, color-mix(in srgb, ${paletteColor} 76%, #fff) 0%, ${paletteColor} 54%, color-mix(in srgb, ${paletteColor} 86%, #000) 100%)`;
         // Teardrop: border-radius 50% 50% 50% 0 has a sharp corner at bottom-left
         // (pointing SW = 225°). Rotating by heading+135° aims that point toward the
         // travel direction. With no heading we keep a plain circle (no false point).
@@ -3000,8 +3073,11 @@ class BusMagoApp {
     });
     const entries = Object.entries(byLine);
     if (!entries.length) return '';
+    const isClassicSkin = this.state.skin.mode === 'classic';
     const chips = entries.map(([label, { count, color }]) => {
-      const bg = `radial-gradient(120% 120% at 30% 20%, rgba(255,255,255,0.35) 0%, rgba(255,255,255,0) 48%), linear-gradient(150deg, color-mix(in srgb, ${color} 78%, #fff) 0%, ${color} 58%, color-mix(in srgb, ${color} 88%, #000) 100%)`;
+      const bg = isClassicSkin
+        ? color
+        : `radial-gradient(120% 120% at 30% 20%, rgba(255,255,255,0.35) 0%, rgba(255,255,255,0) 48%), linear-gradient(150deg, color-mix(in srgb, ${color} 78%, #fff) 0%, ${color} 58%, color-mix(in srgb, ${color} 88%, #000) 100%)`;
       return `<span class="fleet-chip" style="background:${bg}"><span class="fleet-chip-code">${this.escapeHtmlAttribute(label)}</span><span class="fleet-chip-count">${count}</span></span>`;
     }).join('');
     return `<div class="fleet-chips-wrap"><div class="fleet-chips-bar">${chips}</div></div>`;
@@ -3030,9 +3106,12 @@ class BusMagoApp {
     });
     const entries = Object.entries(byLine);
     if (!entries.length) return '';
+    const isClassicSkin = this.state.skin.mode === 'classic';
     const chips = entries.map(([lc, { count, color, label }]) => {
       const isSelected = lc === selectedInfoLine;
-      const bg = `radial-gradient(120% 120% at 30% 20%, rgba(255,255,255,0.35) 0%, rgba(255,255,255,0) 48%), linear-gradient(150deg, color-mix(in srgb, ${color} 78%, #fff) 0%, ${color} 58%, color-mix(in srgb, ${color} 88%, #000) 100%)`;
+      const bg = isClassicSkin
+        ? color
+        : `radial-gradient(120% 120% at 30% 20%, rgba(255,255,255,0.35) 0%, rgba(255,255,255,0) 48%), linear-gradient(150deg, color-mix(in srgb, ${color} 78%, #fff) 0%, ${color} 58%, color-mix(in srgb, ${color} 88%, #000) 100%)`;
       const selectedClass = isSelected ? ' info-chip--selected' : '';
       return `<button type="button" class="info-line-chip${selectedClass}" data-info-line="${this.escapeHtmlAttribute(lc)}" style="background:${bg}" aria-pressed="${isSelected}">
       <span class="info-line-chip-code">${this.escapeHtmlAttribute(label)}</span>

@@ -687,6 +687,36 @@ input:focus-visible,
 .legend-action-btn.is-active:hover { background: rgba(var(--brand-rgb), 0.22); }
 .legend-action-btn:active { transform: scale(0.98); }
 
+/* Aspetto (skin) toggle row */
+.legend-skin-row {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 10px; margin-bottom: 10px;
+}
+.legend-skin-label {
+  font-weight: 700; font-size: 12px; letter-spacing: 0.6px;
+  text-transform: uppercase; color: var(--text-secondary);
+}
+.legend-skin-toggle {
+  display: inline-flex; padding: 3px;
+  background: var(--surface-inactive);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+}
+.legend-skin-opt {
+  border: 0; background: transparent;
+  color: var(--text-secondary);
+  font-weight: 700; font-size: 12px;
+  padding: 6px 14px; border-radius: 999px;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+.legend-skin-opt.is-active {
+  background: var(--brand);
+  color: #fff;
+  box-shadow: 0 2px 6px rgba(var(--brand-rgb), 0.4);
+}
+.legend-skin-opt:not(.is-active):hover { color: var(--text-primary); }
+
 /* Clear all */
 #clear-all-lines {
   width: 100%; margin-bottom: 10px; padding: 10px;
