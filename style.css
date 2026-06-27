@@ -19,6 +19,7 @@
   --danger:     #d93025;
   --danger-rgb: 217, 48, 37;
   --fav:        #f9ab00;
+  --fav-rgb:    249, 171, 0;
   --accent-warn: #fbbf24;
 
   /* Dark theme surfaces (default) */
@@ -717,7 +718,7 @@ input:focus-visible,
 }
 .legend-skin-opt:not(.is-active):hover { color: var(--text-primary); }
 
-/* Clear all */
+/* Clear all — rosso (in entrambi i temi) */
 #clear-all-lines {
   width: 100%; margin-bottom: 10px; padding: 10px;
   background: rgba(var(--danger-rgb), 0.08);
@@ -729,6 +730,19 @@ input:focus-visible,
   transition: background 0.15s ease;
 }
 #clear-all-lines:hover { background: rgba(var(--danger-rgb), 0.15); }
+
+/* Preferiti — giallo, stesso stile di Clear all (in entrambi i temi) */
+#favorites-only-btn {
+  background: rgba(var(--fav-rgb), 0.10);
+  color: var(--accent-warn);
+  border: 1px solid rgba(var(--fav-rgb), 0.28);
+}
+#favorites-only-btn:hover { background: rgba(var(--fav-rgb), 0.16); }
+#favorites-only-btn.is-active {
+  background: rgba(var(--fav-rgb), 0.22);
+  border-color: rgba(var(--fav-rgb), 0.5);
+  color: var(--accent-warn);
+}
 
 /* Group buttons — three large circles filling the full menu width */
 .legend-group-row {
@@ -800,19 +814,26 @@ input:focus-visible,
   border-color: var(--line-color);
 }
 
-/* Grid select button — compact, no label below */
+/* Grid select button — full glossy colored surface, code centered */
 .legend-lines--grid .legend-line-select {
   width: 100%; border: 0;
-  background: transparent;
-  color: var(--text-primary);
+  aspect-ratio: 1 / 1;
+  background:
+    radial-gradient(120% 120% at 30% 22%, rgba(255,255,255,0.45) 0%, rgba(255,255,255,0) 42%),
+    linear-gradient(155deg,
+      color-mix(in srgb, var(--line-color) 72%, #fff) 0%,
+      var(--line-color) 52%,
+      color-mix(in srgb, var(--line-color) 84%, #000) 100%);
+  color: #fff;
   display: flex; flex-direction: column;
   align-items: center; justify-content: center;
-  padding: 10px 6px;
+  padding: 0;
   gap: 0;
   cursor: pointer; user-select: none;
-  transition: background 0.12s ease;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.28);
+  transition: filter 0.15s ease, transform 0.12s ease;
 }
-.legend-lines--grid .legend-line-select:hover  { background: var(--surface-inactive); }
+.legend-lines--grid .legend-line-select:hover  { filter: brightness(1.06); }
 .legend-lines--grid .legend-line-select:active { transform: scale(0.97); }
 
 /* List select button */
@@ -861,7 +882,37 @@ input:focus-visible,
   opacity: 0.92;
 }
 
-.legend-lines--grid .legend-line-code { width: 48px; height: 48px; border-radius: 50%; }
+/* Grid: il colore è sull'intero bottone → il codice torna testo semplice */
+.legend-lines--grid .legend-line-code {
+  width: auto; height: auto;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+  filter: none;
+  font-size: 18px; font-weight: 900;
+}
+/* Pastello sull'intero bottone per le linee non selezionate */
+.legend-lines--grid .legend-line-tile:not(.active-line) .legend-line-select {
+  filter: saturate(0.6) brightness(1.12);
+  opacity: 0.6;
+}
+.legend-lines--grid .legend-line-tile:not(.active-line):hover .legend-line-select {
+  filter: saturate(0.85) brightness(1.05);
+  opacity: 0.92;
+}
+.legend-lines--grid .legend-line-tile:not(.active-line) .legend-line-code {
+  filter: none; opacity: 1;
+}
+/* Selezione: anello attorno alla tile (non al codice) */
+.legend-lines--grid .legend-line-tile { border: 0; }
+.legend-lines--grid .legend-line-tile.active-line {
+  border: 0;
+  box-shadow:
+    0 0 0 3px color-mix(in srgb, var(--line-color) 75%, #fff),
+    0 6px 16px color-mix(in srgb, var(--line-color) 40%, transparent);
+}
+.legend-lines--grid .legend-line-tile.active-line .legend-line-code { box-shadow: none; }
+
 .legend-lines--list .legend-line-code { width: 44px; height: 44px; border-radius: 50%; font-size: 15px; }
 
 /* Line meta label: hidden in grid (badge only), shown in list (fills empty space) */
