@@ -75,6 +75,29 @@
   --legend-active-ring:        rgba(0,0,0,0.72);
 }
 
+/* Glossy: la modalità giorno usa la STESSA palette dell'interfaccia notturna
+   (pannelli/superfici scure glossy). Cambia solo la mappa (tile chiare). */
+:root[data-skin="modern"][data-theme="light"] {
+  --bg:              #0f1117;
+  --surface:         #1a1f2e;
+  --surface-card:    #1f2937;
+  --surface-hover:   #2d3748;
+  --surface-inactive: rgba(255,255,255,0.07);
+  --border:          rgba(255,255,255,0.09);
+  --text-primary:    #f1f5f9;
+  --text-secondary:  #94a3b8;
+  --text-muted:      #64748b;
+  --accent-warn:     #fbbf24;
+
+  --legend-scroll-track:        rgba(255,255,255,0.04);
+  --legend-scroll-thumb:        rgba(255,255,255,0.18);
+  --legend-scroll-thumb-hover:  rgba(255,255,255,0.30);
+  --legend-tile-text:           #ffffff;
+  --legend-active-ring:         rgba(255,255,255,0.9);
+
+  --selected-line-chip-ring:    rgba(255,255,255,0.95);
+}
+
 /* --- Base reset --- */
 *, *::before, *::after { box-sizing: border-box; }
 
@@ -1098,8 +1121,8 @@ input:focus-visible,
   display: flex; flex-wrap: wrap; gap: 8px;
 }
 .info-line-chip {
-  display: inline-flex; align-items: center; gap: 5px;
-  padding: 6px 10px 6px 6px;
+  display: inline-flex; align-items: center; gap: 7px;
+  padding: 5px 8px 5px 11px;
   border-radius: 24px;
   border: 2px solid transparent;
   cursor: pointer;
@@ -1113,13 +1136,21 @@ input:focus-visible,
 }
 .info-line-chip-code {
   font-size: 13px; font-weight: 800; color: #fff;
-  min-width: 22px; text-align: center;
+  min-width: 16px; text-align: center;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.25);
 }
+/* Conteggio bus: badge con icona bus + numero, anello bianco */
 .info-line-chip-count {
-  font-size: 11px; font-weight: 700; color: rgba(255,255,255,0.85);
-  background: rgba(0,0,0,0.18); border-radius: 10px;
-  padding: 1px 6px;
+  display: inline-flex; align-items: center; justify-content: center;
+  gap: 3px;
+  min-width: 20px; height: 20px; padding: 0 7px;
+  border-radius: 999px;
+  background: rgba(0,0,0,0.28);
+  color: #fff; font-size: 11px; font-weight: 800;
+  line-height: 1;
+  box-shadow: inset 0 0 0 1.5px rgba(255,255,255,0.55);
 }
+.info-chip-bus-icon { width: 11px; height: 11px; flex: 0 0 auto; opacity: 0.95; }
 
 /* =====================================================
    TOAST NOTIFICATION

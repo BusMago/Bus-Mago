@@ -220,7 +220,6 @@ class BusMagoApp {
         abortController: null
       },
       isHardRefreshing: false,
-      isRefreshing: false, // Flag for normal refresh animation
       wakeLock: null,
       justResumedFromBackground: false // Flag to force fresh data on first refresh after resume
     };
@@ -1388,19 +1387,22 @@ class BusMagoApp {
   }
 
   deselectVehicle() {
-    if (this.state.selectedVehicleKey) {
+    const hadVehicle = !!this.state.selectedVehicleKey;
+    const hadInfoLine = !!(this.state.infoPanel && this.state.infoPanel.selectedInfoLine);
+    if (!hadVehicle && !hadInfoLine) return;
+    if (hadVehicle) {
       this.releaseWakeLock();
       this.state.selectedVehicleKey = null;
       if (this.state.departures) this.state.departures.collapsed = true;
-      if (this.state.infoPanel) {
-        this.state.infoPanel.selectedBus = null;
-        this.state.infoPanel.selectedTrack = null;
-        this.state.infoPanel.finishedTrip = false;
-        this.state.infoPanel.selectedInfoLine = null;
-      }
-      this.renderInfoPanel();
-      this.updateBusMarkers(this.state.lastEnrichedBuses);
     }
+    if (this.state.infoPanel) {
+      this.state.infoPanel.selectedBus = null;
+      this.state.infoPanel.selectedTrack = null;
+      this.state.infoPanel.finishedTrip = false;
+      this.state.infoPanel.selectedInfoLine = null;
+    }
+    this.renderInfoPanel();
+    this.updateBusMarkers(this.state.lastEnrichedBuses);
   }
 
   initUserLocation() {
@@ -2201,10 +2203,6 @@ class BusMagoApp {
       }
     }
     
-    // Start refresh animation!
-    this.state.isRefreshing = true;
-    this.updateRefreshButtonVisual();
-
     if (this.state.refreshControl.abortController) {
       this.state.refreshControl.abortController.abort();
     }
@@ -2385,18 +2383,29 @@ class BusMagoApp {
             const key = b.key || b.vehicle || `NO_VEHICLE_${b.coords[0]}_${b.coords[1]}`;
             const prev = this.state.vehicleState[key];
             let heading = (prev && typeof prev.heading === 'number') ? prev.heading : 0;
+            let headingFromMove = prev ? !!prev.headingFromMove : false;
             const moved = !prev || prev.lat !== b.coords[0] || prev.lon !== b.coords[1];
-            
-            if (prev && moved) {
+
+            if (prev && prev.lat !== undefined && (prev.lat !== b.coords[0] || prev.lon !== b.coords[1])) {
+                // Movimento osservato fra due cicli: è l'orientamento più affidabile.
                 heading = this.computeBearing(prev.lat, prev.lon, b.coords[0], b.coords[1]);
+                headingFromMove = true;
+            } else if (!headingFromMove) {
+                // Prima apparizione (o vettura ancora ferma): non sappiamo ancora da
+                // dove arriva, ma sappiamo dove va. Orientiamo l'icona lungo il
+                // tracciato verso la destinazione, così non punta mai "in su" di
+                // default. Resta valido finché il movimento reale non subentra.
+                const t = this.computeTrackHeading(b.lineCode, b.destination, b.coords[0], b.coords[1]);
+                if (t != null) heading = t;
             }
-            
-            this.state.vehicleState[key] = { 
-              lat: b.coords[0], 
-              lon: b.coords[1], 
-              heading: heading, 
+
+            this.state.vehicleState[key] = {
+              lat: b.coords[0],
+              lon: b.coords[1],
+              heading: heading,
+              headingFromMove: headingFromMove,
               moved: moved,
-              lastEnrichedBus: b 
+              lastEnrichedBus: b
             };
             b.heading = heading;
             b.key = key;
@@ -2441,9 +2450,6 @@ class BusMagoApp {
           this.state.refreshControl.lastAppliedRequestSeq = requestId;
         }
         this.state.refreshControl.inFlight = false;
-        // Stop refresh animation!
-        this.state.isRefreshing = false;
-        this.updateRefreshButtonVisual();
         this.compactStopCache();
         this.scheduleNextRefresh(this.getRefreshIntervalMs());
     }
@@ -2696,8 +2702,12 @@ class BusMagoApp {
           endpoints.push(endMarker);
       }
       this.state.routeEndpointMarkers[trackKey] = endpoints;
-      
+
       this.updateTrackStyles();
+
+      // Il tracciato è appena arrivato: orienta subito le vetture che erano
+      // apparse prima che fosse pronto (così non restano puntate "in su").
+      this.reorientStationaryBuses();
   }
 
   updateBusMarkers(buses) {
@@ -2724,8 +2734,13 @@ class BusMagoApp {
         newKeys.add(b.key);
 
         const paletteColor = this.getLegendLineColor(b.lineCode);
-        const labelTextColor = this.state.theme.mode === 'light' ? '#111' : '#fff';
-        
+        const isClassicSkin = this.state.skin.mode === 'classic';
+        const isLightDay = this.state.theme.mode === 'light';
+        // TEST palette — Glossy + giorno: goccia pastello + numero scuro unico
+        // (un solo colore-testo per tutte le linee, alto contrasto sui pastelli).
+        const glossyDay = !isClassicSkin && isLightDay;
+        const labelTextColor = glossyDay ? '#262a36' : (isLightDay ? '#111' : '#fff');
+
         let isSelected = false;
         if (this.state.selectedVehicleKey) {
             if (this.state.selectedVehicleKey.startsWith("TRACK_")) {
@@ -2738,7 +2753,9 @@ class BusMagoApp {
         }
 
         let opacity = (this.state.selectedVehicleKey && !isSelected) ? 0.3 : 1.0;
-        if (this.state.infoPanel.selectedInfoLine && b.lineCode !== this.state.infoPanel.selectedInfoLine) {
+        // Il dimming per linea-info vale solo quando NON c'è una vettura selezionata
+        // (la selezione vettura ha la precedenza sulla sovrimpressione di linea).
+        if (!this.state.selectedVehicleKey && this.state.infoPanel.selectedInfoLine && b.lineCode !== this.state.infoPanel.selectedInfoLine) {
           opacity = 0.35;
         }
         const heading = typeof b.heading === 'number' ? b.heading : 0;
@@ -2746,10 +2763,16 @@ class BusMagoApp {
         const selectionBorderColor = this.state.theme.mode === 'light' ? '#111' : '#FFF';
         const borderStyle = isSelected ? `border: 3px solid ${selectionBorderColor};` : '';
         const labelText = showLabel ? b.lineLabel : '';
-        // Classic skin: goccia a tinta piena (niente glossy). Modern: gradiente lucido.
-        const dropBg = this.state.skin.mode === 'classic'
-          ? paletteColor
-          : `radial-gradient(120% 120% at 32% 22%, rgba(255,255,255,0.4) 0%, rgba(255,255,255,0) 46%), linear-gradient(150deg, color-mix(in srgb, ${paletteColor} 76%, #fff) 0%, ${paletteColor} 54%, color-mix(in srgb, ${paletteColor} 86%, #000) 100%)`;
+        // Classic: tinta piena. Glossy notte: gradiente lucido saturo.
+        // Glossy giorno (TEST): goccia pastello (colore linea molto schiarito).
+        let dropBg;
+        if (isClassicSkin) {
+          dropBg = paletteColor;
+        } else if (glossyDay) {
+          dropBg = `radial-gradient(120% 120% at 32% 22%, rgba(255,255,255,0.7) 0%, rgba(255,255,255,0) 52%), linear-gradient(150deg, color-mix(in srgb, ${paletteColor} 34%, #fff) 0%, color-mix(in srgb, ${paletteColor} 50%, #fff) 55%, color-mix(in srgb, ${paletteColor} 64%, #fff) 100%)`;
+        } else {
+          dropBg = `radial-gradient(120% 120% at 32% 22%, rgba(255,255,255,0.4) 0%, rgba(255,255,255,0) 46%), linear-gradient(150deg, color-mix(in srgb, ${paletteColor} 76%, #fff) 0%, ${paletteColor} 54%, color-mix(in srgb, ${paletteColor} 86%, #000) 100%)`;
+        }
         // Teardrop: border-radius 50% 50% 50% 0 has a sharp corner at bottom-left
         // (pointing SW = 225°). Rotating by heading+135° aims that point toward the
         // travel direction. With no heading we keep a plain circle (no false point).
@@ -3125,9 +3148,10 @@ class BusMagoApp {
         ? color
         : `radial-gradient(120% 120% at 30% 20%, rgba(255,255,255,0.35) 0%, rgba(255,255,255,0) 48%), linear-gradient(150deg, color-mix(in srgb, ${color} 78%, #fff) 0%, ${color} 58%, color-mix(in srgb, ${color} 88%, #000) 100%)`;
       const selectedClass = isSelected ? ' info-chip--selected' : '';
+      const busIcon = `<svg class="info-chip-bus-icon" viewBox="0 0 24 24" width="11" height="11" fill="currentColor" aria-hidden="true"><path d="M4 16c0 .88.39 1.67 1 2.22V20a1 1 0 0 0 1 1h1a1 1 0 0 0 1-1v-1h8v1a1 1 0 0 0 1 1h1a1 1 0 0 0 1-1v-1.78c.61-.55 1-1.34 1-2.22V6c0-3.5-3.58-4-8-4S4 2.5 4 6v10zm3.5 1a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3zm9 0a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3zM18 11H6V6h12v5z"/></svg>`;
       return `<button type="button" class="info-line-chip${selectedClass}" data-info-line="${this.escapeHtmlAttribute(lc)}" style="background:${bg}" aria-pressed="${isSelected}">
       <span class="info-line-chip-code">${this.escapeHtmlAttribute(label)}</span>
-      <span class="info-line-chip-count">${count}</span>
+      <span class="info-line-chip-count">${busIcon}${count}</span>
     </button>`;
     }).join('');
     return `<div class="info-chips-row">${chips}</div>`;
@@ -3583,6 +3607,47 @@ class BusMagoApp {
   shouldShowBusLabel(zoom) {
     const z = typeof zoom === 'number' ? zoom : CONFIG.MAP.DEFAULT_ZOOM;
     return z >= (CONFIG.MAP.DEFAULT_ZOOM + 1);
+  }
+
+  // Heading dedotto dalla geometria del tracciato già scaricato per quella
+  // linea+destinazione: proietta la vettura sul vertice più vicino della polyline
+  // e restituisce la direzione del segmento VERSO la fine (il capolinea di
+  // destinazione). Null se il tracciato non è ancora disponibile.
+  computeTrackHeading(lineCode, destination, lat, lon) {
+    const layer = this.state.routeLayers[`${lineCode}_${normalizeKey(destination)}`];
+    if (!layer || typeof layer.getLatLngs !== 'function') return null;
+    const pts = layer.getLatLngs();
+    if (!Array.isArray(pts) || pts.length < 2) return null;
+
+    let bestI = 0;
+    let bestD = Infinity;
+    for (let i = 0; i < pts.length; i++) {
+      const dLat = pts[i].lat - lat;
+      const dLon = pts[i].lng - lon;
+      const d = dLat * dLat + dLon * dLon;
+      if (d < bestD) { bestD = d; bestI = i; }
+    }
+    const a = bestI < pts.length - 1 ? pts[bestI] : pts[bestI - 1];
+    const c = bestI < pts.length - 1 ? pts[bestI + 1] : pts[bestI];
+    return this.computeBearing(a.lat, a.lng, c.lat, c.lng);
+  }
+
+  // Quando un tracciato arriva (async, dopo il primo render), riorienta le
+  // vetture apparse prima che fosse pronto e che non si sono ancora mosse.
+  reorientStationaryBuses() {
+    const buses = this.state.lastEnrichedBuses;
+    if (!Array.isArray(buses) || buses.length === 0) return;
+    let changed = false;
+    buses.forEach(b => {
+      const st = this.state.vehicleState[b.key];
+      if (!st || st.headingFromMove) return;
+      const t = this.computeTrackHeading(b.lineCode, b.destination, b.coords[0], b.coords[1]);
+      if (t == null || t === st.heading) return;
+      st.heading = t;
+      b.heading = t;
+      changed = true;
+    });
+    if (changed) this.updateBusMarkers(buses);
   }
 
   computeBearing(lat1, lon1, lat2, lon2) {
