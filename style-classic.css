@@ -1,0 +1,303 @@
+/* =====================================================
+   Bus Mago — CLASSIC skin
+   Re-skin visivo (look storico/main) attivato da
+   <html data-skin="classic">. Caricato DOPO style.css:
+   le regole qui, prefissate con [data-skin="classic"],
+   vincono per specificità + ordine di sorgente.
+   Struttura/HTML e comportamenti restano quelli moderni.
+   ===================================================== */
+
+/* ---- Variabili (dark, default) ---- */
+:root[data-skin="classic"] {
+  /* Brand storico (blu Bus Mago) */
+  --brand:        #0077ff;
+  --brand-rgb:    0, 119, 255;
+  --brand-strong: #0066dd;
+
+  /* Stati semantici come sul main */
+  --ok:         #2e9e5b;
+  --ok-rgb:     46, 158, 91;
+  --danger:     #dc3545;
+  --danger-rgb: 220, 53, 69;
+  --fav:        #ffd700;
+  --accent-warn: #e6a817;
+
+  /* Superfici "glass" scure */
+  --bg:               #111111;
+  --surface:          rgba(28, 28, 30, 0.92);
+  --surface-card:     rgba(40, 40, 44, 0.92);
+  --surface-hover:    rgba(255, 255, 255, 0.12);
+  --surface-inactive: rgba(255, 255, 255, 0.08);
+  --border:           rgba(255, 255, 255, 0.12);
+  --text-primary:     #eeeeee;
+  --text-secondary:   #b0b0b0;
+  --text-muted:       #888888;
+
+  --legend-scroll-track:       rgba(255,255,255,0.06);
+  --legend-scroll-thumb:       rgba(255,255,255,0.22);
+  --legend-scroll-thumb-hover: rgba(255,255,255,0.34);
+  --legend-tile-text:          #ffffff;
+  --legend-active-ring:        rgba(255,255,255,0.9);
+}
+
+/* ---- Variabili (light) ---- */
+:root[data-skin="classic"][data-theme="light"] {
+  --bg:               #f3f4f6;
+  --surface:          rgba(255, 255, 255, 0.92);
+  --surface-card:     rgba(248, 249, 250, 0.96);
+  --surface-hover:    rgba(0, 0, 0, 0.06);
+  --surface-inactive: rgba(0, 0, 0, 0.05);
+  --border:           rgba(0, 0, 0, 0.12);
+  --text-primary:     #111827;
+  --text-secondary:   #555b66;
+  --text-muted:       #8a8f98;
+  --accent-warn:      #8a5a00;
+
+  --legend-scroll-track:       rgba(0,0,0,0.05);
+  --legend-scroll-thumb:       rgba(0,0,0,0.20);
+  --legend-scroll-thumb-hover: rgba(0,0,0,0.30);
+  --legend-tile-text:          #ffffff;
+  --legend-active-ring:        rgba(0,0,0,0.72);
+}
+
+/* =====================================================
+   Pannelli vetro (blur) — come il glassmorphism del main
+   ===================================================== */
+:root[data-skin="classic"] .info,
+:root[data-skin="classic"] .legend,
+:root[data-skin="classic"] .ctrl-pill,
+:root[data-skin="classic"] .map-search-bar,
+:root[data-skin="classic"] .welcome-modal,
+:root[data-skin="classic"] .toast-notification {
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+/* =====================================================
+   MENU / LEGENDA — port del look storico (main)
+   La struttura HTML è condivisa: qui ridisegniamo tile,
+   gruppi, azioni, chip e pannello selezionate come sul main.
+   ===================================================== */
+
+/* Griglia: 3 colonne, gap come main */
+:root[data-skin="classic"] .legend-lines--grid {
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+
+/* Tile linea: quadrato pieno color linea (niente cerchio, niente glossy) */
+:root[data-skin="classic"] .legend-line-tile {
+  border-radius: 14px;
+  overflow: hidden;
+  border: 1px solid rgba(255,255,255,0.12);
+  box-shadow: 0 6px 18px rgba(0,0,0,0.25);
+}
+:root[data-skin="classic"][data-theme="light"] .legend-line-tile {
+  border-color: rgba(0,0,0,0.10);
+}
+:root[data-skin="classic"] .legend-line-select {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  background: var(--line-color);
+  color: var(--legend-tile-text);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 16px;
+  letter-spacing: 0.4px;
+  gap: 0;
+  padding: 0;
+}
+:root[data-skin="classic"] .legend-line-select:hover  { filter: brightness(1.05); }
+:root[data-skin="classic"] .legend-line-select:active { transform: scale(0.97); }
+
+/* Il codice torna testo semplice (niente badge tondo glossy) */
+:root[data-skin="classic"] .legend-line-code {
+  display: inline-block;
+  width: auto; height: auto;
+  min-width: 0;
+  background: none !important;
+  border-radius: 0;
+  box-shadow: none;
+  filter: none;
+  opacity: 1;
+  font-size: 16px;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+}
+:root[data-skin="classic"] .legend-line-tile:not(.active-line) .legend-line-code {
+  filter: none; opacity: 1;
+}
+/* Selezione: anello attorno all'intera tile, come main */
+:root[data-skin="classic"] .legend-line-tile.active-line {
+  box-shadow: 0 0 0 2px var(--legend-active-ring), 0 8px 22px rgba(0,0,0,0.3);
+}
+:root[data-skin="classic"] .legend-line-tile.active-line .legend-line-code {
+  box-shadow: none;
+}
+
+/* Vista lista: riga color linea, codice a sinistra + nome */
+:root[data-skin="classic"] .legend-lines--list .legend-line-select {
+  aspect-ratio: auto;
+  flex-direction: row;
+  min-height: 50px; height: 50px;
+  justify-content: flex-start;
+  gap: 10px;
+  padding: 0 44px 0 14px;
+}
+:root[data-skin="classic"] .legend-lines--list .legend-line-code {
+  min-width: 40px;
+  text-align: center;
+  font-size: 16px; font-weight: 900;
+}
+:root[data-skin="classic"] .legend-lines--list .legend-line-name > span { color: #fff; }
+:root[data-skin="classic"] .legend-lines--list .legend-line-dirs > span { color: rgba(255,255,255,0.85); }
+:root[data-skin="classic"][data-theme="light"] .legend-lines--list .legend-line-name > span { color: rgba(0,0,0,0.92); }
+:root[data-skin="classic"][data-theme="light"] .legend-lines--list .legend-line-dirs > span { color: rgba(0,0,0,0.7); }
+
+/* Stella preferiti su sfondo colorato → bianca */
+:root[data-skin="classic"] .legend-line-fav { color: var(--legend-tile-text); }
+:root[data-skin="classic"] .legend-line-fav.is-favorite { color: var(--fav); }
+
+/* Chip header (SELEZIONATE & DIREZIONI / LINEE / view toggle) — come main */
+:root[data-skin="classic"] .legend-chip {
+  height: 40px;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,0.10);
+  background: rgba(0,0,0,0.18);
+  color: var(--legend-tile-text);
+}
+:root[data-skin="classic"][data-theme="light"] .legend-chip {
+  border-color: rgba(0,0,0,0.08);
+  background: rgba(0,0,0,0.04);
+}
+
+/* Bottoni gruppo: rettangoli bianchi come main (UNI+FS, BARCOLA 16/9) */
+:root[data-skin="classic"] .legend-group-row {
+  display: flex; flex-direction: row; gap: 10px; margin-bottom: 12px;
+}
+:root[data-skin="classic"] .legend-group-row--centered { justify-content: center; }
+:root[data-skin="classic"] .legend-group-btn {
+  flex: 1 1 0;
+  width: auto;
+  height: 52px;
+  aspect-ratio: auto;
+  padding: 0; margin-bottom: 0;
+  border-radius: 12px;
+  overflow: hidden;
+  background: #ffffff;
+  border: 1px solid rgba(0,0,0,0.18);
+  display: flex; align-items: center; justify-content: center;
+}
+:root[data-skin="classic"] .legend-group-btn.is-active {
+  background: #ffffff;
+  border-color: transparent;
+  box-shadow: 0 0 0 2px var(--brand);
+}
+:root[data-skin="classic"] .legend-group-icon {
+  display: block; max-width: 100%; max-height: 100%; pointer-events: none;
+}
+:root[data-skin="classic"] #legend-group-uni .legend-group-icon {
+  width: 100%; height: auto; transform: scale(1.25); transform-origin: center;
+}
+:root[data-skin="classic"] #legend-group-fs .legend-group-icon {
+  height: calc(100% - 4px); width: auto; transform: scale(1); transform-origin: center;
+}
+:root[data-skin="classic"] #legend-group-barcola {
+  flex: 0 0 calc(50% - 5px);
+  aspect-ratio: 16 / 9;
+  height: auto;
+  border-radius: 12px;
+  overflow: hidden;
+}
+:root[data-skin="classic"] #legend-group-barcola .legend-group-icon {
+  width: 100%; height: 100%; object-fit: cover; object-position: bottom;
+}
+
+/* Pannello SELEZIONATE — tile piatte color linea */
+:root[data-skin="classic"] .selected-line-tile {
+  border-radius: 16px;
+  background: var(--line-color);
+  box-shadow: 0 10px 26px rgba(0,0,0,0.28);
+}
+:root[data-skin="classic"] .selected-line-tile::before { display: none; }
+:root[data-skin="classic"] .selected-line-code {
+  width: 44px; height: auto;
+  border-radius: 0;
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+  text-shadow: 0 2px 8px rgba(0,0,0,0.35);
+}
+
+/* Chip pannello Informazioni (sfondo inline reso solido dal JS) */
+:root[data-skin="classic"] .info-line-chip {
+  border-radius: 12px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.25);
+}
+:root[data-skin="classic"] .info-line-chip.info-chip--selected {
+  border-color: var(--legend-active-ring);
+  box-shadow: 0 0 0 2px var(--legend-active-ring);
+}
+
+/* Fleet chip + badge partenze */
+:root[data-skin="classic"] .fleet-chip { border-radius: 12px; box-shadow: none; }
+:root[data-skin="classic"] .departures-line-badge { border-radius: 8px; }
+:root[data-skin="classic"] .departures-line-badge::before { display: none; }
+
+/* =====================================================
+   Card vettura selezionata — niente gradiente glossy
+   ===================================================== */
+:root[data-skin="classic"] .vehicle-info--glossy {
+  background: var(--surface-card);
+  border: 1px solid var(--border);
+  box-shadow: none;
+}
+:root[data-skin="classic"] .vehicle-info--glossy .info-header { border-bottom-color: var(--border); }
+:root[data-skin="classic"] .vehicle-info--glossy .info-footer { border-top-color: var(--border); }
+:root[data-skin="classic"] .info-line-badge {
+  background: var(--line-color);
+  border-radius: 10px;
+}
+
+/* =====================================================
+   Controlli — pulsanti a tinta piena (no gradienti lucidi)
+   ===================================================== */
+:root[data-skin="classic"] .map-search-menu-btn {
+  background: var(--brand);
+  box-shadow: 0 2px 6px rgba(var(--brand-rgb), 0.4);
+}
+:root[data-skin="classic"] .map-search-menu-btn:hover { filter: brightness(1.08); }
+
+/* =====================================================
+   Modali (benvenuto / installa) — superficie piatta
+   ===================================================== */
+:root[data-skin="classic"] .welcome-modal {
+  background: var(--surface);
+}
+:root[data-skin="classic"] .welcome-step-icon {
+  background: rgba(var(--brand-rgb), 0.18);
+  border: 1px solid rgba(var(--brand-rgb), 0.30);
+}
+:root[data-skin="classic"] .welcome-close-btn {
+  background: var(--brand);
+  box-shadow: 0 4px 12px rgba(var(--brand-rgb), 0.4);
+}
+
+/* =====================================================
+   Marker bus — la goccia a tinta piena è gestita dal JS
+   (dropBg = colore linea quando skin=classic). Qui solo
+   un'ombra più semplice, in stile main.
+   ===================================================== */
+:root[data-skin="classic"] .bus-drop {
+  box-shadow: 0 0 4px rgba(0,0,0,0.5);
+}
+
+/* =====================================================
+   Tile OSM scurite in tema notte (come sul main).
+   La classe è applicata al tile layer solo in classic+dark.
+   ===================================================== */
+.dark-mode-tiles {
+  filter: invert(100%) hue-rotate(180deg) brightness(85%) contrast(90%);
+}
+:root[data-theme="light"] .dark-mode-tiles { filter: none; }

@@ -13,36 +13,72 @@
 <link rel="apple-touch-icon" sizes="180x180" type="image/png" href="img/icona_bus_mago.png"/>
 <link rel="manifest" href="manifest.json"/>
 <link rel="preconnect" href="https://unpkg.com">
+<link rel="preconnect" href="https://a.basemaps.cartocdn.com">
+<link rel="preconnect" href="https://b.basemaps.cartocdn.com">
+<link rel="preconnect" href="https://c.basemaps.cartocdn.com">
 <link rel="preconnect" href="https://a.tile.openstreetmap.org">
 <link rel="preconnect" href="https://b.tile.openstreetmap.org">
 <link rel="preconnect" href="https://c.tile.openstreetmap.org">
 <link rel="preconnect" href="https://realtime.tplfvg.it">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <link rel="stylesheet" href="style.css"/>
+<link rel="stylesheet" href="style-classic.css"/>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" defer></script>
 <script src="lines.js" defer></script>
 <script src="script.js" defer></script>
 </head>
 <body>
-<button id="menu-toggle" class="menu-toggle">☰</button>
+
+<!-- Floating search bar (top-center) — contains menu toggle -->
+<div class="map-search-bar" id="map-search-bar">
+  <svg class="map-search-icon-svg" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+    <circle cx="11" cy="11" r="7"/><line x1="17" y1="17" x2="22" y2="22"/>
+  </svg>
+  <input id="map-search-input" class="map-search-input" type="text" placeholder="Cerca linea o fermata…" autocomplete="off" spellcheck="false" aria-label="Cerca linea o fermata">
+  <button id="menu-toggle" class="map-search-menu-btn" aria-label="Apri pannello linee" title="Apri pannello linee">
+    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true">
+      <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
+    </svg>
+  </button>
+</div>
+
 <div class="info"></div>
 <div id="map"></div>
 <div id="legend" class="legend" style="display: none;"></div>
 
-<div class="map-controls-bottom-right">
-  <button id="refresh-btn" class="map-btn refresh-btn" title="Aggiorna" aria-label="Aggiorna"><svg class="refresh-icon" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.34-5.66"/><path d="M20 4v4h-4"/></svg></button>
-  <button id="theme-toggle-btn" class="map-btn theme-toggle-btn" title="Cambia tema"></button>
-  <button id="recenter-btn" class="map-btn recenter-btn" title="Centra su posizione" aria-label="Centra sulla mia posizione">
-    <svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-      <circle cx="12" cy="12" r="7"></circle>
-      <line x1="12" y1="1" x2="12" y2="4"></line>
-      <line x1="12" y1="20" x2="12" y2="23"></line>
-      <line x1="1" y1="12" x2="4" y2="12"></line>
-      <line x1="20" y1="12" x2="23" y2="12"></line>
-      <circle cx="12" cy="12" r="2.5" fill="currentColor" stroke="none"></circle>
+<!-- Right control pill — all map controls in one surface -->
+<div class="ctrl-pill">
+  <button id="recenter-btn" class="ctrl-pill-btn" title="Centra su posizione" aria-label="Centra sulla mia posizione">
+    <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" fill="currentColor">
+      <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5a2.5 2.5 0 1 1 0-5 2.5 2.5 0 0 1 0 5z"/>
     </svg>
   </button>
-  <button id="help-btn" class="map-btn help-btn" title="Come funziona" aria-label="Come funziona">?</button>
+  <div class="ctrl-pill-divider"></div>
+  <button id="zoom-in-btn" class="ctrl-pill-btn" aria-label="Zoom avanti" title="Zoom avanti">
+    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true">
+      <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+    </svg>
+  </button>
+  <button id="zoom-out-btn" class="ctrl-pill-btn" aria-label="Zoom indietro" title="Zoom indietro">
+    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true">
+      <line x1="5" y1="12" x2="19" y2="12"/>
+    </svg>
+  </button>
+  <div class="ctrl-pill-divider"></div>
+  <button id="theme-toggle-btn" class="ctrl-pill-btn" title="Cambia tema" aria-label="Cambia tema"></button>
+  <button id="refresh-btn" class="ctrl-pill-btn refresh-btn" title="Aggiorna" aria-label="Aggiorna">
+    <svg class="refresh-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <path d="M20 12a8 8 0 1 1-2.34-5.66"/><path d="M20 4v4h-4"/>
+    </svg>
+  </button>
+  <div class="ctrl-pill-divider"></div>
+  <button id="help-btn" class="ctrl-pill-btn" title="Come funziona" aria-label="Come funziona">
+    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <circle cx="12" cy="12" r="10"/>
+      <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/>
+      <line x1="12" y1="17" x2="12.01" y2="17"/>
+    </svg>
+  </button>
 </div>
 
 <div class="map-controls-bottom-left">
@@ -67,8 +103,8 @@
     </div>
     <div class="welcome-steps">
       <div class="welcome-step">
-        <span class="welcome-step-icon">☰</span>
-        <span class="welcome-step-text">Tocca <strong>☰</strong> in alto a destra per aprire il pannello linee</span>
+        <span class="welcome-step-icon">🔍</span>
+        <span class="welcome-step-text">Cerca nella <strong>barra in alto</strong> o tocca il pulsante ≡ per aprire il pannello linee</span>
       </div>
       <div class="welcome-step">
         <span class="welcome-step-icon">🚌</span>

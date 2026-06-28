@@ -36,7 +36,7 @@ const CONFIG = {
   UI: {
     TOAST_DURATION_MS: 3000,
     SMALL_ICON_THRESHOLD: 10,
-    BUS_ICON_SCALE_MAX: 1.2,
+    BUS_ICON_SCALE_MAX: 0.92,
     DIRECTIONS_EMPTY_AFTER_MS: 30000,
   },
   MAP: {
@@ -167,6 +167,10 @@ class BusMagoApp {
         key: 'busmago:theme:v1',
         mode: 'dark'
       },
+      skin: {
+        key: 'busmago:skin:v1',
+        mode: 'classic' // 'classic' (look storico/main, default) | 'modern' (Google 2026 glossy)
+      },
       legend: {
         filterText: '',
         viewMode: 'grid',
@@ -190,7 +194,8 @@ class BusMagoApp {
       infoPanel: {
         selectedBus: null,
         selectedTrack: null,
-        finishedTrip: false
+        finishedTrip: false,
+        selectedInfoLine: null
       },
       lastStopDataMap: null,
       legendPaletteIndexByCode: {},
@@ -480,6 +485,7 @@ class BusMagoApp {
 
   init() {
     this.loadTheme();
+    this.loadSkin();
     this.loadFavorites();
     this.loadDeparturesCollapsed();
     this.initMap();
@@ -720,17 +726,48 @@ class BusMagoApp {
     if (modal) modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
   }
 
-  initMap() {
-    this.state.map = L.map('map', { zoomControl: false, preferCanvas: true }).setView(CONFIG.MAP.DEFAULT_CENTER, CONFIG.MAP.DEFAULT_ZOOM);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { 
-      maxZoom: 19, 
-      attribution: '&copy; OpenStreetMap contributors',
-      className: this.state.theme.mode === 'dark' ? 'dark-mode-tiles' : '',
+  getTileUrl(themeMode, skinMode) {
+    const skin = skinMode || this.state.skin.mode;
+    // Classic skin → tile OSM standard (come sul main, niente variante dark).
+    if (skin === 'classic') {
+      return 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
+    }
+    return themeMode === 'dark'
+      ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
+      : 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png';
+  }
+
+  applyTileLayer() {
+    if (!this.state.map) return;
+    const isClassic = this.state.skin.mode === 'classic';
+    const isDark = this.state.theme.mode === 'dark';
+    const url = this.getTileUrl(this.state.theme.mode, this.state.skin.mode);
+    const attribution = isClassic
+      ? '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+      : '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>';
+    // Classic usa tile OSM (nessuna variante dark nativa): in tema scuro le
+    // scuriamo via filtro CSS, come sul main. Modern usa già le tile CartoDB
+    // dark/light, quindi nessun filtro.
+    const className = (isClassic && isDark) ? 'dark-mode-tiles' : '';
+    if (this.tileLayer) {
+      this.state.map.removeLayer(this.tileLayer);
+      this.tileLayer = null;
+    }
+    this.tileLayer = L.tileLayer(url, {
+      maxZoom: 19,
+      attribution,
+      className,
+      subdomains: isClassic ? 'abc' : 'abcd',
       keepBuffer: 15,
       updateWhenIdle: false,
       updateWhenZooming: false,
       fadeAnimation: false
     }).addTo(this.state.map);
+  }
+
+  initMap() {
+    this.state.map = L.map('map', { zoomControl: false, preferCanvas: true }).setView(CONFIG.MAP.DEFAULT_CENTER, CONFIG.MAP.DEFAULT_ZOOM);
+    this.applyTileLayer();
     L.control.zoom({ position: 'bottomright' }).addTo(this.state.map);
 
     // Smooth bus gliding: disable the CSS transition while the map is moving
@@ -765,19 +802,32 @@ class BusMagoApp {
     const btn = document.getElementById('theme-toggle-btn');
     if (btn) btn.textContent = mode === 'dark' ? '🌙' : '☀️';
 
-    const map = this.state.map;
-    if (map) {
-      map.eachLayer(layer => {
-        if (layer && layer.options && typeof layer.setUrl === 'function') {
-          layer.options.className = mode === 'dark' ? 'dark-mode-tiles' : '';
-          if (layer.getContainer) {
-            const c = layer.getContainer();
-            if (c) c.className = layer.options.className;
-          }
-        }
-      });
+    this.applyTileLayer();
+
+    this.renderLegend();
+    this.updateBusMarkers(this.state.lastEnrichedBuses);
+  }
+
+  loadSkin() {
+    try {
+      const raw = localStorage.getItem(this.state.skin.key);
+      if (raw === 'classic' || raw === 'modern') this.state.skin.mode = raw;
+    } catch {
+    }
+    document.documentElement.dataset.skin = this.state.skin.mode;
+  }
+
+  setSkin(mode) {
+    if (mode !== 'classic' && mode !== 'modern') return;
+    if (this.state.skin.mode === mode) return;
+    this.state.skin.mode = mode;
+    document.documentElement.dataset.skin = mode;
+    try {
+      localStorage.setItem(this.state.skin.key, mode);
+    } catch {
     }
 
+    this.applyTileLayer();
     this.renderLegend();
     this.updateBusMarkers(this.state.lastEnrichedBuses);
   }
@@ -785,6 +835,7 @@ class BusMagoApp {
   updateRefreshButtonVisual() {
     const btn = document.getElementById('refresh-btn');
     if (!btn) return;
+    // Spin ONLY on a user-triggered hard refresh, never on silent auto-refresh.
     if (this.state.isHardRefreshing) {
       btn.classList.add('refreshing');
     } else {
@@ -1037,9 +1088,6 @@ class BusMagoApp {
             if (willShow) this.renderLegend();
         });
 
-        // Esc chiude la legenda e riporta il focus sul toggle. I modali
-        // (welcome/install) fermano la propagazione dell'Esc, quindi questo
-        // handler scatta solo quando nessun modale è aperto.
         document.addEventListener('keydown', (e) => {
             if (e.key !== 'Escape') return;
             if (this.isLegendVisible()) {
@@ -1047,6 +1095,42 @@ class BusMagoApp {
                 menuToggle.focus();
             }
         });
+    }
+
+    // Floating search bar — opens legend and filters lines
+    const mapSearchInput = document.getElementById('map-search-input');
+    if (mapSearchInput) {
+      mapSearchInput.addEventListener('input', (e) => {
+        this.state.legend.filterText = e.target.value;
+        if (!this.isLegendVisible()) {
+          this.legendDiv.style.display = 'block';
+        }
+        this.renderLegend({ skipInfoPanel: true });
+      });
+      mapSearchInput.addEventListener('focus', () => {
+        if (!this.isLegendVisible()) {
+          this.legendDiv.style.display = 'block';
+          this.renderLegend();
+        }
+      });
+    }
+
+    // Custom zoom buttons (replace Leaflet built-in)
+    const zoomInBtn = document.getElementById('zoom-in-btn');
+    if (zoomInBtn) {
+      zoomInBtn.addEventListener('click', (e) => {
+        e.preventDefault(); e.stopPropagation();
+        this.hapticTap();
+        if (this.state.map) this.state.map.zoomIn();
+      });
+    }
+    const zoomOutBtn = document.getElementById('zoom-out-btn');
+    if (zoomOutBtn) {
+      zoomOutBtn.addEventListener('click', (e) => {
+        e.preventDefault(); e.stopPropagation();
+        this.hapticTap();
+        if (this.state.map) this.state.map.zoomOut();
+      });
     }
 
     // Handle app visibility changes:
@@ -1087,11 +1171,30 @@ class BusMagoApp {
     if (this.infoDiv) {
       this.infoDiv.addEventListener('click', (e) => {
         const t = e && e.target ? e.target : null;
-        const btn = t && t.closest ? t.closest('#departures-toggle') : null;
-        if (!btn) return;
-        e.preventDefault();
-        e.stopPropagation();
-        this.toggleDeparturesCollapsed();
+        const chipBtn = t && t.closest ? t.closest('.info-line-chip[data-info-line]') : null;
+        if (chipBtn) {
+          e.preventDefault();
+          e.stopPropagation();
+          const lc = chipBtn.dataset.infoLine;
+          if (lc === this.state.infoPanel.selectedInfoLine) {
+            this.clearInfoLine();
+          } else {
+            this.selectInfoLine(lc);
+          }
+          return;
+        }
+        if (t && t.closest && t.closest('#departures-toggle')) {
+          e.preventDefault();
+          e.stopPropagation();
+          this.toggleDeparturesCollapsed();
+          return;
+        }
+        if (t && t.closest && (t.closest('#vehicle-deselect-btn') || t.closest('#departures-deselect-btn'))) {
+          e.preventDefault();
+          e.stopPropagation();
+          this.deselectVehicle();
+          return;
+        }
       });
     }
   }
@@ -1284,18 +1387,22 @@ class BusMagoApp {
   }
 
   deselectVehicle() {
-    if (this.state.selectedVehicleKey) {
+    const hadVehicle = !!this.state.selectedVehicleKey;
+    const hadInfoLine = !!(this.state.infoPanel && this.state.infoPanel.selectedInfoLine);
+    if (!hadVehicle && !hadInfoLine) return;
+    if (hadVehicle) {
       this.releaseWakeLock();
       this.state.selectedVehicleKey = null;
       if (this.state.departures) this.state.departures.collapsed = true;
-      if (this.state.infoPanel) {
-        this.state.infoPanel.selectedBus = null;
-        this.state.infoPanel.selectedTrack = null;
-        this.state.infoPanel.finishedTrip = false;
-      }
-      this.renderInfoPanel();
-      this.updateBusMarkers(this.state.lastEnrichedBuses);
     }
+    if (this.state.infoPanel) {
+      this.state.infoPanel.selectedBus = null;
+      this.state.infoPanel.selectedTrack = null;
+      this.state.infoPanel.finishedTrip = false;
+      this.state.infoPanel.selectedInfoLine = null;
+    }
+    this.renderInfoPanel();
+    this.updateBusMarkers(this.state.lastEnrichedBuses);
   }
 
   initUserLocation() {
@@ -1376,7 +1483,7 @@ class BusMagoApp {
     const wasSearchFocused = !!(activeEl && activeEl.id === 'legend-search');
     const searchSelStart = wasSearchFocused ? activeEl.selectionStart : null;
     const searchSelEnd = wasSearchFocused ? activeEl.selectionEnd : null;
-    let html = "";
+    let html = '<div class="sheet-handle" aria-hidden="true"></div>';
     if (this.state.uiTimers.directionsStatusTimeout) {
       clearTimeout(this.state.uiTimers.directionsStatusTimeout);
       this.state.uiTimers.directionsStatusTimeout = null;
@@ -1391,8 +1498,16 @@ class BusMagoApp {
     const svgList = `<svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><g fill="currentColor"><circle cx="6" cy="6" r="1.5"/><rect x="9" y="5" width="12" height="2" rx="1"/><circle cx="6" cy="12" r="1.5"/><rect x="9" y="11" width="12" height="2" rx="1"/><circle cx="6" cy="18" r="1.5"/><rect x="9" y="17" width="12" height="2" rx="1"/></g></svg>`;
     const iconSvg = iconTarget === 'list' ? svgList : svgGrid;
 
-    html += `<div class="legend-search-row">
-              <input id="legend-search" type="text" placeholder="Cerca linea..." value="${this.escapeHtmlAttribute(filterValue)}" class="legend-search">
+    // Search is handled by the external #map-search-input in the floating search bar
+
+    // Aspetto (skin) toggle: Moderno | Classico
+    const skinMode = this.state.skin.mode === 'classic' ? 'classic' : 'modern';
+    html += `<div class="legend-skin-row">
+              <span class="legend-skin-label">Aspetto</span>
+              <div class="legend-skin-toggle" role="group" aria-label="Scegli aspetto">
+                <button type="button" class="legend-skin-opt ${skinMode === 'classic' ? 'is-active' : ''}" data-skin-opt="classic" aria-pressed="${skinMode === 'classic' ? 'true' : 'false'}">Classico</button>
+                <button type="button" class="legend-skin-opt ${skinMode === 'modern' ? 'is-active' : ''}" data-skin-opt="modern" aria-pressed="${skinMode === 'modern' ? 'true' : 'false'}">Glossy</button>
+              </div>
             </div>`;
 
     html += `<button id="favorites-only-btn" class="legend-action-btn legend-action-toggle ${favoritesOnly ? 'is-active' : ''}" type="button" aria-pressed="${favoritesOnly ? 'true' : 'false'}">PREFERITI</button>`;
@@ -1407,13 +1522,23 @@ class BusMagoApp {
     const fsActive = groupKeys.has('FS');
     const barcolaActive = groupKeys.has('BARCOLA');
     html += `<hr class="legend-grid-separator">`;
-    html += `<div class="legend-group-row">
-              <button id="legend-group-uni" class="legend-action-btn legend-action-toggle legend-group-btn ${uniActive ? 'is-active' : ''}" type="button" aria-label="Gruppo UNI" aria-pressed="${uniActive ? 'true' : 'false'}"><img class="legend-group-icon" src="img/icona_uni.webp" alt=""></button>
-              <button id="legend-group-fs" class="legend-action-btn legend-action-toggle legend-group-btn ${fsActive ? 'is-active' : ''}" type="button" aria-label="Gruppo FS" aria-pressed="${fsActive ? 'true' : 'false'}"><img class="legend-group-icon" src="img/icona_fs.webp" alt=""></button>
-            </div>
-            <div class="legend-group-row legend-group-row--centered">
-              <button id="legend-group-barcola" class="legend-action-btn legend-action-toggle legend-group-btn ${barcolaActive ? 'is-active' : ''}" type="button" aria-label="Gruppo BARCOLA" aria-pressed="${barcolaActive ? 'true' : 'false'}"><img class="legend-group-icon" src="img/barcola.webp" alt=""></button>
-            </div>`;
+    if (skinMode === 'classic') {
+      // Layout storico (main): UNI+FS su una riga, BARCOLA centrata sotto (16/9)
+      html += `<div class="legend-group-row">
+                <button id="legend-group-uni" class="legend-action-btn legend-action-toggle legend-group-btn ${uniActive ? 'is-active' : ''}" type="button" aria-label="Gruppo UNI" aria-pressed="${uniActive ? 'true' : 'false'}"><img class="legend-group-icon" src="img/icona_uni.webp" alt=""></button>
+                <button id="legend-group-fs" class="legend-action-btn legend-action-toggle legend-group-btn ${fsActive ? 'is-active' : ''}" type="button" aria-label="Gruppo FS" aria-pressed="${fsActive ? 'true' : 'false'}"><img class="legend-group-icon" src="img/icona_fs.webp" alt=""></button>
+              </div>
+              <div class="legend-group-row legend-group-row--centered">
+                <button id="legend-group-barcola" class="legend-action-btn legend-action-toggle legend-group-btn ${barcolaActive ? 'is-active' : ''}" type="button" aria-label="Gruppo BARCOLA" aria-pressed="${barcolaActive ? 'true' : 'false'}"><img class="legend-group-icon" src="img/barcola.webp" alt=""></button>
+              </div>`;
+    } else {
+      // Layout glossy: tre cerchi a tutta larghezza
+      html += `<div class="legend-group-row">
+                <button id="legend-group-uni" class="legend-group-btn ${uniActive ? 'is-active' : ''}" type="button" aria-label="Gruppo UNI" aria-pressed="${uniActive ? 'true' : 'false'}"><img class="legend-group-icon" src="img/icona_uni.webp" alt=""></button>
+                <button id="legend-group-fs" class="legend-group-btn ${fsActive ? 'is-active' : ''}" type="button" aria-label="Gruppo FS" aria-pressed="${fsActive ? 'true' : 'false'}"><img class="legend-group-icon" src="img/icona_fs.webp" alt=""></button>
+                <button id="legend-group-barcola" class="legend-group-btn ${barcolaActive ? 'is-active' : ''}" type="button" aria-label="Gruppo BARCOLA" aria-pressed="${barcolaActive ? 'true' : 'false'}"><img class="legend-group-icon" src="img/barcola.webp" alt=""></button>
+              </div>`;
+    }
     html += `<hr class="legend-grid-separator">`;
 
     const activeLineCodes = Object.keys(this.state.lineVisibility).filter(k => this.state.lineVisibility[k] === true);
@@ -1543,26 +1668,34 @@ class BusMagoApp {
 
     // Lines
     html += `<div class="legend-lines legend-lines--${viewMode}">`;
-    let separatorAdded = false;
-    const orderedLines = Array.isArray(linesConfig) ? [...linesConfig] : [];
-    const idx17 = orderedLines.findIndex(l => l && l.code === '17');
-    const idx17s = orderedLines.findIndex(l => l && l.code === '17/');
+    const NIGHT_CODES = ["A", "B", "C", "D"];
+    const nowHour = new Date().getHours();
+    const isNightTime = nowHour >= 22 || nowHour < 6;
+    const rawLines = Array.isArray(linesConfig) ? [...linesConfig] : [];
+    const idx17 = rawLines.findIndex(l => l && l.code === '17');
+    const idx17s = rawLines.findIndex(l => l && l.code === '17/');
     if (idx17 !== -1 && idx17s !== -1 && idx17 > idx17s) {
-      const tmp = orderedLines[idx17];
-      orderedLines[idx17] = orderedLines[idx17s];
-      orderedLines[idx17s] = tmp;
+      const tmp = rawLines[idx17]; rawLines[idx17] = rawLines[idx17s]; rawLines[idx17s] = tmp;
     }
+    // At night, move night lines to the top; by day keep them at the bottom
+    const nightLines = rawLines.filter(l => l && NIGHT_CODES.includes(l.code));
+    const dayLines   = rawLines.filter(l => l && !NIGHT_CODES.includes(l.code) && l.code !== "777");
+    const orderedLines = isNightTime ? [...nightLines, ...dayLines] : [...dayLines, ...nightLines];
 
+    let separatorAdded = false;
     orderedLines.forEach(l => {
-      // Add separator before night lines
-      if (!separatorAdded && ["A", "B", "C", "D"].includes(l.code)) {
-        html += '<hr class="legend-grid-separator">';
-        separatorAdded = true;
-      }
-      
-      // Add separator before 777
-      if (l.code === "777") {
+      if (l.code === "777") return; // Easter egg line hidden from menu
+      // Separator between night and day lines
+      if (isNightTime) {
+        if (!separatorAdded && !NIGHT_CODES.includes(l.code)) {
           html += '<hr class="legend-grid-separator">';
+          separatorAdded = true;
+        }
+      } else {
+        if (!separatorAdded && NIGHT_CODES.includes(l.code)) {
+          html += '<hr class="legend-grid-separator">';
+          separatorAdded = true;
+        }
       }
 
       const isFavorite = this.state.favorites.set.has(l.code);
@@ -1579,10 +1712,18 @@ class BusMagoApp {
       const title = this.escapeHtmlAttribute(l.label || l.code);
       const pressed = this.state.lineVisibility[l.code] ? 'true' : 'false';
       const tileColor = this.getLegendLineColor(l.code);
+      const dirsArr = directionsList(l.directions);
+      const dirsText = dirsArr.join(' • ');
+      const hasLabel = l.label && l.label !== l.code;
+      const lineName = hasLabel ? l.label : (dirsText || l.code);
+      const subText = hasLabel ? dirsText : '';
+      const listMeta = viewMode === 'list'
+        ? `<span class="legend-line-meta"><span class="legend-line-name"><span>${this.escapeHtmlAttribute(lineName)}</span></span>${subText ? `<span class="legend-line-dirs"><span>${this.escapeHtmlAttribute(subText)}</span></span>` : ''}</span>`
+        : '';
       html += `<div class="legend-line-tile ${activeClass}" style="--line-color:${tileColor};" title="${title}">
                 <button type="button" class="legend-line-select" data-key="${safeKey}" aria-pressed="${pressed}">
                   <span class="legend-line-code">${this.escapeHtmlAttribute(l.code)}</span>
-                  ${viewMode === 'grid' ? `<span class="legend-line-meta">${this.escapeHtmlAttribute(directionsList(l.directions).length ? directionsList(l.directions).join(' • ') : (l.label || l.code))}</span>` : ''}
+                  ${listMeta}
                 </button>
                 <button type="button" class="fav-btn legend-line-fav ${favClass}" data-fav="${safeKey}" aria-label="Preferito ${title}">${favSymbol}</button>
               </div>`;
@@ -1609,6 +1750,40 @@ class BusMagoApp {
     // Add Listeners
     this.setupLegendListeners();
     if (!skipInfoPanel) this.renderInfoPanel();
+    if (viewMode === 'list') this._initMarqueeItems();
+  }
+
+  _initMarqueeItems() {
+    // Continuous ticker: duplicate text so the loop is seamless (span = [text][gap][text]),
+    // animate translateX(0 → -50%) at a fixed pixel/s speed so all items scroll equally fast.
+    const SPEED_PX_S = 38;   // pixels per second — same for every item
+    const GAP = '    •    '; // "    •    "
+    requestAnimationFrame(() => {
+      const wrappers = this.legendDiv
+        ? this.legendDiv.querySelectorAll('.legend-line-name, .legend-line-dirs')
+        : [];
+      wrappers.forEach(wrapper => {
+        const span = wrapper.querySelector('span');
+        if (!span) return;
+        // Reset to plain text before measuring (strip any previous duplication)
+        if (span._tickerOriginal !== undefined) {
+          span.textContent = span._tickerOriginal;
+        }
+        span.classList.remove('scrolling');
+        span.style.removeProperty('--ticker-dur');
+        const textW = span.scrollWidth;
+        const containerW = wrapper.clientWidth;
+        if (textW <= containerW + 4) return; // fits — no ticker needed
+        // Store original and duplicate: [text][gap][text]
+        span._tickerOriginal = span.textContent;
+        span.textContent = span._tickerOriginal + GAP + span._tickerOriginal;
+        // One "cycle" = scrollWidth/2 pixels (one copy + one gap)
+        const oneCycleW = span.scrollWidth / 2;
+        const dur = oneCycleW / SPEED_PX_S;
+        span.style.setProperty('--ticker-dur', `${dur.toFixed(2)}s`);
+        span.classList.add('scrolling');
+      });
+    });
   }
 
   preserveLegendScroll(anchorEl, action) {
@@ -1680,6 +1855,14 @@ class BusMagoApp {
         this.renderLegend({ skipInfoPanel: true });
       });
     }
+
+    this.legendDiv.querySelectorAll('[data-skin-opt]').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        this.setSkin(btn.dataset.skinOpt);
+      });
+    });
 
     const favoritesOnlyBtn = document.getElementById('favorites-only-btn');
     if (favoritesOnlyBtn) {
@@ -2537,8 +2720,10 @@ class BusMagoApp {
 
     const activeLineCount = Object.keys(this.state.lineVisibility).filter(k => this.state.lineVisibility[k] === true).length;
     const useSmallIcons = activeLineCount >= CONFIG.UI.SMALL_ICON_THRESHOLD;
-    const iconSize = useSmallIcons ? [28, 28] : [40, 40];
-    const iconAnchor = useSmallIcons ? [14, 14] : [20, 20];
+    // Teardrop ("goccia") marker — square box, border-radius makes the drop shape
+    const dropSize = useSmallIcons ? 30 : 44;
+    const iconSize = [dropSize, dropSize];
+    const iconAnchor = [Math.floor(dropSize / 2), Math.floor(dropSize / 2)];
     const sizeClass = useSmallIcons ? 'small' : 'large';
 
     if (buses && buses.length > 0) {
@@ -2549,8 +2734,13 @@ class BusMagoApp {
         newKeys.add(b.key);
 
         const paletteColor = this.getLegendLineColor(b.lineCode);
-        const labelTextColor = this.state.theme.mode === 'light' ? '#111' : '#fff';
-        
+        const isClassicSkin = this.state.skin.mode === 'classic';
+        const isLightDay = this.state.theme.mode === 'light';
+        // TEST palette — Glossy + giorno: goccia pastello + numero scuro unico
+        // (un solo colore-testo per tutte le linee, alto contrasto sui pastelli).
+        const glossyDay = !isClassicSkin && isLightDay;
+        const labelTextColor = glossyDay ? '#262a36' : (isLightDay ? '#111' : '#fff');
+
         let isSelected = false;
         if (this.state.selectedVehicleKey) {
             if (this.state.selectedVehicleKey.startsWith("TRACK_")) {
@@ -2562,13 +2752,34 @@ class BusMagoApp {
             }
         }
 
-        const opacity = (this.state.selectedVehicleKey && !isSelected) ? 0.3 : 1.0;
+        let opacity = (this.state.selectedVehicleKey && !isSelected) ? 0.3 : 1.0;
+        // Il dimming per linea-info vale solo quando NON c'è una vettura selezionata
+        // (la selezione vettura ha la precedenza sulla sovrimpressione di linea).
+        if (!this.state.selectedVehicleKey && this.state.infoPanel.selectedInfoLine && b.lineCode !== this.state.infoPanel.selectedInfoLine) {
+          opacity = 0.35;
+        }
         const heading = typeof b.heading === 'number' ? b.heading : 0;
+        const hasHeading = typeof b.heading === 'number';
         const selectionBorderColor = this.state.theme.mode === 'light' ? '#111' : '#FFF';
         const borderStyle = isSelected ? `border: 3px solid ${selectionBorderColor};` : '';
-        const opacityStyle = `opacity: ${opacity};`;
         const labelText = showLabel ? b.lineLabel : '';
-        const iconHtml = `<div class="bus-icon ${sizeClass}" style="background-color: ${paletteColor}; transform: rotate(${heading + 135}deg) scale(${zoomScale}); ${borderStyle} ${opacityStyle}"><span style="display:inline-block; transform: rotate(${-(heading + 135)}deg); color: ${labelTextColor}; opacity: ${showLabel ? 1 : 0};">${labelText}</span></div>`;
+        // Classic: tinta piena. Glossy notte: gradiente lucido saturo.
+        // Glossy giorno (TEST): goccia pastello (colore linea molto schiarito).
+        let dropBg;
+        if (isClassicSkin) {
+          dropBg = paletteColor;
+        } else if (glossyDay) {
+          dropBg = `radial-gradient(120% 120% at 32% 22%, rgba(255,255,255,0.7) 0%, rgba(255,255,255,0) 52%), linear-gradient(150deg, color-mix(in srgb, ${paletteColor} 34%, #fff) 0%, color-mix(in srgb, ${paletteColor} 50%, #fff) 55%, color-mix(in srgb, ${paletteColor} 64%, #fff) 100%)`;
+        } else {
+          dropBg = `radial-gradient(120% 120% at 32% 22%, rgba(255,255,255,0.4) 0%, rgba(255,255,255,0) 46%), linear-gradient(150deg, color-mix(in srgb, ${paletteColor} 76%, #fff) 0%, ${paletteColor} 54%, color-mix(in srgb, ${paletteColor} 86%, #000) 100%)`;
+        }
+        // Teardrop: border-radius 50% 50% 50% 0 has a sharp corner at bottom-left
+        // (pointing SW = 225°). Rotating by heading+135° aims that point toward the
+        // travel direction. With no heading we keep a plain circle (no false point).
+        // The wrapper rotates+scales; the number counter-rotates to stay upright.
+        const dropRot = hasHeading ? (heading + 135) : 0;
+        const dropRadius = hasHeading ? '50% 50% 50% 0' : '50%';
+        const iconHtml = `<div class="bus-marker-wrap" style="transform:rotate(${dropRot}deg) scale(${zoomScale});opacity:${opacity}"><div class="bus-drop ${sizeClass}" style="background:${dropBg};border-radius:${dropRadius};${borderStyle}"><span style="transform:rotate(${-dropRot}deg);color:${labelTextColor};">${labelText}</span></div></div>`;
 
         let marker;
         if (this.state.busMarkers[b.key]) {
@@ -2587,21 +2798,19 @@ class BusMagoApp {
             if (isSameSize) {
                 const el = marker.getElement();
                 if (el) {
-                    const iconDiv = el.querySelector('.bus-icon');
-                    if (iconDiv) {
-                        // Update styles directly
-                        iconDiv.style.backgroundColor = paletteColor;
-                        iconDiv.style.transform = `rotate(${heading + 135}deg) scale(${zoomScale})`;
-                        iconDiv.style.opacity = opacity;
+                    const wrap = el.querySelector('.bus-marker-wrap');
+                    const iconDiv = wrap && wrap.querySelector('.bus-drop');
+                    if (wrap && iconDiv) {
+                        wrap.style.transform = `rotate(${dropRot}deg) scale(${zoomScale})`;
+                        wrap.style.opacity = String(opacity);
+                        iconDiv.style.background = dropBg;
+                        iconDiv.style.borderRadius = dropRadius;
                         iconDiv.style.border = isSelected ? `3px solid ${selectionBorderColor}` : '';
-                        
-                        // Update text content (only if changed)
                         const span = iconDiv.querySelector('span');
                         if (span) {
                             if (span.textContent !== labelText) span.textContent = labelText;
-                            span.style.transform = `rotate(${-(heading + 135)}deg)`;
+                            span.style.transform = `rotate(${-dropRot}deg)`;
                             span.style.color = labelTextColor;
-                            span.style.opacity = showLabel ? '1' : '0';
                         }
                         updated = true;
                     }
@@ -2688,6 +2897,8 @@ class BusMagoApp {
     });
 
     this.updateTrackStyles();
+    // Update fleet chip bar in info panel whenever bus data changes
+    this.renderInfoPanel();
   }
 
   updateTrackStyles() {
@@ -2739,6 +2950,10 @@ class BusMagoApp {
             } else {
                 layer.bringToFront();
             }
+        } else if (this.state.infoPanel.selectedInfoLine && lineCode !== this.state.infoPanel.selectedInfoLine) {
+            opacity = 0.35;
+        } else if (this.state.infoPanel.selectedInfoLine && lineCode === this.state.infoPanel.selectedInfoLine) {
+            layer.bringToFront();
         }
 
         layer.setStyle({ color: paletteColor, opacity: opacity, weight: 3 });
@@ -2881,19 +3096,150 @@ class BusMagoApp {
     this.renderInfoPanel();
   }
 
+  buildFleetChipsHtml() {
+    const buses = this.state.lastEnrichedBuses || [];
+    if (!buses.length) return '';
+    const byLine = {};
+    buses.forEach(b => {
+      if (this.state.lineVisibility[b.lineCode] !== true) return;
+      const key = b.lineLabel || String(b.lineCode || '?');
+      if (!byLine[key]) byLine[key] = { count: 0, color: this.getLegendLineColor(b.lineCode) };
+      byLine[key].count++;
+    });
+    const entries = Object.entries(byLine);
+    if (!entries.length) return '';
+    const isClassicSkin = this.state.skin.mode === 'classic';
+    const chips = entries.map(([label, { count, color }]) => {
+      const bg = isClassicSkin
+        ? color
+        : `radial-gradient(120% 120% at 30% 20%, rgba(255,255,255,0.35) 0%, rgba(255,255,255,0) 48%), linear-gradient(150deg, color-mix(in srgb, ${color} 78%, #fff) 0%, ${color} 58%, color-mix(in srgb, ${color} 88%, #000) 100%)`;
+      return `<span class="fleet-chip" style="background:${bg}"><span class="fleet-chip-code">${this.escapeHtmlAttribute(label)}</span><span class="fleet-chip-count">${count}</span></span>`;
+    }).join('');
+    return `<div class="fleet-chips-wrap"><div class="fleet-chips-bar">${chips}</div></div>`;
+  }
+
+  selectInfoLine(lineCode) {
+    this.state.infoPanel.selectedInfoLine = lineCode || null;
+    this.renderInfoPanel();
+    this.updateBusMarkers(this.state.lastEnrichedBuses);
+  }
+
+  clearInfoLine() {
+    this.state.infoPanel.selectedInfoLine = null;
+    this.renderInfoPanel();
+    this.updateBusMarkers(this.state.lastEnrichedBuses);
+  }
+
+  buildInfoChipsHtml(selectedInfoLine) {
+    const buses = this.state.lastEnrichedBuses || [];
+    const byLine = {};
+    buses.forEach(b => {
+      if (this.state.lineVisibility[b.lineCode] !== true) return;
+      const lc = b.lineCode;
+      if (!byLine[lc]) byLine[lc] = { count: 0, color: this.getLegendLineColor(lc), label: b.lineLabel || lc };
+      byLine[lc].count++;
+    });
+    const entries = Object.entries(byLine);
+    if (!entries.length) return '';
+    const isClassicSkin = this.state.skin.mode === 'classic';
+    const chips = entries.map(([lc, { count, color, label }]) => {
+      const isSelected = lc === selectedInfoLine;
+      const bg = isClassicSkin
+        ? color
+        : `radial-gradient(120% 120% at 30% 20%, rgba(255,255,255,0.35) 0%, rgba(255,255,255,0) 48%), linear-gradient(150deg, color-mix(in srgb, ${color} 78%, #fff) 0%, ${color} 58%, color-mix(in srgb, ${color} 88%, #000) 100%)`;
+      const selectedClass = isSelected ? ' info-chip--selected' : '';
+      const busIcon = `<svg class="info-chip-bus-icon" viewBox="0 0 24 24" width="11" height="11" fill="currentColor" aria-hidden="true"><path d="M4 16c0 .88.39 1.67 1 2.22V20a1 1 0 0 0 1 1h1a1 1 0 0 0 1-1v-1h8v1a1 1 0 0 0 1 1h1a1 1 0 0 0 1-1v-1.78c.61-.55 1-1.34 1-2.22V6c0-3.5-3.58-4-8-4S4 2.5 4 6v10zm3.5 1a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3zm9 0a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3zM18 11H6V6h12v5z"/></svg>`;
+      return `<button type="button" class="info-line-chip${selectedClass}" data-info-line="${this.escapeHtmlAttribute(lc)}" style="background:${bg}" aria-pressed="${isSelected}">
+      <span class="info-line-chip-code">${this.escapeHtmlAttribute(label)}</span>
+      <span class="info-line-chip-count">${busIcon}${count}</span>
+    </button>`;
+    }).join('');
+    return `<div class="info-chips-row">${chips}</div>`;
+  }
+
+  buildDeparturesForLine(lineCode) {
+    const lc = String(lineCode);
+    const collapsed = !!(this.state.departures && this.state.departures.collapsed);
+    const btnLabel = collapsed ? 'Apri' : 'Chiudi';
+    const icon = collapsed ? '▾' : '▴';
+    const bodyStyle = collapsed ? 'display:none;' : '';
+    const items = this.getDeparturesItems([lc], null);
+    if (!items.length) {
+      const hasData = !!(this.state.lastStopDataMap && typeof this.state.lastStopDataMap === 'object');
+      if (!hasData) {
+        return `<div class="departures-section"><div class="departures-header"><div class="departures-title">Prossime partenze</div></div><div class="departures-body"><div class="departures-empty">In attesa dati…</div></div></div>`;
+      }
+      return '';
+    }
+    const body = items.map(it => {
+      const badgeColor = this.getLegendLineColor(it.lineCode);
+      const times = it.times && it.times.length ? it.times.map(t => this.escapeHtmlAttribute(t)).join(' · ') : '';
+      const destLabel = it.destinationLabel ? this.escapeHtmlAttribute(it.destinationLabel) : this.escapeHtmlAttribute(it.destinationKey || '');
+      const meta = it.originLabel ? `Da: ${this.escapeHtmlAttribute(it.originLabel)}` : '';
+      const runningDot = it.isStarted === true ? `<span class="departures-running-dot" title="Bus in servizio"></span>` : '';
+      const right = times
+        ? `<div class="departures-times">${runningDot}${times}</div>`
+        : `<div class="departures-times departures-times--empty">${this.escapeHtmlAttribute(it.message || 'In attesa dati…')}</div>`;
+      return `<div class="departures-line">
+      <div class="departures-line-badge" style="background-color:${badgeColor};">${this.escapeHtmlAttribute(it.lineCode)}</div>
+      <div class="departures-line-main">
+        <div class="departures-dest">${destLabel}</div>
+        ${meta ? `<div class="departures-meta">${meta}</div>` : ''}
+        ${it.note ? `<div class="departures-note">${this.escapeHtmlAttribute(it.note)}</div>` : ''}
+        ${right}
+      </div>
+    </div>`;
+    }).join('');
+    return `<div class="departures-section">
+    <div class="departures-header">
+      <div class="departures-title">Prossime partenze</div>
+      <button id="departures-toggle" class="departures-toggle" type="button" aria-label="${btnLabel}" aria-expanded="${collapsed ? 'false' : 'true'}">${icon}</button>
+    </div>
+    <div class="departures-body" style="${bodyStyle}">${body}</div>
+  </div>`;
+  }
+
   renderInfoPanel() {
     if (!this.infoDiv) return;
 
-    const vehicleHtml = this.buildVehicleInfoHtml();
-    const departuresHtml = this.buildDeparturesHtml();
+    const vehicleSelected = !!this.state.selectedVehicleKey && !this.state.selectedVehicleKey.startsWith('TRACK_');
+    const selectedInfoLine = this.state.infoPanel.selectedInfoLine;
     const activeLineCodes = Object.keys(this.state.lineVisibility).filter(k => this.state.lineVisibility[k] === true);
+
+    // Build content based on mode
+    let combined = '';
+
+    if (vehicleSelected || (this.state.selectedVehicleKey && this.state.selectedVehicleKey.startsWith('TRACK_'))) {
+      // MODE 3: vehicle/track selected — existing behavior
+      const vehicleHtml = this.buildVehicleInfoHtml();
+      const departuresHtml = this.buildDeparturesHtml();
+      const busSection = `${vehicleHtml || ''}${vehicleHtml && departuresHtml ? '<div class="info-section-divider"></div>' : ''}${departuresHtml || ''}`;
+      combined = busSection;
+    } else {
+      // MODE 1 or 2: no vehicle selected
+      const chipsHtml = this.buildInfoChipsHtml(selectedInfoLine);
+      if (!chipsHtml) {
+        this.infoDiv.style.display = 'none';
+        this.infoDiv.innerHTML = '';
+        this.infoDiv.classList.remove('info--departures-only', 'info--departures-collapsed');
+        return;
+      }
+      const departuresHtml = selectedInfoLine ? this.buildDeparturesForLine(selectedInfoLine) : '';
+      combined = `<div class="info-header-row">
+      <div class="info-section-label">Informazioni</div>
+    </div>
+    ${chipsHtml}
+    ${departuresHtml ? '<div class="info-section-divider"></div>' + departuresHtml : ''}`;
+    }
+
+    // Signature check to avoid unnecessary DOM writes
     const vehicleSig = this.getVehicleInfoSignature();
-    const departuresSig = this.getDeparturesSignature(activeLineCodes);
-    const signature = `${vehicleSig}|${departuresSig}|${this.state.departures.collapsed ? 1 : 0}|${activeLineCodes.join(',')}|${this.state.directions.lastKnownSignature || ''}|${this.state.selectedVehicleKey || ''}|${this.state.updateStatus.lastSuccessAt || 0}|${this.state.updateStatus.lastErrorAt || 0}`;
+    const fleetSig = (this.state.lastEnrichedBuses || []).filter(b => this.state.lineVisibility[b.lineCode] === true).length;
+    const depSig = selectedInfoLine ? `L:${selectedInfoLine}` : (vehicleSelected ? `V:${this.state.selectedVehicleKey}` : '');
+    const signature = `${vehicleSig}|${depSig}|${this.state.departures.collapsed ? 1 : 0}|${activeLineCodes.join(',')}|${this.state.directions.lastKnownSignature || ''}|${this.state.selectedVehicleKey || ''}|${selectedInfoLine || ''}|${this.state.updateStatus.lastSuccessAt || 0}|${fleetSig}`;
     if (signature === this.state.lastInfoSignature) return;
     this.state.lastInfoSignature = signature;
 
-    const combined = `${vehicleHtml || ''}${vehicleHtml && departuresHtml ? `<div class="info-section-divider"></div>` : ''}${departuresHtml || ''}`;
     if (!combined) {
       this.infoDiv.style.display = 'none';
       this.infoDiv.innerHTML = '';
@@ -2901,9 +3247,7 @@ class BusMagoApp {
       return;
     }
 
-    const departuresOnly = !vehicleHtml && !!departuresHtml;
-    this.infoDiv.classList.toggle('info--departures-only', departuresOnly);
-    this.infoDiv.classList.toggle('info--departures-collapsed', departuresOnly && !!(this.state.departures && this.state.departures.collapsed));
+    this.infoDiv.classList.remove('info--departures-only', 'info--departures-collapsed');
     this.infoDiv.innerHTML = combined;
     this.infoDiv.style.display = 'block';
   }
@@ -2935,7 +3279,11 @@ class BusMagoApp {
     let lineCodes = baseLineCodes;
     let forcedDestinationKeyByLine = null;
     const selectedBus = this.state.infoPanel ? this.state.infoPanel.selectedBus : null;
-    if (selectedBus && selectedBus.lineCode) {
+    // Only force the filter to a single line when a vehicle is GENUINELY selected.
+    // Without this guard a stale selectedBus would pin the panel to one line even
+    // after deselection — when nothing is selected we want all active lines shown.
+    const vehicleSelected = !!this.state.selectedVehicleKey && !this.state.selectedVehicleKey.startsWith('TRACK_');
+    if (vehicleSelected && selectedBus && selectedBus.lineCode) {
       const lc = String(selectedBus.lineCode);
       if (this.state.lineVisibility[lc] === true) {
         lineCodes = [lc];
@@ -2960,9 +3308,9 @@ class BusMagoApp {
     const track = this.state.infoPanel && this.state.infoPanel.selectedTrack ? this.state.infoPanel.selectedTrack : null;
     if (track) {
       return `
-        <div class="vehicle-info">
+        <div class="vehicle-info vehicle-info--glossy" style="--line-color: ${this.getLegendLineColor(track.lineCode)}">
           <div class="info-header" style="border-bottom: none; margin-bottom: 0; padding-bottom: 0;">
-            <div class="info-line-badge" style="background-color: ${this.getLegendLineColor(track.lineCode)}">${this.escapeHtmlAttribute(track.lineLabel)}</div>
+            <div class="info-line-badge" style="--line-color: ${this.getLegendLineColor(track.lineCode)}">${this.escapeHtmlAttribute(track.lineLabel)}</div>
             <div class="info-destination">${this.escapeHtmlAttribute(track.destination)}</div>
           </div>
         </div>
@@ -2973,7 +3321,7 @@ class BusMagoApp {
       return `
         <div class="vehicle-info">
           <div class="info-header" style="border-bottom-color: rgba(220, 53, 69, 0.3)">
-            <div class="info-line-badge" style="background-color: #666">⚠</div>
+            <div class="info-line-badge" style="--line-color: #777">⚠</div>
             <div class="info-destination" style="color: #ff6b6b">Corsa terminata</div>
           </div>
           <div class="info-body">
@@ -2985,7 +3333,10 @@ class BusMagoApp {
       `;
     }
 
-    const bus = this.state.infoPanel ? this.state.infoPanel.selectedBus : null;
+    // Only show the vehicle card when a vehicle is genuinely selected; a stale
+    // selectedBus must not render a highlighted card after deselection.
+    const vehicleSelected = !!this.state.selectedVehicleKey && !this.state.selectedVehicleKey.startsWith('TRACK_');
+    const bus = (vehicleSelected && this.state.infoPanel) ? this.state.infoPanel.selectedBus : null;
     if (!bus) return '';
 
     const now = Date.now();
@@ -3007,10 +3358,13 @@ class BusMagoApp {
     const lineLabel = bus.lineLabel || (bus.lineCode || '-');
 
     return `
-      <div class="vehicle-info">
+      <div class="vehicle-info vehicle-info--glossy" style="--line-color: ${lineBadgeColor}">
         <div class="info-header">
-          <div class="info-line-badge" style="background-color: ${lineBadgeColor}">${this.escapeHtmlAttribute(lineLabel)}</div>
+          <div class="info-line-badge" style="--line-color: ${lineBadgeColor}">${this.escapeHtmlAttribute(lineLabel)}</div>
           <div class="info-destination">${this.escapeHtmlAttribute(bus.destination || '-')}</div>
+          <button id="vehicle-deselect-btn" class="vehicle-deselect-btn" type="button" aria-label="Chiudi info vettura" title="Chiudi">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </button>
         </div>
         <div class="info-body">
           <div class="info-label">Partenza</div><div class="info-value">${this.escapeHtmlAttribute(bus.departure || '-')}</div>
@@ -3046,7 +3400,15 @@ class BusMagoApp {
     let body = '';
 
     if (items.length === 0) {
-      body = `<div class="departures-empty">In attesa dati…</div>`;
+      // Only show "waiting for data" while data has genuinely not loaded yet.
+      // Once data is present, hide the section entirely — the selected lines are
+      // still represented by the fleet chips, so we never show a stale placeholder.
+      const hasData = !!(this.state.lastStopDataMap && typeof this.state.lastStopDataMap === 'object');
+      if (!hasData) {
+        body = `<div class="departures-empty">In attesa dati…</div>`;
+      } else {
+        return '';
+      }
     } else {
       body = items.map(it => {
         const badgeColor = this.getLegendLineColor(it.lineCode);
@@ -3054,7 +3416,7 @@ class BusMagoApp {
         const destLabel = it.destinationLabel ? this.escapeHtmlAttribute(it.destinationLabel) : this.escapeHtmlAttribute(it.destinationKey || '');
 
         const meta = it.originLabel ? `Da: ${this.escapeHtmlAttribute(it.originLabel)}` : '';
-        const runningDot = it.isStarted === true ? `<span class="departures-running-dot" title="Bus in servizio">●</span>` : '';
+        const runningDot = it.isStarted === true ? `<span class="departures-running-dot" title="Bus in servizio"></span>` : '';
         const right = times
           ? `<div class="departures-times">${runningDot}${times}</div>`
           : `<div class="departures-times departures-times--empty">${this.escapeHtmlAttribute(it.message || 'In attesa dati…')}</div>`;
@@ -3073,10 +3435,20 @@ class BusMagoApp {
       }).join('');
     }
 
+    const isFiltered = activeLineCodes.length === 1 && activeLineCodes.length < baseActiveLineCodes.length;
+    const filteredLine = isFiltered ? activeLineCodes[0] : null;
+    const filterBadge = filteredLine
+      ? `<button id="departures-deselect-btn" class="departures-filter-badge" type="button" title="Mostra tutte le linee" aria-label="Rimuovi filtro linea ${filteredLine}">
+           <span class="departures-filter-badge-code" style="background:${this.getLegendLineColor(filteredLine)}">${this.escapeHtmlAttribute(filteredLine)}</span>
+           <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+         </button>`
+      : '';
+
     return `
       <div class="departures-section">
         <div class="departures-header">
           <div class="departures-title">Prossime partenze</div>
+          ${filterBadge}
           <button id="departures-toggle" class="departures-toggle" type="button" aria-label="${btnLabel}" aria-expanded="${collapsed ? 'false' : 'true'}">${icon}</button>
         </div>
         <div class="departures-body" style="${bodyStyle}">
@@ -3227,7 +3599,7 @@ class BusMagoApp {
     const tRaw = (z - base) / (max - base);
     const t = Math.max(0, Math.min(1, tRaw));
     const eased = 1 - Math.pow(1 - t, 3);
-    const minScale = 0.56;
+    const minScale = 0.64;
     const maxScale = Math.max(minScale, Number(CONFIG.UI.BUS_ICON_SCALE_MAX) || 1.0);
     return minScale + (maxScale - minScale) * eased;
   }
