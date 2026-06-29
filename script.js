@@ -33,6 +33,17 @@ const CONFIG = {
   CACHE: {
     STOP_RUNS_TTL_MS: 5000
   },
+  RATE: {
+    // Tetto di richieste/secondo verso l'API realtime (mrcruns). Il rate-limiter
+    // (_rateSlot) SPALMA le richieste di ogni ciclo a questa cadenza invece di
+    // spararle tutte insieme con Promise.all: elimina il "burst" istantaneo che,
+    // soprattutto alla RIAPERTURA dell'app (cache svuotata → ciclo tutto-rete),
+    // faceva scattare il rate-limit per-IP del TPL FVG (mrcruns falliscono →
+    // vetture congelate). Vincolo: tenerlo ≥ carico di picco offerto
+    // (~fermate_per_ciclo ÷ intervallo_minimo) per non accumulare backlog, e ben
+    // SOTTO la soglia reale dell'API. Tarare con lo script api-rate-probe.py.
+    MAX_RPS: 36
+  },
   UI: {
     TOAST_DURATION_MS: 3000,
     SMALL_ICON_THRESHOLD: 10,
@@ -486,6 +497,7 @@ class BusMagoApp {
   init() {
     this.loadTheme();
     this.loadSkin();
+    this.syncThemeColorMeta();
     this.loadFavorites();
     this.loadDeparturesCollapsed();
     this.initMap();
@@ -803,6 +815,7 @@ class BusMagoApp {
     if (btn) btn.textContent = mode === 'dark' ? '🌙' : '☀️';
 
     this.applyTileLayer();
+    this.syncThemeColorMeta();
 
     this.renderLegend();
     this.updateBusMarkers(this.state.lastEnrichedBuses);
@@ -828,8 +841,26 @@ class BusMagoApp {
     }
 
     this.applyTileLayer();
+    this.syncThemeColorMeta();
     this.renderLegend();
     this.updateBusMarkers(this.state.lastEnrichedBuses);
+  }
+
+  // Allinea <meta theme-color> (colore barra di stato del browser/PWA) al --bg
+  // EFFETTIVO, che dipende da tema E skin (classic+light è chiaro, glossy è sempre
+  // scuro). Prima era fisso su #121212: in tema chiaro la barra restava scura.
+  syncThemeColorMeta() {
+    try {
+      const bg = getComputedStyle(document.documentElement).getPropertyValue('--bg').trim();
+      if (!bg) return;
+      let meta = document.querySelector('meta[name="theme-color"]');
+      if (!meta) {
+        meta = document.createElement('meta');
+        meta.setAttribute('name', 'theme-color');
+        document.head.appendChild(meta);
+      }
+      meta.setAttribute('content', bg);
+    } catch {}
   }
 
   updateRefreshButtonVisual() {
@@ -964,29 +995,48 @@ class BusMagoApp {
     });
   }
 
-  async fetchStopRuns(stopCode, signal = null, ttlMs = CONFIG.CACHE.STOP_RUNS_TTL_MS) {
+  // Rate-limiter deterministico: restituisce una Promise che si risolve quando è
+  // lecito far partire la PROSSIMA richiesta, distanziando le partenze di
+  // 1000/MAX_RPS ms. Converte il Promise.all di un ciclo (decine di fetch
+  // simultanee) in uno stream regolare ≤ MAX_RPS req/s, senza burst.
+  // ponytail: lock globale a singolo slot; basta e avanza per un solo client.
+  _rateSlot() {
+    const minGap = 1000 / CONFIG.RATE.MAX_RPS;
     const now = Date.now();
+    const at = Math.max(now, this._rateNext || 0);
+    this._rateNext = at + minGap;
+    const wait = at - now;
+    return wait > 0 ? new Promise(r => setTimeout(r, wait)) : Promise.resolve();
+  }
+
+  async fetchStopRuns(stopCode, signal = null, ttlMs = CONFIG.CACHE.STOP_RUNS_TTL_MS) {
     const cached = this.state.stopCache.entries[stopCode];
-    if (cached && cached.expiresAt > now) return cached.data;
+    if (cached && cached.expiresAt > Date.now()) return cached.data;
 
     const inFlight = this.state.stopCache.inFlight[stopCode];
     if (inFlight) return inFlight;
 
     const fetchOptions = signal ? { signal } : {};
-    const p = fetch(`https://realtime.tplfvg.it/API/v1.0/polemonitor/mrcruns?StopCode=${stopCode}&IsUrban=true&_=${now}`, fetchOptions)
-      .then(r => r.json())
-      .then(data => {
-        const normalized = Array.isArray(data) ? data : [];
-        this.state.stopCache.entries[stopCode] = { data: normalized, expiresAt: now + ttlMs };
-        return normalized;
-      })
+    // Attende lo slot del rate-limiter PRIMA di partire: le N richieste di un ciclo
+    // escono spalmate a ≤ MAX_RPS invece che tutte nello stesso istante.
+    const p = this._rateSlot().then(() => {
+      if (signal && signal.aborted) return cached ? cached.data : [];
+      const ts = Date.now();
+      return fetch(`https://realtime.tplfvg.it/API/v1.0/polemonitor/mrcruns?StopCode=${stopCode}&IsUrban=true&_=${ts}`, fetchOptions)
+        .then(r => r.json())
+        .then(data => {
+          const normalized = Array.isArray(data) ? data : [];
+          this.state.stopCache.entries[stopCode] = { data: normalized, expiresAt: ts + ttlMs };
+          return normalized;
+        });
+    })
       .catch((err) => {
         if (err && err.name === 'AbortError') {
           delete this.state.stopCache.inFlight[stopCode];
           return cached ? cached.data : [];
         }
         const fallback = cached ? cached.data : [];
-        this.state.stopCache.entries[stopCode] = { data: fallback, expiresAt: now + 1000 };
+        this.state.stopCache.entries[stopCode] = { data: fallback, expiresAt: Date.now() + 1000 };
         return fallback;
       })
       .finally(() => {
@@ -1160,10 +1210,19 @@ class BusMagoApp {
         // Force immediate refresh with NO CACHE!
         this.scheduleNextRefresh(0);
       } else {
-        // When going to background: clean up
+        // In background: FERMA del tutto il loop. Prima il timer di refresh
+        // restava schedulato e continuava a interrogare l'API mentre l'app era
+        // "chiusa"/in background — richieste sprecate che bruciavano il budget di
+        // rate-limit, così al ritorno in foreground le mrcruns erano già bloccate
+        // (vetture congelate). Ora alla riapertura si riparte da zero, pulito.
+        if (this.state.uiTimers.refreshTimeout) {
+          clearTimeout(this.state.uiTimers.refreshTimeout);
+          this.state.uiTimers.refreshTimeout = null;
+        }
         if (this.state.refreshControl.abortController) {
           this.state.refreshControl.abortController.abort();
         }
+        this.state.refreshControl.inFlight = false;
         this.releaseWakeLock();
       }
     });
@@ -1514,8 +1573,8 @@ class BusMagoApp {
 
     const filterText = (this.state.legend.filterText || '').trim().toLowerCase();
 
-    // Clear All Button
-    html += `<button id="clear-all-lines">CLEAR ALL</button>`;
+    // Clear All Button (UI in italiano come il resto del pannello)
+    html += `<button id="clear-all-lines">Deseleziona tutte</button>`;
 
     const groupKeys = (this.state.legend && this.state.legend.groupKeys instanceof Set) ? this.state.legend.groupKeys : new Set();
     const uniActive = groupKeys.has('UNI');
@@ -2244,7 +2303,12 @@ class BusMagoApp {
             Math.min(MAX_STOPS_PER_LINE, Math.round(FETCH_BUDGET / Math.max(1, activeLineCount)))
         );
 
-        const uniqueStops = new Set();
+        // Due insiemi separati per PRIORITIZZARE i capolinea nello stream a budget:
+        // i capolinea (dove converge ogni corsa) vengono richiesti PRIMA delle fermate
+        // intermedie campionate, così prendono gli slot iniziali del rate-limiter e
+        // restano freschi anche se il deadline del ciclo taglia la coda sotto carico.
+        const terminalStops = new Set();
+        const sampleStops = new Set();
         let hasActiveLines = false;
 
         linesConfig.forEach(l => {
@@ -2284,12 +2348,13 @@ class BusMagoApp {
                     stopsToUse = picked;
                 }
 
-                stopsToUse.forEach(s => uniqueStops.add(s));
+                stopsToUse.forEach(s => sampleStops.add(s));
 
                 // Interroga SEMPRE i capolinea: li' convergono tutti i bus della
                 // linea (ogni corsa e' diretta a un capolinea), quindi garantiscono
                 // di intercettare ogni vettura indipendentemente dal campionamento.
-                if (Array.isArray(l.terminals)) l.terminals.forEach(s => uniqueStops.add(s));
+                // Vanno nel set prioritario (richiesti per primi).
+                if (Array.isArray(l.terminals)) l.terminals.forEach(s => terminalStops.add(s));
             }
         });
 
@@ -2302,7 +2367,9 @@ class BusMagoApp {
 
         if (requestId !== this.state.refreshControl.requestSeq) return;
 
-        const stopsList = Array.from(uniqueStops);
+        // Ordine = capolinea PRIMA, poi le intermedie non già coperte. Il rate-limiter
+        // assegna gli slot nell'ordine di questo array, quindi i capolinea partono per primi.
+        const stopsList = [...terminalStops, ...[...sampleStops].filter(s => !terminalStops.has(s))];
 
         // 2. Fetch data (Async/Await)
         // TTL dinamico: leggermente inferiore all'intervallo di refresh così
