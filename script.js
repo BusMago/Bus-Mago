@@ -206,7 +206,9 @@ class BusMagoApp {
         selectedBus: null,
         selectedTrack: null,
         finishedTrip: false,
-        selectedInfoLine: null
+        selectedInfoLine: null,
+        collapsed: false,
+        collapsedStorageKey: 'busmago:vehicleCollapsed:v1'
       },
       lastStopDataMap: null,
       legendPaletteIndexByCode: {},
@@ -500,6 +502,7 @@ class BusMagoApp {
     this.syncThemeColorMeta();
     this.loadFavorites();
     this.loadDeparturesCollapsed();
+    this.loadVehicleCollapsed();
     this.initMap();
     this.initToast();
     this.initInstall();
@@ -567,6 +570,31 @@ class BusMagoApp {
   toggleDeparturesCollapsed() {
     this.state.departures.collapsed = !this.state.departures.collapsed;
     this.saveDeparturesCollapsed();
+    this.renderInfoPanel();
+  }
+
+  // Collapse del pannello info-vettura (come "Prossime partenze"): comprime corpo
+  // e footer lasciando solo l'header (badge linea + destinazione), per liberare
+  // schermo su mobile. La preferenza persiste e vale anche per le selezioni successive.
+  loadVehicleCollapsed() {
+    try {
+      const raw = localStorage.getItem(this.state.infoPanel.collapsedStorageKey);
+      if (raw === '1') { this.state.infoPanel.collapsed = true; return; }
+      if (raw === '0') { this.state.infoPanel.collapsed = false; return; }
+    } catch {
+    }
+  }
+
+  saveVehicleCollapsed() {
+    try {
+      localStorage.setItem(this.state.infoPanel.collapsedStorageKey, this.state.infoPanel.collapsed ? '1' : '0');
+    } catch {
+    }
+  }
+
+  toggleVehicleCollapsed() {
+    this.state.infoPanel.collapsed = !this.state.infoPanel.collapsed;
+    this.saveVehicleCollapsed();
     this.renderInfoPanel();
   }
 
@@ -1246,6 +1274,12 @@ class BusMagoApp {
           e.preventDefault();
           e.stopPropagation();
           this.toggleDeparturesCollapsed();
+          return;
+        }
+        if (t && t.closest && t.closest('#vehicle-collapse-toggle')) {
+          e.preventDefault();
+          e.stopPropagation();
+          this.toggleVehicleCollapsed();
           return;
         }
         if (t && t.closest && (t.closest('#vehicle-deselect-btn') || t.closest('#departures-deselect-btn'))) {
@@ -3303,7 +3337,7 @@ class BusMagoApp {
     const vehicleSig = this.getVehicleInfoSignature();
     const fleetSig = (this.state.lastEnrichedBuses || []).filter(b => this.state.lineVisibility[b.lineCode] === true).length;
     const depSig = selectedInfoLine ? `L:${selectedInfoLine}` : (vehicleSelected ? `V:${this.state.selectedVehicleKey}` : '');
-    const signature = `${vehicleSig}|${depSig}|${this.state.departures.collapsed ? 1 : 0}|${activeLineCodes.join(',')}|${this.state.directions.lastKnownSignature || ''}|${this.state.selectedVehicleKey || ''}|${selectedInfoLine || ''}|${this.state.updateStatus.lastSuccessAt || 0}|${fleetSig}`;
+    const signature = `${vehicleSig}|${depSig}|${this.state.departures.collapsed ? 1 : 0}|${this.state.infoPanel.collapsed ? 1 : 0}|${activeLineCodes.join(',')}|${this.state.directions.lastKnownSignature || ''}|${this.state.selectedVehicleKey || ''}|${selectedInfoLine || ''}|${this.state.updateStatus.lastSuccessAt || 0}|${fleetSig}`;
     if (signature === this.state.lastInfoSignature) return;
     this.state.lastInfoSignature = signature;
 
@@ -3424,22 +3458,28 @@ class BusMagoApp {
     const lineBadgeColor = bus.lineCode ? this.getLegendLineColor(bus.lineCode) : (bus.lineColor || '#666');
     const lineLabel = bus.lineLabel || (bus.lineCode || '-');
 
+    const collapsed = !!(this.state.infoPanel && this.state.infoPanel.collapsed);
+    const collapseBodyStyle = collapsed ? 'display:none;' : '';
+    const collapseIcon = collapsed ? '▾' : '▴';
+    const collapseLabel = collapsed ? 'Espandi info vettura' : 'Comprimi info vettura';
+
     return `
-      <div class="vehicle-info vehicle-info--glossy" style="--line-color: ${lineBadgeColor}">
+      <div class="vehicle-info vehicle-info--glossy ${collapsed ? 'vehicle-info--collapsed' : ''}" style="--line-color: ${lineBadgeColor}">
         <div class="info-header">
           <div class="info-line-badge" style="--line-color: ${lineBadgeColor}">${this.escapeHtmlAttribute(lineLabel)}</div>
           <div class="info-destination">${this.escapeHtmlAttribute(bus.destination || '-')}</div>
+          <button id="vehicle-collapse-toggle" class="vehicle-deselect-btn vehicle-collapse-toggle" type="button" aria-label="${collapseLabel}" aria-expanded="${collapsed ? 'false' : 'true'}" title="${collapsed ? 'Espandi' : 'Comprimi'}">${collapseIcon}</button>
           <button id="vehicle-deselect-btn" class="vehicle-deselect-btn" type="button" aria-label="Chiudi info vettura" title="Chiudi">
             <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
           </button>
         </div>
-        <div class="info-body">
+        <div class="info-body" style="${collapseBodyStyle}">
           <div class="info-label">Partenza</div><div class="info-value">${this.escapeHtmlAttribute(bus.departure || '-')}</div>
           <div class="info-label">Corsa</div><div class="info-value">${this.escapeHtmlAttribute(bus.race || '-')}</div>
           <div class="info-label">Vettura</div><div class="info-value">${this.escapeHtmlAttribute(bus.vehicle || '-')}</div>
           ${bus.note ? `<div class="info-label info-note-label">Nota</div><div class="info-value info-note-value">${this.escapeHtmlAttribute(bus.note)}</div>` : ''}
         </div>
-        <div class="info-footer">
+        <div class="info-footer" style="${collapseBodyStyle}">
           <div style="display: flex; justify-content: space-between; align-items: center; font-size: 11px;">
             <span id="info-update-badge" class="${badgeClass}" style="padding: 2px 8px; border-radius: 10px; background: ${badgeBg}; border: 1px solid ${badgeBorder}">
               Aggiornato ${this.escapeHtmlAttribute(ageText)}

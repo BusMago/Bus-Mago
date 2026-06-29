@@ -469,6 +469,9 @@ input:focus-visible,
   transition: background 0.15s, color 0.15s;
 }
 .vehicle-deselect-btn:hover { background: rgba(255,255,255,0.22); color: var(--text-primary); }
+.vehicle-collapse-toggle { font-size: 13px; line-height: 1; }
+/* Compresso: header senza bordo/spazio inferiore (corpo e footer nascosti) */
+.vehicle-info--collapsed .info-header { margin-bottom: 0; padding-bottom: 0; border-bottom: none; }
 
 .info-body {
   display: grid;
