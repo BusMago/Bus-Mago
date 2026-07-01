@@ -53,6 +53,9 @@
   --ctrl-gap:      10px;
   --ctrl-bottom:   20px;
   --ctrl-count-br: 4;
+
+  /* iOS status bar / notch clearance for fixed top elements */
+  --top-safe: env(safe-area-inset-top, 0px);
 }
 
 /* Light theme overrides */
@@ -73,29 +76,6 @@
   --legend-scroll-thumb-hover: rgba(0,0,0,0.28);
   --legend-tile-text:          #111;
   --legend-active-ring:        rgba(0,0,0,0.72);
-}
-
-/* Glossy: la modalità giorno usa la STESSA palette dell'interfaccia notturna
-   (pannelli/superfici scure glossy). Cambia solo la mappa (tile chiare). */
-:root[data-skin="modern"][data-theme="light"] {
-  --bg:              #0f1117;
-  --surface:         #1a1f2e;
-  --surface-card:    #1f2937;
-  --surface-hover:   #2d3748;
-  --surface-inactive: rgba(255,255,255,0.07);
-  --border:          rgba(255,255,255,0.09);
-  --text-primary:    #f1f5f9;
-  --text-secondary:  #94a3b8;
-  --text-muted:      #64748b;
-  --accent-warn:     #fbbf24;
-
-  --legend-scroll-track:        rgba(255,255,255,0.04);
-  --legend-scroll-thumb:        rgba(255,255,255,0.18);
-  --legend-scroll-thumb-hover:  rgba(255,255,255,0.30);
-  --legend-tile-text:           #ffffff;
-  --legend-active-ring:         rgba(255,255,255,0.9);
-
-  --selected-line-chip-ring:    rgba(255,255,255,0.95);
 }
 
 /* --- Base reset --- */
@@ -185,7 +165,7 @@ input:focus-visible,
 /* Floating search bar (top center) — clean Google 2026 pill */
 .map-search-bar {
   position: fixed;
-  top: 14px;
+  top: calc(14px + var(--top-safe));
   left: 50%;
   transform: translateX(-50%);
   z-index: var(--z-legend-toggle);
@@ -349,7 +329,7 @@ input:focus-visible,
    ===================================================== */
 .info {
   position: fixed;
-  top: 70px;
+  top: calc(70px + var(--top-safe));
   left: 14px;
   background: var(--surface);
   padding: 16px 18px;
@@ -378,7 +358,7 @@ input:focus-visible,
 /* Collapsed departures-only state */
 .info.info--departures-only.info--departures-collapsed {
   box-sizing: border-box;
-  top: 70px;
+  top: calc(70px + var(--top-safe));
   height: 44px;
   padding: 0 0 0 10px;
   border-radius: 14px;
@@ -597,7 +577,7 @@ input:focus-visible,
 
 .legend {
   position: fixed;
-  top: 70px;
+  top: calc(70px + var(--top-safe));
   left: 50%;
   transform: translateX(-50%);
   bottom: auto; right: auto;
@@ -1325,7 +1305,7 @@ input:focus-visible,
 
   .info {
     left: 12px; right: 12px;
-    top: 70px;
+    top: calc(70px + var(--top-safe));
     max-width: none; min-width: 0;
     font-size: 13px; padding: 12px 14px;
     max-height: calc(100dvh - 80px);
@@ -1333,5 +1313,5 @@ input:focus-visible,
   }
   .info::-webkit-scrollbar { display: none; }
 
-  .info.info--departures-only.info--departures-collapsed { top: 70px; }
+  .info.info--departures-only.info--departures-collapsed { top: calc(70px + var(--top-safe)); }
 }
