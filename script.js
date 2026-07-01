@@ -1,5 +1,7 @@
 // Initial configuration
 const linesConfig = window.linesConfig || [];
+// ponytail: log solo in sviluppo (localhost), silenzio in produzione
+const DEBUG = typeof location !== 'undefined' && (location.hostname === 'localhost' || location.hostname === '127.0.0.1');
 
 // Configuration constants
 const CONFIG = {
@@ -1543,7 +1545,7 @@ class BusMagoApp {
           firstLocationUpdate = false;
         }
       }, error => {
-        console.warn("Geolocation access denied or error: " + error.message);
+        if (DEBUG) console.warn("Geolocation access denied or error: " + error.message);
       }, {
         enableHighAccuracy: true,
         maximumAge: 10000,
@@ -2029,6 +2031,9 @@ class BusMagoApp {
         });
     }
 
+    // Query unica: riusata sia per "Seleziona tutte" sia per il binding dei click sotto.
+    const lineButtons = this.legendDiv.querySelectorAll('button.legend-line-select[data-key]');
+
     // Select All
     const selectAllBtn = document.getElementById('select-all-lines-btn');
     if (selectAllBtn) {
@@ -2046,7 +2051,6 @@ class BusMagoApp {
         const allSelectedNext = !Object.keys(this.state.lineVisibility)
           .filter(k => k !== '777')
           .every(k => this.state.lineVisibility[k] === true);
-        const lineButtons = this.legendDiv.querySelectorAll('button.legend-line-select[data-key]');
 
         const now = Date.now();
         lineButtons.forEach(btn => {
@@ -2079,7 +2083,6 @@ class BusMagoApp {
       });
     }
 
-    const lineButtons = this.legendDiv.querySelectorAll('button.legend-line-select[data-key]');
     lineButtons.forEach(btn => {
       btn.addEventListener('click', (e) => {
         e.preventDefault();
@@ -2544,7 +2547,7 @@ class BusMagoApp {
     } catch (err) {
         this.state.updateStatus.lastErrorAt = Date.now();
         this.state.updateStatus.lastErrorMessage = (err && err.message) ? String(err.message) : 'Errore di connessione';
-        console.error("Errore aggiornamento dati", err);
+        if (DEBUG) console.error("Errore aggiornamento dati", err);
         this.showToast("Errore di connessione. Riprovo...", "error");
         this.renderInfoPanel();
     } finally {
@@ -2648,7 +2651,7 @@ class BusMagoApp {
                 .catch(err => {
                     if (err && err.name === 'AbortError') return;
                     delete this.state.trackFetchControllers[trackKey];
-                    console.error(`Errore caricamento tracciato ${trackKey}`, err);
+                    if (DEBUG) console.error(`Errore caricamento tracciato ${trackKey}`, err);
                 });
         });
     });
