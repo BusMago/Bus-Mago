@@ -2882,14 +2882,7 @@ class BusMagoApp {
         // The wrapper rotates+scales; the number counter-rotates to stay upright.
         const dropRot = hasHeading ? (heading + 135) : 0;
         const dropRadius = hasHeading ? '50% 50% 50% 0' : '50%';
-        // Pallino di ritardo sul marker: solo per corse effettivamente in
-        // ritardo (>2 min), niente pallino verde su ogni bus in orario per
-        // non affollare la mappa. Il dettaglio completo resta nel pannello.
-        const delayBadge = this.getDelayBadge(b);
-        const delayDotHtml = (delayBadge && delayBadge.solid)
-          ? `<span class="bus-delay-dot" style="transform:rotate(${-dropRot}deg);background:${delayBadge.solid};">+${delayBadge.delay}</span>`
-          : '';
-        const iconHtml = `<div class="bus-marker-wrap" style="transform:rotate(${dropRot}deg) scale(${zoomScale});opacity:${opacity}"><div class="bus-drop ${sizeClass}" style="background:${dropBg};border-radius:${dropRadius};${borderStyle}"><span style="transform:rotate(${-dropRot}deg);color:${labelTextColor};">${labelText}</span>${delayDotHtml}</div></div>`;
+        const iconHtml = `<div class="bus-marker-wrap" style="transform:rotate(${dropRot}deg) scale(${zoomScale});opacity:${opacity}"><div class="bus-drop ${sizeClass}" style="background:${dropBg};border-radius:${dropRadius};${borderStyle}"><span style="transform:rotate(${-dropRot}deg);color:${labelTextColor};">${labelText}</span></div></div>`;
 
         let marker;
         if (this.state.busMarkers[b.key]) {
@@ -2921,20 +2914,6 @@ class BusMagoApp {
                             if (span.textContent !== labelText) span.textContent = labelText;
                             span.style.transform = `rotate(${-dropRot}deg)`;
                             span.style.color = labelTextColor;
-                        }
-                        let dot = iconDiv.querySelector('.bus-delay-dot');
-                        if (delayBadge && delayBadge.solid) {
-                            if (!dot) {
-                                dot = document.createElement('span');
-                                dot.className = 'bus-delay-dot';
-                                iconDiv.appendChild(dot);
-                            }
-                            const dotText = `+${delayBadge.delay}`;
-                            if (dot.textContent !== dotText) dot.textContent = dotText;
-                            dot.style.background = delayBadge.solid;
-                            dot.style.transform = `rotate(${-dropRot}deg)`;
-                        } else if (dot) {
-                            dot.remove();
                         }
                         updated = true;
                     }
@@ -3801,12 +3780,12 @@ class BusMagoApp {
     const delay = this.computeDelayMinutes(bus);
     if (delay === null) return null;
     if (delay <= 2) {
-      return { delay, text: 'In orario', bg: 'rgba(60,180,120,0.15)', border: 'rgba(60,180,120,0.4)', color: 'var(--ok)', solid: null };
+      return { text: 'In orario', bg: 'rgba(60,180,120,0.15)', border: 'rgba(60,180,120,0.4)', color: 'var(--ok)' };
     }
     if (delay <= 7) {
-      return { delay, text: `+${delay} min`, bg: 'rgba(249,171,0,0.15)', border: 'rgba(249,171,0,0.4)', color: 'var(--fav)', solid: '#f9ab00' };
+      return { text: `+${delay} min`, bg: 'rgba(249,171,0,0.15)', border: 'rgba(249,171,0,0.4)', color: 'var(--fav)' };
     }
-    return { delay, text: `+${delay} min`, bg: 'rgba(217,48,37,0.15)', border: 'rgba(217,48,37,0.4)', color: 'var(--danger)', solid: '#d93025' };
+    return { text: `+${delay} min`, bg: 'rgba(217,48,37,0.15)', border: 'rgba(217,48,37,0.4)', color: 'var(--danger)' };
   }
 
   computeBearing(lat1, lon1, lat2, lon2) {
