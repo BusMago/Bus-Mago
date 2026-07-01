@@ -3768,17 +3768,31 @@ class BusMagoApp {
   // (niente ritardo inventato per corse non ancora partite).
   computeDelayMinutes(bus) {
     if (!bus || !bus.arrivalRaw || !bus.scheduledTime) return null;
-    const m = /^(\d+)\s*min/i.exec(bus.arrivalRaw.trim());
-    if (!m) return null;
+    const raw = bus.arrivalRaw.trim();
+    let minutesFromNow;
+    const m = /^(\d+)\s*min/i.exec(raw);
+    if (m) {
+      minutesFromNow = parseInt(m[1], 10);
+    } else if (/^in transito$/i.test(raw)) {
+      // Il bus sta transitando ORA dalla fermata (countdown a zero).
+      minutesFromNow = 0;
+    } else {
+      // Corsa non ancora tracciata via GPS (l'API ripete l'orario pianificato
+      // come etichetta, es. "11:35"): nessun ritardo mostrabile.
+      return null;
+    }
     const scheduled = new Date(bus.scheduledTime).getTime();
     if (Number.isNaN(scheduled)) return null;
-    const predicted = Date.now() + parseInt(m[1], 10) * 60000;
+    const predicted = Date.now() + minutesFromNow * 60000;
     return Math.round((predicted - scheduled) / 60000);
   }
 
   getDelayBadge(bus) {
     const delay = this.computeDelayMinutes(bus);
     if (delay === null) return null;
+    if (delay <= -3) {
+      return { text: `In anticipo (${Math.abs(delay)} min)`, bg: 'rgba(26,115,232,0.15)', border: 'rgba(26,115,232,0.4)', color: 'var(--brand)' };
+    }
     if (delay <= 2) {
       return { text: 'In orario', bg: 'rgba(60,180,120,0.15)', border: 'rgba(60,180,120,0.4)', color: 'var(--ok)' };
     }
