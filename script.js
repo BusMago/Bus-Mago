@@ -2458,6 +2458,8 @@ class BusMagoApp {
                     note: r.Note || "",
                     isStarted: r.IsStarted !== false,
                     nextPasses: r.NextPasses || "",
+                    scheduledTime: r.Time || "",
+                    arrivalRaw: r.ArrivalTime || "",
                     lineLabel: lineConf.label,
                     lineColor: this.getLegendLineColor(lineConf.code),
                     lineCode: lineConf.code,
@@ -3361,7 +3363,7 @@ class BusMagoApp {
     }
     const bus = this.state.infoPanel ? this.state.infoPanel.selectedBus : null;
     if (!bus) return '';
-    return `B:${bus.key || ''}|${bus.lineCode || ''}|${bus.destination || ''}|${bus.departure || ''}|${bus.race || ''}|${bus.vehicle || ''}|${bus.note || ''}`;
+    return `B:${bus.key || ''}|${bus.lineCode || ''}|${bus.destination || ''}|${bus.departure || ''}|${bus.race || ''}|${bus.vehicle || ''}|${bus.note || ''}|${bus.arrivalRaw || ''}`;
   }
 
   getDeparturesSignature(activeLineCodes) {
@@ -3462,6 +3464,7 @@ class BusMagoApp {
     const collapseBodyStyle = collapsed ? 'display:none;' : '';
     const collapseIcon = collapsed ? '▾' : '▴';
     const collapseLabel = collapsed ? 'Espandi info vettura' : 'Comprimi info vettura';
+    const delayBadge = this.getDelayBadge(bus);
 
     return `
       <div class="vehicle-info vehicle-info--glossy ${collapsed ? 'vehicle-info--collapsed' : ''}" style="--line-color: ${lineBadgeColor}">
@@ -3477,6 +3480,7 @@ class BusMagoApp {
           <div class="info-label">Partenza</div><div class="info-value">${this.escapeHtmlAttribute(bus.departure || '-')}</div>
           <div class="info-label">Corsa</div><div class="info-value">${this.escapeHtmlAttribute(bus.race || '-')}</div>
           <div class="info-label">Vettura</div><div class="info-value">${this.escapeHtmlAttribute(bus.vehicle || '-')}</div>
+          ${delayBadge ? `<div class="info-label">Ritardo</div><div class="info-value"><span style="padding: 2px 8px; border-radius: 10px; background: ${delayBadge.bg}; border: 1px solid ${delayBadge.border}; color: ${delayBadge.color}; font-weight: 700; font-size: 12px;">${this.escapeHtmlAttribute(delayBadge.text)}</span></div>` : ''}
           ${bus.note ? `<div class="info-label info-note-label">Nota</div><div class="info-value info-note-value">${this.escapeHtmlAttribute(bus.note)}</div>` : ''}
         </div>
         <div class="info-footer" style="${collapseBodyStyle}">
@@ -3755,6 +3759,33 @@ class BusMagoApp {
       changed = true;
     });
     if (changed) this.updateBusMarkers(buses);
+  }
+
+  // Ritardo = (adesso + minuti dal countdown live "ArrivalTime") - orario
+  // pianificato ("Time"). Il countdown ("N min") compare solo per corse già
+  // tracciate via GPS; per le altre l'API ripete l'orario pianificato come
+  // etichetta ("HH:MM"), quindi la regex non combacia e non mostriamo nulla
+  // (niente ritardo inventato per corse non ancora partite).
+  computeDelayMinutes(bus) {
+    if (!bus || !bus.arrivalRaw || !bus.scheduledTime) return null;
+    const m = /^(\d+)\s*min/i.exec(bus.arrivalRaw.trim());
+    if (!m) return null;
+    const scheduled = new Date(bus.scheduledTime).getTime();
+    if (Number.isNaN(scheduled)) return null;
+    const predicted = Date.now() + parseInt(m[1], 10) * 60000;
+    return Math.round((predicted - scheduled) / 60000);
+  }
+
+  getDelayBadge(bus) {
+    const delay = this.computeDelayMinutes(bus);
+    if (delay === null) return null;
+    if (delay <= 2) {
+      return { text: 'In orario', bg: 'rgba(60,180,120,0.15)', border: 'rgba(60,180,120,0.4)', color: 'var(--ok)' };
+    }
+    if (delay <= 7) {
+      return { text: `+${delay} min`, bg: 'rgba(249,171,0,0.15)', border: 'rgba(249,171,0,0.4)', color: 'var(--fav)' };
+    }
+    return { text: `+${delay} min`, bg: 'rgba(217,48,37,0.15)', border: 'rgba(217,48,37,0.4)', color: 'var(--danger)' };
   }
 
   computeBearing(lat1, lon1, lat2, lon2) {
