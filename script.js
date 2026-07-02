@@ -54,8 +54,8 @@ const CONFIG = {
     EXPECTED_FIX_S: 20,      // cadenza reale del GPS TPL FVG
     MAX_SPEED_MPS: 17,       // ~60 km/h: clamp superiore plausibile in città
     MIN_SPEED_MPS: 0.5,      // sotto: bus considerato fermo
-    EXTRAP_FRACTION: 0.8,    // avanza max 80% della distanza inter-fix attesa
-    MAX_EXTRAP_M: 220,       // tetto assoluto oltre l'ultimo fix reale
+    EXTRAP_FRACTION: 0.92,   // avanza max 92% della distanza inter-fix attesa
+    MAX_EXTRAP_M: 260,       // tetto assoluto oltre l'ultimo fix reale
     OFF_ROUTE_M: 35,         // proiezione più lontana = fuori percorso (deviazione)
     REJOIN_S: 3,             // il gap col fix nuovo si chiude in ~3s
     SNAP_M: 300,             // gap enorme = corsa/anello nuovo: snap secco
@@ -3890,24 +3890,42 @@ class BusMagoApp {
     while (i < pts.length - 2 && cum[i + 1] < target) i++;
     const segLen = cum[i + 1] - cum[i];
     const t = segLen > 0 ? (target - cum[i]) / segLen : 0;
-    return {
-      lat: pts[i].lat + (pts[i + 1].lat - pts[i].lat) * t,
-      lng: pts[i].lng + (pts[i + 1].lng - pts[i].lng) * t,
-      heading: this.computeBearing(pts[i].lat, pts[i].lng, pts[i + 1].lat, pts[i + 1].lng),
-      segIdx: i
-    };
+    const lat = pts[i].lat + (pts[i + 1].lat - pts[i].lat) * t;
+    const lng = pts[i].lng + (pts[i + 1].lng - pts[i].lng) * t;
+    return { lat, lng, heading: this.headingAlongTrack(geom, target, lat, lng, i), segIdx: i };
   }
 
-  // Heading dedotto dalla geometria del tracciato per linea+destinazione:
-  // direzione del segmento più vicino VERSO il capolinea di destinazione
+  // Heading "lisciato": punta verso un punto più avanti sul tracciato (non il
+  // solo segmento corrente). Alcune fermate hanno nella geometria del percorso
+  // piccoli zig-zag perpendicolari (baia di fermata): guardando solo il
+  // segmento locale la punta del bus li seguirebbe uno a uno. Guardando ~15m
+  // più avanti quei micro-segmenti vengono attraversati senza influenzare
+  // l'orientamento mostrato.
+  headingAlongTrack(geom, s, lat, lng, hintIdx) {
+    const LOOKAHEAD_M = 15;
+    const pts = geom.pts, cum = geom.cum;
+    const ahead = Math.min(s + LOOKAHEAD_M, geom.total);
+    let j = Math.max(0, Math.min(hintIdx || 0, pts.length - 2));
+    if (ahead - s < 1) {
+      // Troppo vicino alla fine del tracciato per guardare avanti: segmento corrente.
+      return this.computeBearing(pts[j].lat, pts[j].lng, pts[j + 1].lat, pts[j + 1].lng);
+    }
+    while (j < pts.length - 2 && cum[j + 1] < ahead) j++;
+    const segLen = cum[j + 1] - cum[j];
+    const t = segLen > 0 ? (ahead - cum[j]) / segLen : 0;
+    const aLat = pts[j].lat + (pts[j + 1].lat - pts[j].lat) * t;
+    const aLng = pts[j].lng + (pts[j + 1].lng - pts[j].lng) * t;
+    return this.computeBearing(lat, lng, aLat, aLng);
+  }
+
+  // Heading dedotto dalla geometria del tracciato per linea+destinazione
   // (la polyline della Race va da partenza a destinazione).
   // Null se il tracciato non è ancora disponibile.
   computeTrackHeading(lineCode, destination, lat, lon) {
     const geom = this.getTrackGeometry(`${lineCode}_${normalizeKey(destination)}`);
     if (!geom) return null;
     const p = this.projectToTrack(geom, lat, lon);
-    const a = geom.pts[p.segIdx], c = geom.pts[p.segIdx + 1];
-    return this.computeBearing(a.lat, a.lng, c.lat, c.lng);
+    return this.headingAlongTrack(geom, p.s, lat, lon, p.segIdx);
   }
 
   // ===== Animatore dead-reckoning =====
@@ -4040,10 +4058,20 @@ class BusMagoApp {
       if (!geom) return;
       // capS con pavimento a lastFixS: il fix reale è sempre raggiungibile.
       const limit = Math.min(Math.max(rec.capS, rec.lastFixS), geom.total);
+      const remaining = limit - rec.s;
+      if (remaining < 0.3) return; // già al tetto: fermo, niente da disegnare
       // Ricongiungimento morbido: al gap col fix nuovo si aggiunge velocità
       // che decade a zero man mano che il gap si chiude (~REJOIN_S secondi).
-      const vEff = (rec.speed || 0) + Math.max(0, rec.lastFixS - rec.s) / CONFIG.ANIM.REJOIN_S;
-      if (rec.s < limit && vEff > 0.01) anyAdvanceable = true;
+      const target = (rec.speed || 0) + Math.max(0, rec.lastFixS - rec.s) / CONFIG.ANIM.REJOIN_S;
+      // Filtro passa-basso sulla velocità mostrata: quando arriva un fix nuovo
+      // il bonus di ricongiungimento nasce di colpo (gap grande subito dopo
+      // l'aggiornamento) — senza filtro il bus scatterebbe avanti invece di
+      // accelerare dolcemente. rec.dispV vive nel record, non resettato dai fix.
+      rec.dispV = rec.dispV == null ? target : rec.dispV + (target - rec.dispV) * 0.15;
+      // Decelera negli ultimi metri prima del tetto invece di fermarsi di scatto.
+      const DECEL_ZONE_M = 6;
+      const vEff = remaining < DECEL_ZONE_M ? rec.dispV * (remaining / DECEL_ZONE_M) : rec.dispV;
+      if (vEff > 0.01) anyAdvanceable = true;
       const sNew = Math.min(rec.s + vEff * dt, limit);
       if (sNew <= rec.s) return;
 
@@ -4065,10 +4093,19 @@ class BusMagoApp {
       marker.setLatLng([pt.lat, pt.lng]);
       this._writeMarkerRotation(marker, pt.heading, zoomScale);
 
-      // Follow: il bus seguito resta inchiodato al centro, in lockstep col passo.
+      // Follow: il bus seguito resta inchiodato al centro. `setView({animate:false})`
+      // faceva un reset istantaneo del pane ogni ~120ms E, soprattutto, generava
+      // 'movestart'/'moveend' che accendevano/spegnevano `.map-interacting` a ogni
+      // passo — spegnendo la transition del marker (.bus-anim) di continuo: da qui
+      // gli scatti (più visibili su desktop, dove il reflow costa di più). `panTo`
+      // con `noMoveStart` usa invece il pan animato di Leaflet (rAF su transform,
+      // stessa tecnica del marker) e non tocca `.map-interacting`.
       if (this.state.isFollowing && this.state.selectedVehicleKey === key) {
         this.state.lastFollowCoords = [pt.lat, pt.lng];
-        map.setView([pt.lat, pt.lng], map.getZoom(), { animate: false });
+        map.panTo([pt.lat, pt.lng], {
+          animate: true, noMoveStart: true,
+          duration: CONFIG.ANIM.STEP_MS / 1000, easeLinearity: 1
+        });
       }
     });
 
