@@ -514,36 +514,22 @@ input:focus-visible,
   text-transform: uppercase; color: var(--text-secondary);
   flex: 1 1 auto;
 }
-/* Badge linea attiva con X per deselezionare (solo quando filtro attivo) */
-.departures-filter-badge {
-  display: inline-flex; align-items: center; gap: 5px;
-  padding: 3px 7px 3px 3px;
-  border-radius: 20px;
-  background: var(--surface-inactive);
-  border: 1px solid var(--border);
-  cursor: pointer; color: var(--text-secondary);
-  font-size: 11px; font-weight: 600;
-  transition: background 0.15s, color 0.15s;
-  flex: 0 0 auto;
-}
-.departures-filter-badge:hover { background: var(--surface-hover); color: var(--text-primary); }
-.departures-filter-badge-code {
-  display: inline-flex; align-items: center; justify-content: center;
-  min-width: 22px; height: 22px; border-radius: 50%;
-  padding: 0 4px;
-  color: #fff; font-size: 11px; font-weight: 800;
-}
+/* Stesso stile del toggle comprimi/espandi della card vettura
+   (.vehicle-collapse-toggle): pulsanti analoghi, aspetto uniforme. */
 .departures-toggle {
-  width: 32px; height: 28px; border-radius: 8px;
-  border: 1px solid var(--border);
-  background: var(--surface-inactive);
-  color: var(--text-primary);
+  flex: 0 0 auto;
+  width: 28px; height: 28px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(255,255,255,0.12);
+  color: var(--text-secondary);
   cursor: pointer;
   display: inline-flex; align-items: center; justify-content: center;
   padding: 0;
-  transition: background 0.15s ease;
+  font-size: 13px; line-height: 1;
+  transition: background 0.15s, color 0.15s;
 }
-.departures-toggle:hover { background: var(--surface-hover); }
+.departures-toggle:hover { background: rgba(255,255,255,0.22); color: var(--text-primary); }
 
 .departures-body    { margin-top: 6px; display: flex; flex-direction: column; gap: 4px; overflow: visible; }
 .departures-empty   { color: var(--text-secondary); font-size: 12px; }

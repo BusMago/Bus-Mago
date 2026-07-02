@@ -1319,7 +1319,7 @@ class BusMagoApp {
           this.toggleVehicleCollapsed();
           return;
         }
-        if (t && t.closest && (t.closest('#vehicle-deselect-btn') || t.closest('#departures-deselect-btn'))) {
+        if (t && t.closest && t.closest('#vehicle-deselect-btn')) {
           e.preventDefault();
           e.stopPropagation();
           this.deselectVehicle();
@@ -3643,20 +3643,10 @@ class BusMagoApp {
       body = items.map(it => this.buildDepartureRowHtml(it)).join('');
     }
 
-    const isFiltered = activeLineCodes.length === 1 && activeLineCodes.length < baseActiveLineCodes.length;
-    const filteredLine = isFiltered ? activeLineCodes[0] : null;
-    const filterBadge = filteredLine
-      ? `<button id="departures-deselect-btn" class="departures-filter-badge" type="button" title="Mostra tutte le linee" aria-label="Rimuovi filtro linea ${filteredLine}">
-           <span class="departures-filter-badge-code" style="background:${this.getLegendLineColor(filteredLine)}">${this.escapeHtmlAttribute(filteredLine)}</span>
-           <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-         </button>`
-      : '';
-
     return `
       <div class="departures-section">
         <div class="departures-header">
           <div class="departures-title"><span aria-hidden="true">🕐</span> Prossime partenze</div>
-          ${filterBadge}
           <button id="departures-toggle" class="departures-toggle" type="button" aria-label="${btnLabel}" aria-expanded="${collapsed ? 'false' : 'true'}">${icon}</button>
         </div>
         <div class="departures-body" style="${bodyStyle}">
