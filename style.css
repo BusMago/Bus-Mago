@@ -261,7 +261,12 @@ input:focus-visible,
   transition: background 0.15s ease, transform 0.1s ease;
   flex-shrink: 0;
 }
-.ctrl-pill-btn:hover  { background: var(--surface-hover); }
+/* :hover solo su dispositivi con puntatore reale: su touch il browser lo
+   simula al tap e resta "incollato" finché non si tocca altrove — l'alone
+   di sfondo che sembra rimanere premuto anche dopo aver sollevato il dito. */
+@media (hover: hover) and (pointer: fine) {
+  .ctrl-pill-btn:hover { background: var(--surface-hover); }
+}
 .ctrl-pill-btn:active { transform: scale(0.94); }
 
 .ctrl-pill-divider {
