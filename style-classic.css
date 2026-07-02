@@ -246,15 +246,8 @@
 :root[data-skin="classic"] .departures-line-badge::before { display: none; }
 
 /* =====================================================
-   Card vettura selezionata — niente gradiente glossy
+   Card vettura selezionata
    ===================================================== */
-:root[data-skin="classic"] .vehicle-info--glossy {
-  background: var(--surface-card);
-  border: 1px solid var(--border);
-  box-shadow: none;
-}
-:root[data-skin="classic"] .vehicle-info--glossy .info-header { border-bottom-color: var(--border); }
-:root[data-skin="classic"] .vehicle-info--glossy .info-footer { border-top-color: var(--border); }
 :root[data-skin="classic"] .info-line-badge {
   background: var(--line-color);
   border-radius: 10px;

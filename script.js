@@ -3251,30 +3251,30 @@ class BusMagoApp {
     const vehicleRoot = this.infoDiv.querySelector('.vehicle-info');
     if (!vehicleRoot) return;
     const badge = vehicleRoot.querySelector('#info-update-badge');
-    const timeSpan = vehicleRoot.querySelector('.info-footer span:last-child');
     if (!badge) return;
 
     const now = Date.now();
     const lastSuccessAt = this.state.updateStatus.lastSuccessAt || 0;
     const lastErrorAt = this.state.updateStatus.lastErrorAt || 0;
-    const lastSelectedMoveAt = this.state.updateStatus.lastSelectedMoveAt || 0;
     const isOffline = lastErrorAt > lastSuccessAt;
 
+    badge.classList.toggle('info-age-badge--offline', isOffline);
+    badge.classList.toggle('info-age-badge--online', !isOffline);
+
     if (isOffline) {
-      badge.textContent = 'Aggiornato offline';
-      badge.style.background = 'rgba(180, 60, 60, 0.2)';
-      badge.style.border = '1px solid rgba(180, 60, 60, 0.4)';
+      badge.textContent = '🔴 offline';
+      badge.title = 'Aggiornamento non riuscito: dati non aggiornati';
       return;
     }
 
     const ageSec = lastSuccessAt ? Math.max(0, Math.floor((now - lastSuccessAt) / 1000)) : null;
-    badge.textContent = `Aggiornato ${ageSec === null ? '?' : ageSec}s fa`;
-    badge.style.background = 'rgba(60, 180, 120, 0.15)';
-    badge.style.border = '1px solid rgba(60, 180, 120, 0.4)';
-
-    if (timeSpan && lastSuccessAt) {
+    badge.textContent = `🟢 ${ageSec === null ? '?' : ageSec}s fa`;
+    if (lastSuccessAt) {
       const dt = new Date(lastSuccessAt);
-      timeSpan.textContent = `${String(dt.getHours()).padStart(2, '0')}:${String(dt.getMinutes()).padStart(2, '0')}:${String(dt.getSeconds()).padStart(2, '0')}`;
+      const hh = String(dt.getHours()).padStart(2, '0');
+      const mm = String(dt.getMinutes()).padStart(2, '0');
+      const ss = String(dt.getSeconds()).padStart(2, '0');
+      badge.title = `Aggiornato ${ageSec}s fa (${hh}:${mm}:${ss})`;
     }
   }
 
@@ -3365,32 +3365,14 @@ class BusMagoApp {
     if (!items.length) {
       const hasData = !!(this.state.lastStopDataMap && typeof this.state.lastStopDataMap === 'object');
       if (!hasData) {
-        return `<div class="departures-section"><div class="departures-header"><div class="departures-title">Prossime partenze</div></div><div class="departures-body"><div class="departures-empty">In attesa dati…</div></div></div>`;
+        return `<div class="departures-section"><div class="departures-header"><div class="departures-title"><span aria-hidden="true">🕐</span> Prossime partenze</div></div><div class="departures-body"><div class="departures-empty">In attesa dati…</div></div></div>`;
       }
       return '';
     }
-    const body = items.map(it => {
-      const badgeColor = this.getLegendLineColor(it.lineCode);
-      const times = it.times && it.times.length ? it.times.map(t => this.escapeHtmlAttribute(t)).join(' · ') : '';
-      const destLabel = it.destinationLabel ? this.escapeHtmlAttribute(it.destinationLabel) : this.escapeHtmlAttribute(it.destinationKey || '');
-      const meta = it.originLabel ? `Da: ${this.escapeHtmlAttribute(it.originLabel)}` : '';
-      const runningDot = it.isStarted === true ? `<span class="departures-running-dot" title="Bus in servizio"></span>` : '';
-      const right = times
-        ? `<div class="departures-times">${runningDot}${times}</div>`
-        : `<div class="departures-times departures-times--empty">${this.escapeHtmlAttribute(it.message || 'In attesa dati…')}</div>`;
-      return `<div class="departures-line">
-      <div class="departures-line-badge" style="background-color:${badgeColor};">${this.escapeHtmlAttribute(it.lineCode)}</div>
-      <div class="departures-line-main">
-        <div class="departures-dest">${destLabel}</div>
-        ${meta ? `<div class="departures-meta">${meta}</div>` : ''}
-        ${it.note ? `<div class="departures-note">${this.escapeHtmlAttribute(it.note)}</div>` : ''}
-        ${right}
-      </div>
-    </div>`;
-    }).join('');
+    const body = items.map(it => this.buildDepartureRowHtml(it)).join('');
     return `<div class="departures-section">
     <div class="departures-header">
-      <div class="departures-title">Prossime partenze</div>
+      <div class="departures-title"><span aria-hidden="true">🕐</span> Prossime partenze</div>
       <button id="departures-toggle" class="departures-toggle" type="button" aria-label="${btnLabel}" aria-expanded="${collapsed ? 'false' : 'true'}">${icon}</button>
     </div>
     <div class="departures-body" style="${bodyStyle}">${body}</div>
@@ -3509,7 +3491,7 @@ class BusMagoApp {
     const track = this.state.infoPanel && this.state.infoPanel.selectedTrack ? this.state.infoPanel.selectedTrack : null;
     if (track) {
       return `
-        <div class="vehicle-info vehicle-info--glossy" style="--line-color: ${this.getLegendLineColor(track.lineCode)}">
+        <div class="vehicle-info" style="--line-color: ${this.getLegendLineColor(track.lineCode)}">
           <div class="info-header" style="border-bottom: none; margin-bottom: 0; padding-bottom: 0;">
             <div class="info-line-badge" style="--line-color: ${this.getLegendLineColor(track.lineCode)}">${this.escapeHtmlAttribute(track.lineLabel)}</div>
             <div class="info-destination">${this.escapeHtmlAttribute(track.destination)}</div>
@@ -3520,15 +3502,13 @@ class BusMagoApp {
 
     if (this.state.infoPanel && this.state.infoPanel.finishedTrip && this.state.selectedVehicleKey && !this.state.selectedVehicleKey.startsWith('TRACK_')) {
       return `
-        <div class="vehicle-info">
+        <div class="vehicle-info" style="--line-color: #777">
           <div class="info-header" style="border-bottom-color: rgba(220, 53, 69, 0.3)">
-            <div class="info-line-badge" style="--line-color: #777">⚠</div>
+            <div class="info-line-badge" style="--line-color: #777">⚠️</div>
             <div class="info-destination" style="color: #ff6b6b">Corsa terminata</div>
           </div>
-          <div class="info-body">
-            <div style="grid-column: 1 / -1; color: #aaa; font-size: 12px; margin-top: 4px;">
-              Il veicolo non è più rilevato dal sistema. È probabile che abbia raggiunto il capolinea.
-            </div>
+          <div class="info-empty-note">
+            Il veicolo non è più rilevato dal sistema. È probabile che abbia raggiunto il capolinea.
           </div>
         </div>
       `;
@@ -3551,10 +3531,9 @@ class BusMagoApp {
       timeStr = `${String(dt.getHours()).padStart(2, '0')}:${String(dt.getMinutes()).padStart(2, '0')}:${String(dt.getSeconds()).padStart(2, '0')}`;
     }
 
-    const badgeClass = isOffline ? "offline" : "online";
-    const ageText = isOffline ? "offline" : `${Math.max(0, Math.floor((now - lastSuccessAt) / 1000))}s fa`;
-    const badgeBg = isOffline ? 'rgba(180,60,60,0.2)' : 'rgba(60,180,120,0.15)';
-    const badgeBorder = isOffline ? 'rgba(180,60,60,0.4)' : 'rgba(60,180,120,0.4)';
+    const ageSec = isOffline ? null : Math.max(0, Math.floor((now - lastSuccessAt) / 1000));
+    const ageText = isOffline ? '🔴 offline' : `🟢 ${ageSec}s fa`;
+    const ageTitle = isOffline ? 'Aggiornamento non riuscito: dati non aggiornati' : `Aggiornato ${ageSec}s fa (${timeStr})`;
     const lineBadgeColor = bus.lineCode ? this.getLegendLineColor(bus.lineCode) : (bus.lineColor || '#666');
     const lineLabel = bus.lineLabel || (bus.lineCode || '-');
 
@@ -3566,32 +3545,70 @@ class BusMagoApp {
     const speedText = this.getVehicleSpeedText(bus.key);
     const distText = this.getVehicleDistanceText(bus);
 
+    const statChip = (emoji, label, value) => `
+          <div class="info-stat" title="${this.escapeHtmlAttribute(label)}">
+            <span class="info-stat-icon" aria-hidden="true">${emoji}</span>
+            <span class="sr-only">${this.escapeHtmlAttribute(label)}: </span>
+            <span class="info-stat-value">${this.escapeHtmlAttribute(value)}</span>
+          </div>`;
+    const statsHtml = [
+      statChip('🔢', 'Corsa', bus.race || '-'),
+      statChip('🚌', 'Vettura', bus.vehicle || '-'),
+      speedText ? statChip('⚡', 'Velocità', speedText) : '',
+      distText ? statChip('📍', 'Distanza da te', distText) : '',
+      delayBadge ? `
+          <div class="info-stat" title="Ritardo">
+            <span class="sr-only">Ritardo: </span>
+            <span class="info-stat-pill" style="background: ${delayBadge.bg}; border-color: ${delayBadge.border}; color: ${delayBadge.color}">${delayBadge.emoji} ${this.escapeHtmlAttribute(delayBadge.text)}</span>
+          </div>` : ''
+    ].join('');
+
     return `
-      <div class="vehicle-info vehicle-info--glossy ${collapsed ? 'vehicle-info--collapsed' : ''}" style="--line-color: ${lineBadgeColor}">
+      <div class="vehicle-info ${collapsed ? 'vehicle-info--collapsed' : ''}" style="--line-color: ${lineBadgeColor}">
         <div class="info-header">
           <div class="info-line-badge" style="--line-color: ${lineBadgeColor}">${this.escapeHtmlAttribute(lineLabel)}</div>
-          <div class="info-destination">${this.escapeHtmlAttribute(bus.destination || '-')}</div>
+          <div class="info-heading">
+            <div class="info-destination">${this.escapeHtmlAttribute(bus.destination || '-')}</div>
+            <div class="info-subtitle" title="Partenza: ${this.escapeHtmlAttribute(bus.departure || '-')}">
+              <span aria-hidden="true">🕒</span>
+              <span class="sr-only">Partenza: </span>${this.escapeHtmlAttribute(bus.departure || '-')}
+            </div>
+          </div>
+          <span id="info-update-badge" class="info-age-badge ${isOffline ? 'info-age-badge--offline' : 'info-age-badge--online'}" title="${this.escapeHtmlAttribute(ageTitle)}">${ageText}</span>
           <button id="vehicle-collapse-toggle" class="vehicle-deselect-btn vehicle-collapse-toggle" type="button" aria-label="${collapseLabel}" aria-expanded="${collapsed ? 'false' : 'true'}" title="${collapsed ? 'Espandi' : 'Comprimi'}">${collapseIcon}</button>
           <button id="vehicle-deselect-btn" class="vehicle-deselect-btn" type="button" aria-label="Chiudi info vettura" title="Chiudi">
             <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
           </button>
         </div>
-        <div class="info-body" style="${collapseBodyStyle}">
-          <div class="info-label">Partenza</div><div class="info-value">${this.escapeHtmlAttribute(bus.departure || '-')}</div>
-          <div class="info-label">Corsa</div><div class="info-value">${this.escapeHtmlAttribute(bus.race || '-')}</div>
-          <div class="info-label">Vettura</div><div class="info-value">${this.escapeHtmlAttribute(bus.vehicle || '-')}</div>
-          ${speedText ? `<div class="info-label">Velocità</div><div class="info-value">${this.escapeHtmlAttribute(speedText)}</div>` : ''}
-          ${distText ? `<div class="info-label">Distanza da te</div><div class="info-value">${this.escapeHtmlAttribute(distText)}</div>` : ''}
-          ${delayBadge ? `<div class="info-label">Ritardo</div><div class="info-value"><span style="padding: 2px 8px; border-radius: 10px; background: ${delayBadge.bg}; border: 1px solid ${delayBadge.border}; color: ${delayBadge.color}; font-weight: 700; font-size: 12px;">${this.escapeHtmlAttribute(delayBadge.text)}</span></div>` : ''}
-          ${bus.note ? `<div class="info-label info-note-label">Nota</div><div class="info-value info-note-value">${this.escapeHtmlAttribute(bus.note)}</div>` : ''}
+        <div class="info-stats" style="${collapseBodyStyle}">${statsHtml}
         </div>
-        <div class="info-footer" style="${collapseBodyStyle}">
-          <div style="display: flex; justify-content: space-between; align-items: center; font-size: 11px;">
-            <span id="info-update-badge" class="${badgeClass}" style="padding: 2px 8px; border-radius: 10px; background: ${badgeBg}; border: 1px solid ${badgeBorder}">
-              Aggiornato ${this.escapeHtmlAttribute(ageText)}
-            </span>
-            <span style="color: #888;">${this.escapeHtmlAttribute(timeStr)}</span>
-          </div>
+        ${bus.note ? `<div class="info-note" style="${collapseBodyStyle}"><span aria-hidden="true">📝</span><span class="sr-only">Nota: </span><span>${this.escapeHtmlAttribute(bus.note)}</span></div>` : ''}
+      </div>
+    `;
+  }
+
+  // Riga di una singola partenza (linea+destinazione+orari): condivisa fra
+  // buildDeparturesHtml (vettura selezionata) e buildDeparturesForLine (chip
+  // "Informazioni" senza vettura) così le due modalità restano allineate.
+  buildDepartureRowHtml(it) {
+    const badgeColor = this.getLegendLineColor(it.lineCode);
+    const times = it.times && it.times.length ? it.times.map(t => this.escapeHtmlAttribute(t)).join(' · ') : '';
+    const destLabel = it.destinationLabel ? this.escapeHtmlAttribute(it.destinationLabel) : this.escapeHtmlAttribute(it.destinationKey || '');
+
+    const meta = it.originLabel ? `<span class="sr-only">Da: </span><span aria-hidden="true">🚏</span> ${this.escapeHtmlAttribute(it.originLabel)}` : '';
+    const runningDot = it.isStarted === true ? `<span class="departures-running-dot" title="Bus in servizio"></span>` : '';
+    const right = times
+      ? `<div class="departures-times">${runningDot}${times}</div>`
+      : `<div class="departures-times departures-times--empty">${this.escapeHtmlAttribute(it.message || 'In attesa dati…')}</div>`;
+
+    return `
+      <div class="departures-line">
+        <div class="departures-line-badge" style="background-color:${badgeColor};">${this.escapeHtmlAttribute(it.lineCode)}</div>
+        <div class="departures-line-main">
+          <div class="departures-dest">${destLabel}</div>
+          ${meta ? `<div class="departures-meta">${meta}</div>` : ''}
+          ${it.note ? `<div class="departures-note"><span class="sr-only">Nota: </span><span aria-hidden="true">📝</span> ${this.escapeHtmlAttribute(it.note)}</div>` : ''}
+          ${right}
         </div>
       </div>
     `;
@@ -3623,29 +3640,7 @@ class BusMagoApp {
         return '';
       }
     } else {
-      body = items.map(it => {
-        const badgeColor = this.getLegendLineColor(it.lineCode);
-        const times = it.times && it.times.length ? it.times.map(t => this.escapeHtmlAttribute(t)).join(' · ') : '';
-        const destLabel = it.destinationLabel ? this.escapeHtmlAttribute(it.destinationLabel) : this.escapeHtmlAttribute(it.destinationKey || '');
-
-        const meta = it.originLabel ? `Da: ${this.escapeHtmlAttribute(it.originLabel)}` : '';
-        const runningDot = it.isStarted === true ? `<span class="departures-running-dot" title="Bus in servizio"></span>` : '';
-        const right = times
-          ? `<div class="departures-times">${runningDot}${times}</div>`
-          : `<div class="departures-times departures-times--empty">${this.escapeHtmlAttribute(it.message || 'In attesa dati…')}</div>`;
-
-        return `
-          <div class="departures-line">
-            <div class="departures-line-badge" style="background-color:${badgeColor};">${this.escapeHtmlAttribute(it.lineCode)}</div>
-            <div class="departures-line-main">
-              <div class="departures-dest">${destLabel}</div>
-              ${meta ? `<div class="departures-meta">${meta}</div>` : ''}
-              ${it.note ? `<div class="departures-note">${this.escapeHtmlAttribute(it.note)}</div>` : ''}
-              ${right}
-            </div>
-          </div>
-        `;
-      }).join('');
+      body = items.map(it => this.buildDepartureRowHtml(it)).join('');
     }
 
     const isFiltered = activeLineCodes.length === 1 && activeLineCodes.length < baseActiveLineCodes.length;
@@ -3660,7 +3655,7 @@ class BusMagoApp {
     return `
       <div class="departures-section">
         <div class="departures-header">
-          <div class="departures-title">Prossime partenze</div>
+          <div class="departures-title"><span aria-hidden="true">🕐</span> Prossime partenze</div>
           ${filterBadge}
           <button id="departures-toggle" class="departures-toggle" type="button" aria-label="${btnLabel}" aria-expanded="${collapsed ? 'false' : 'true'}">${icon}</button>
         </div>
@@ -4187,15 +4182,15 @@ class BusMagoApp {
     const delay = this.computeDelayMinutes(bus);
     if (delay === null) return null;
     if (delay <= -3) {
-      return { text: `In anticipo (${Math.abs(delay)} min)`, bg: 'rgba(26,115,232,0.15)', border: 'rgba(26,115,232,0.4)', color: 'var(--brand)' };
+      return { text: `In anticipo (${Math.abs(delay)} min)`, bg: 'rgba(26,115,232,0.15)', border: 'rgba(26,115,232,0.4)', color: 'var(--brand)', emoji: '🔵' };
     }
     if (delay <= 2) {
-      return { text: 'In orario', bg: 'rgba(60,180,120,0.15)', border: 'rgba(60,180,120,0.4)', color: 'var(--ok)' };
+      return { text: 'In orario', bg: 'rgba(60,180,120,0.15)', border: 'rgba(60,180,120,0.4)', color: 'var(--ok)', emoji: '🟢' };
     }
     if (delay <= 7) {
-      return { text: `+${delay} min`, bg: 'rgba(249,171,0,0.15)', border: 'rgba(249,171,0,0.4)', color: 'var(--fav)' };
+      return { text: `+${delay} min`, bg: 'rgba(249,171,0,0.15)', border: 'rgba(249,171,0,0.4)', color: 'var(--fav)', emoji: '🟠' };
     }
-    return { text: `+${delay} min`, bg: 'rgba(217,48,37,0.15)', border: 'rgba(217,48,37,0.4)', color: 'var(--danger)' };
+    return { text: `+${delay} min`, bg: 'rgba(217,48,37,0.15)', border: 'rgba(217,48,37,0.4)', color: 'var(--danger)', emoji: '🔴' };
   }
 
   computeBearing(lat1, lon1, lat2, lon2) {
