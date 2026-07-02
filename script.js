@@ -46,6 +46,21 @@ const CONFIG = {
     // SOTTO la soglia reale dell'API. Tarare con lo script api-rate-probe.py.
     MAX_RPS: 36
   },
+  ANIM: {
+    // Dead reckoning: fra un fix GPS reale e l'altro (~20s) i bus avanzano
+    // lungo la polyline del tracciato alla velocità stimata dagli ultimi fix,
+    // poi si ricongiungono in morbidezza al dato nuovo. Zero richieste in più.
+    STEP_MS: 120,            // cadenza dei passi (~8 fps: sotto, liscia il CSS)
+    EXPECTED_FIX_S: 20,      // cadenza reale del GPS TPL FVG
+    MAX_SPEED_MPS: 17,       // ~60 km/h: clamp superiore plausibile in città
+    MIN_SPEED_MPS: 0.5,      // sotto: bus considerato fermo
+    EXTRAP_FRACTION: 0.8,    // avanza max 80% della distanza inter-fix attesa
+    MAX_EXTRAP_M: 220,       // tetto assoluto oltre l'ultimo fix reale
+    OFF_ROUTE_M: 35,         // proiezione più lontana = fuori percorso (deviazione)
+    REJOIN_S: 3,             // il gap col fix nuovo si chiude in ~3s
+    SNAP_M: 300,             // gap enorme = corsa/anello nuovo: snap secco
+    STOPPED_AFTER_MS: 45000  // nessun fix mosso da 45s (≥2 fix GPS) → velocità 0
+  },
   UI: {
     TOAST_DURATION_MS: 3000,
     SMALL_ICON_THRESHOLD: 10,
@@ -213,6 +228,7 @@ class BusMagoApp {
         collapsedStorageKey: 'busmago:vehicleCollapsed:v1'
       },
       lastStopDataMap: null,
+      userLocation: null, // {lat, lon, accuracy} dall'ultimo watchPosition
       legendPaletteIndexByCode: {},
       persisted: {
         activeLinesKey: 'busmago:activeLines:v2'
@@ -236,7 +252,10 @@ class BusMagoApp {
       },
       isHardRefreshing: false,
       wakeLock: null,
-      justResumedFromBackground: false // Flag to force fresh data on first refresh after resume
+      justResumedFromBackground: false, // Flag to force fresh data on first refresh after resume
+      // Dead reckoning: stato dell'animatore che fa avanzare i bus lungo il
+      // tracciato fra un fix GPS reale e l'altro (~20s). byKey: vedi feedAnimatorFix.
+      anim: { rafId: null, lastStepTs: 0, byKey: {} }
     };
 
     // DOM Elements
@@ -244,9 +263,15 @@ class BusMagoApp {
     this.legendDiv = document.getElementById('legend');
     this.toastDiv = null;
 
+    // Cache geometria tracciati (trackKey -> {pts, cum, total}), vedi getTrackGeometry.
+    this._trackGeom = new Map();
+    this._reducedMotion = !!(typeof window !== 'undefined' && window.matchMedia
+      && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+
     // Bindings
     this.refreshData = this.refreshData.bind(this);
     this.hardRefreshData = this.hardRefreshData.bind(this);
+    this._busAnimStep = this._busAnimStep.bind(this);
   }
 
   // Feedback aptico (solo dispositivi che supportano l'API Vibration, di fatto
@@ -350,12 +375,19 @@ class BusMagoApp {
 
   getLegendLineColor(code) {
     const rawCode = String(code ?? '');
+    // Memoizzato: chiamata decine di volte per ciclo nei loop dei marker, ma
+    // la palette cambia solo in initVisibility (che svuota la cache).
+    if (!this._lineColorCache) this._lineColorCache = new Map();
+    const hit = this._lineColorCache.get(rawCode);
+    if (hit) return hit;
     const colorRotation = { '51': '56', '56': '58', '58': '51', '4': '9', '9': '4' };
     const sourceCode = colorRotation[rawCode] ?? rawCode;
     const idx = this.state.legendPaletteIndexByCode[sourceCode] ?? 0;
     const palette = BUS_PALETTE;
     if (!Array.isArray(palette) || palette.length === 0) return '#0077ff';
-    return palette[((idx % palette.length) + palette.length) % palette.length];
+    const color = palette[((idx % palette.length) + palette.length) % palette.length];
+    this._lineColorCache.set(rawCode, color);
+    return color;
   }
 
   recomputeGroupDefaultFilters() {
@@ -1105,6 +1137,8 @@ class BusMagoApp {
       this.state.legendPaletteIndexByCode['3'] = idx10;
       this.state.legendPaletteIndexByCode['10'] = idx3;
     }
+    // Unico punto che riassegna la palette: invalida la cache dei colori.
+    if (this._lineColorCache) this._lineColorCache.clear();
   }
 
   setupEvents() {
@@ -1253,6 +1287,7 @@ class BusMagoApp {
           this.state.refreshControl.abortController.abort();
         }
         this.state.refreshControl.inFlight = false;
+        this.stopBusAnimator(); // niente rAF in background (riparte col refresh)
         this.releaseWakeLock();
       }
     });
@@ -1515,7 +1550,9 @@ class BusMagoApp {
         
         lastLat = lat;
         lastLon = lon;
-  
+        // Copia nello state: serve alla riga "Distanza da te" del pannello.
+        this.state.userLocation = { lat, lon, accuracy };
+
         if (userMarker) {
           userMarker.setLatLng([lat, lon]);
           userAccuracyCircle.setLatLng([lat, lon]);
@@ -2255,6 +2292,9 @@ class BusMagoApp {
 
     // 4. Clear vehicle state and other data
     this.state.vehicleState = {};
+    this.state.anim.byKey = {};
+    this.stopBusAnimator();
+    this._trackGeom.clear();
     this.state.lastEnrichedBuses = [];
     this.state.lastStopDataMap = null;
     this.state.stopCache = {
@@ -2485,10 +2525,27 @@ class BusMagoApp {
 
         const uniqueBuses = Object.values(byVehicle);
 
+        // 4bis. Tracciati PRIMA dell'enrichment: al primo ciclo (o linea appena
+        // attivata) attendiamo brevemente i LineGeoTrack mancanti, così
+        // computeTrackHeading trova già le polyline e i bus nascono orientati
+        // lungo il percorso invece di puntare a nord. Nei cicli successivi
+        // l'array è vuoto → zero attesa. reorientStationaryBuses resta come
+        // rete di sicurezza per i tracciati che sforano il tetto.
+        const pendingTracks = this.processTracks(stopDataMap);
+        if (pendingTracks.length > 0) {
+            await Promise.race([
+                Promise.all(pendingTracks),
+                new Promise(res => setTimeout(res, 2000))
+            ]);
+            if (requestId !== this.state.refreshControl.requestSeq) return;
+        }
+
         const enriched = uniqueBuses.map(b => {
             const key = b.key || b.vehicle || `NO_VEHICLE_${b.coords[0]}_${b.coords[1]}`;
             const prev = this.state.vehicleState[key];
-            let heading = (prev && typeof prev.heading === 'number') ? prev.heading : 0;
+            // null = orientamento davvero ignoto → il marker resta un cerchio
+            // senza punta (niente "nord" a caso) finché non arriva un heading.
+            let heading = (prev && typeof prev.heading === 'number') ? prev.heading : null;
             let headingFromMove = prev ? !!prev.headingFromMove : false;
             const moved = !prev || prev.lat !== b.coords[0] || prev.lon !== b.coords[1];
 
@@ -2496,14 +2553,22 @@ class BusMagoApp {
                 // Movimento osservato fra due cicli: è l'orientamento più affidabile.
                 heading = this.computeBearing(prev.lat, prev.lon, b.coords[0], b.coords[1]);
                 headingFromMove = true;
-            } else if (!headingFromMove) {
+            } else if (!headingFromMove && heading === null) {
                 // Prima apparizione (o vettura ancora ferma): non sappiamo ancora da
                 // dove arriva, ma sappiamo dove va. Orientiamo l'icona lungo il
                 // tracciato verso la destinazione, così non punta mai "in su" di
                 // default. Resta valido finché il movimento reale non subentra.
+                // (Solo quando l'heading è ancora ignoto: un bus fermo già
+                // orientato non deve rifare la proiezione O(n) a ogni ciclo.)
                 const t = this.computeTrackHeading(b.lineCode, b.destination, b.coords[0], b.coords[1]);
                 if (t != null) heading = t;
             }
+
+            // Dead reckoning: registra il fix; se il bus è animabile l'heading
+            // mostrato è quello del segmento corrente del tracciato (unica
+            // fonte per marker e pannello, coerente col moto animato).
+            const animHeading = this.feedAnimatorFix(b, key, moved);
+            if (animHeading != null) heading = animHeading;
 
             this.state.vehicleState[key] = {
               lat: b.coords[0],
@@ -2521,12 +2586,10 @@ class BusMagoApp {
 
         this.updateKnownDirectionsFromStopData(stopDataMap);
 
-        // 5. Process Tracks
-        this.processTracks(stopDataMap);
-
         let selected = null;
 
         this.updateBusMarkers(enriched);
+        this.syncBusAnimator();
 
         // Update selected info
         if (this.state.selectedVehicleKey) {
@@ -2563,6 +2626,9 @@ class BusMagoApp {
 
   processTracks(stopDataMap) {
     const visible = new Set();
+    // Promise dei LineGeoTrack per tracciati ANCORA SENZA layer: il chiamante
+    // può attenderle (con tetto) così il primo render nasce già orientato.
+    const pendingFirstTracks = [];
 
     linesConfig.forEach(lineConf => {
         if (this.state.lineVisibility[lineConf.code] !== true) return;
@@ -2641,7 +2707,8 @@ class BusMagoApp {
             const trackController = new AbortController();
             this.state.trackFetchControllers[trackKey] = trackController;
 
-            fetch(url, { signal: trackController.signal })
+            const isFirstTrack = !this.state.routeLayers[trackKey];
+            const trackPromise = fetch(url, { signal: trackController.signal })
                 .then(r => r.json())
                 .then(track => {
                     delete this.state.trackFetchControllers[trackKey];
@@ -2653,6 +2720,7 @@ class BusMagoApp {
                     delete this.state.trackFetchControllers[trackKey];
                     if (DEBUG) console.error(`Errore caricamento tracciato ${trackKey}`, err);
                 });
+            if (isFirstTrack) pendingFirstTracks.push(trackPromise);
         });
     });
 
@@ -2669,6 +2737,7 @@ class BusMagoApp {
     });
 
     this.state.visibleTrackKeys = visible;
+    return pendingFirstTracks;
   }
 
   handleEasterEggTrack(lineConf, dir) {
@@ -2754,6 +2823,7 @@ class BusMagoApp {
           // Just update geometry, do not remove/add (prevents flicker and layout thrashing)
           this.state.routeLayers[trackKey].setLatLngs(pts);
           this.state.routeLayers[trackKey].options.destination = destination;
+          this._trackGeom.delete(trackKey); // geometria cambiata: invalida la cache
       } else {
           const polyline = L.polyline(pts, { color: paletteColor, weight: 3.5 }).addTo(this.state.map);
           this.state.routeLayers[trackKey] = polyline;
@@ -2768,7 +2838,9 @@ class BusMagoApp {
               }
               this.state.selectedVehicleKey = "TRACK_" + trackKey;
               if (this.state.departures) this.state.departures.collapsed = false;
-              this.updateInfoFromTrack(lineConf, destination);
+              // Destinazione letta dalle options (aggiornate a ogni update):
+              // la closure diventerebbe stantia se la variante cambia.
+              this.updateInfoFromTrack(lineConf, polyline.options.destination);
               if (this.legendDiv.style.display === 'block') {
                   this.legendDiv.style.display = 'none';
               }
@@ -2776,38 +2848,44 @@ class BusMagoApp {
           });
       }
 
-      // Endpoints (always recreate or update - here we recreate for simplicity as they are few)
-      if (this.state.routeEndpointMarkers[trackKey]) {
-          this.state.routeEndpointMarkers[trackKey].forEach(m => this.state.map.removeLayer(m));
-      }
-
-      const endpoints = [];
+      // Endpoints: creati UNA volta, poi solo riposizionati/ricolorati.
+      // Prima venivano rimossi e ricreati (con rebinding dei listener) a ogni
+      // update del tracciato: churn di layer inutile.
       if (pts.length > 0) {
           const start = pts[0];
           const end = pts[pts.length - 1];
-          const startMarker = L.circleMarker(start, { radius: 6, color: paletteColor, fillColor: paletteColor, fillOpacity: 1, weight: 2 }).addTo(this.state.map);
-          const endMarker = L.circleMarker(end, { radius: 6, color: paletteColor, fillColor: paletteColor, fillOpacity: 1, weight: 2 }).addTo(this.state.map);
-          [startMarker, endMarker].forEach(m => {
-            m.off('click');
-            m.on('click', (e) => {
-              const oe = e && e.originalEvent ? e.originalEvent : e;
-              if (oe) {
-                L.DomEvent.preventDefault(oe);
-                L.DomEvent.stopPropagation(oe);
-              }
-              this.state.selectedVehicleKey = "TRACK_" + trackKey;
-              if (this.state.departures) this.state.departures.collapsed = false;
-              this.updateInfoFromTrack(lineConf, destination);
-              if (this.legendDiv.style.display === 'block') {
-                this.legendDiv.style.display = 'none';
-              }
-              this.updateBusMarkers(this.state.lastEnrichedBuses);
-            });
-          });
-          endpoints.push(startMarker);
-          endpoints.push(endMarker);
+          const existing = this.state.routeEndpointMarkers[trackKey];
+          if (Array.isArray(existing) && existing.length === 2 && existing.every(m => m && m.setLatLng && m.setStyle)) {
+              existing[0].setLatLng(start);
+              existing[1].setLatLng(end);
+              existing.forEach(m => m.setStyle({ color: paletteColor, fillColor: paletteColor }));
+          } else {
+              if (existing) existing.forEach(m => this.state.map.removeLayer(m));
+              const startMarker = L.circleMarker(start, { radius: 6, color: paletteColor, fillColor: paletteColor, fillOpacity: 1, weight: 2 }).addTo(this.state.map);
+              const endMarker = L.circleMarker(end, { radius: 6, color: paletteColor, fillColor: paletteColor, fillOpacity: 1, weight: 2 }).addTo(this.state.map);
+              [startMarker, endMarker].forEach(m => {
+                m.on('click', (e) => {
+                  const oe = e && e.originalEvent ? e.originalEvent : e;
+                  if (oe) {
+                    L.DomEvent.preventDefault(oe);
+                    L.DomEvent.stopPropagation(oe);
+                  }
+                  this.state.selectedVehicleKey = "TRACK_" + trackKey;
+                  if (this.state.departures) this.state.departures.collapsed = false;
+                  const layer = this.state.routeLayers[trackKey];
+                  this.updateInfoFromTrack(lineConf, layer ? layer.options.destination : destination);
+                  if (this.legendDiv.style.display === 'block') {
+                    this.legendDiv.style.display = 'none';
+                  }
+                  this.updateBusMarkers(this.state.lastEnrichedBuses);
+                });
+              });
+              this.state.routeEndpointMarkers[trackKey] = [startMarker, endMarker];
+          }
+      } else if (this.state.routeEndpointMarkers[trackKey]) {
+          this.state.routeEndpointMarkers[trackKey].forEach(m => this.state.map.removeLayer(m));
+          delete this.state.routeEndpointMarkers[trackKey];
       }
-      this.state.routeEndpointMarkers[trackKey] = endpoints;
 
       this.updateTrackStyles();
 
@@ -2883,8 +2961,14 @@ class BusMagoApp {
         // (pointing SW = 225°). Rotating by heading+135° aims that point toward the
         // travel direction. With no heading we keep a plain circle (no false point).
         // The wrapper rotates+scales; the number counter-rotates to stay upright.
-        const dropRot = hasHeading ? (heading + 135) : 0;
+        const prevMarker = this.state.busMarkers[b.key] || null;
+        // Rotazione cumulativa ad arco breve (condivisa con l'animatore).
+        const dropRot = this._cumDropRot(prevMarker, hasHeading ? (heading + 135) : 0);
         const dropRadius = hasHeading ? '50% 50% 50% 0' : '50%';
+        // Bus animato dal dead-reckoning: il refresh NON deve teletrasportarlo
+        // indietro al fix grezzo — si disegna alla posizione animata corrente.
+        const animCoords = this.getAnimatedCoords(b.key);
+        const displayCoords = animCoords || b.coords;
         const iconHtml = `<div class="bus-marker-wrap" style="transform:rotate(${dropRot}deg) scale(${zoomScale});opacity:${opacity}"><div class="bus-drop ${sizeClass}" style="background:${dropBg};border-radius:${dropRadius};${borderStyle}"><span style="transform:rotate(${-dropRot}deg);color:${labelTextColor};">${labelText}</span></div></div>`;
 
         let marker;
@@ -2892,8 +2976,8 @@ class BusMagoApp {
             // Update existing
             marker = this.state.busMarkers[b.key];
             const prev = marker.getLatLng();
-            const samePos = prev && prev.lat === b.coords[0] && prev.lng === b.coords[1];
-            if (!samePos) marker.setLatLng(b.coords);
+            const samePos = prev && prev.lat === displayCoords[0] && prev.lng === displayCoords[1];
+            if (!samePos) marker.setLatLng(displayCoords);
             marker.setZIndexOffset(isSelected ? 1000 : 0);
             
             // Optimization: Update DOM directly to preserve smooth transition
@@ -2904,6 +2988,9 @@ class BusMagoApp {
             if (isSameSize) {
                 const el = marker.getElement();
                 if (el) {
+                    // Bus non più animato (fuori rotta/tracciato sparito):
+                    // togli la transition corta, torna il glide standard 1.2s.
+                    if (!animCoords && el.classList.contains('bus-anim')) el.classList.remove('bus-anim');
                     const wrap = el.querySelector('.bus-marker-wrap');
                     const iconDiv = wrap && wrap.querySelector('.bus-drop');
                     if (wrap && iconDiv) {
@@ -2941,7 +3028,7 @@ class BusMagoApp {
                 iconAnchor: iconAnchor
               });
 
-             marker = L.marker(b.coords, { icon: icon, zIndexOffset: isSelected ? 1000 : 0 }).addTo(this.state.map);
+             marker = L.marker(displayCoords, { icon: icon, zIndexOffset: isSelected ? 1000 : 0 }).addTo(this.state.map);
              this.state.busMarkers[b.key] = marker;
 
              // Bind the click handler ONCE. It resolves the current bus by key
@@ -2971,13 +3058,17 @@ class BusMagoApp {
              });
         }
 
+        marker._dropRotCum = dropRot;
+
         // Follow logic: la mappa scorre INSIEME al bus seguito non appena si
         // muove, tenendolo centrato. Per non litigare con la gente che trascina
         // la mappa, ripaniamo solo quando le coordinate del bus CAMBIANO davvero
         // rispetto all'ultima posizione su cui abbiamo centrato (un refresh in
         // cui il bus è fermo non sposta la vista). La micro-soglia evita pan
         // inutili per oscillazioni GPS sotto il metro.
-        if (isSelected && this.state.isFollowing && !this.state.selectedVehicleKey.startsWith("TRACK_")) {
+        // Per i bus ANIMATI il centraggio lo fa l'animatore a ogni passo
+        // (setView in _busAnimStep): questo panTo litigherebbe con lui.
+        if (!animCoords && isSelected && this.state.isFollowing && !this.state.selectedVehicleKey.startsWith("TRACK_")) {
             const map = this.state.map;
             const last = this.state.lastFollowCoords;
             const moved = !last ||
@@ -2996,6 +3087,7 @@ class BusMagoApp {
         if (!newKeys.has(key)) {
             this.state.map.removeLayer(this.state.busMarkers[key]);
             delete this.state.busMarkers[key];
+            delete this.state.anim.byKey[key]; // bus sparito: stop dead reckoning
         }
     });
     Object.keys(this.state.vehicleState).forEach(key => {
@@ -3366,7 +3458,10 @@ class BusMagoApp {
     }
     const bus = this.state.infoPanel ? this.state.infoPanel.selectedBus : null;
     if (!bus) return '';
-    return `B:${bus.key || ''}|${bus.lineCode || ''}|${bus.destination || ''}|${bus.departure || ''}|${bus.race || ''}|${bus.vehicle || ''}|${bus.note || ''}|${bus.arrivalRaw || ''}`;
+    // Velocità/distanza come stringhe FORMATTATE: cambiano solo quando cambia
+    // il testo mostrato (niente churn), ma senza di esse il guard anti-re-render
+    // bloccherebbe l'aggiornamento delle righe (stesso bug visto per arrivalRaw).
+    return `B:${bus.key || ''}|${bus.lineCode || ''}|${bus.destination || ''}|${bus.departure || ''}|${bus.race || ''}|${bus.vehicle || ''}|${bus.note || ''}|${bus.arrivalRaw || ''}|${this.getVehicleSpeedText(bus.key) || ''}|${this.getVehicleDistanceText(bus) || ''}`;
   }
 
   getDeparturesSignature(activeLineCodes) {
@@ -3468,6 +3563,8 @@ class BusMagoApp {
     const collapseIcon = collapsed ? '▾' : '▴';
     const collapseLabel = collapsed ? 'Espandi info vettura' : 'Comprimi info vettura';
     const delayBadge = this.getDelayBadge(bus);
+    const speedText = this.getVehicleSpeedText(bus.key);
+    const distText = this.getVehicleDistanceText(bus);
 
     return `
       <div class="vehicle-info vehicle-info--glossy ${collapsed ? 'vehicle-info--collapsed' : ''}" style="--line-color: ${lineBadgeColor}">
@@ -3483,6 +3580,8 @@ class BusMagoApp {
           <div class="info-label">Partenza</div><div class="info-value">${this.escapeHtmlAttribute(bus.departure || '-')}</div>
           <div class="info-label">Corsa</div><div class="info-value">${this.escapeHtmlAttribute(bus.race || '-')}</div>
           <div class="info-label">Vettura</div><div class="info-value">${this.escapeHtmlAttribute(bus.vehicle || '-')}</div>
+          ${speedText ? `<div class="info-label">Velocità</div><div class="info-value">${this.escapeHtmlAttribute(speedText)}</div>` : ''}
+          ${distText ? `<div class="info-label">Distanza da te</div><div class="info-value">${this.escapeHtmlAttribute(distText)}</div>` : ''}
           ${delayBadge ? `<div class="info-label">Ritardo</div><div class="info-value"><span style="padding: 2px 8px; border-radius: 10px; background: ${delayBadge.bg}; border: 1px solid ${delayBadge.border}; color: ${delayBadge.color}; font-weight: 700; font-size: 12px;">${this.escapeHtmlAttribute(delayBadge.text)}</span></div>` : ''}
           ${bus.note ? `<div class="info-label info-note-label">Nota</div><div class="info-value info-note-value">${this.escapeHtmlAttribute(bus.note)}</div>` : ''}
         </div>
@@ -3723,27 +3822,284 @@ class BusMagoApp {
     return z >= (CONFIG.MAP.DEFAULT_ZOOM + 1);
   }
 
-  // Heading dedotto dalla geometria del tracciato già scaricato per quella
-  // linea+destinazione: proietta la vettura sul vertice più vicino della polyline
-  // e restituisce la direzione del segmento VERSO la fine (il capolinea di
-  // destinazione). Null se il tracciato non è ancora disponibile.
-  computeTrackHeading(lineCode, destination, lat, lon) {
-    const layer = this.state.routeLayers[`${lineCode}_${normalizeKey(destination)}`];
+  // ===== Geometria dei tracciati (cache + proiezione + campionamento) =====
+
+  // Geometria di una polyline per trackKey: punti, distanze cumulative in
+  // metri (equirettangolari: più che sufficienti su scala urbana) e lunghezza
+  // totale. La cache si valida per IDENTITÀ dell'array di getLatLngs():
+  // setLatLngs lo sostituisce, quindi una geometria nuova si invalida da sola
+  // (più il delete esplicito in updateTrackLayer, cintura e bretelle).
+  // Null per il 777 (easter egg, tracciato finto) e per tracciati assenti.
+  getTrackGeometry(trackKey) {
+    if (!trackKey || trackKey.startsWith('777_')) return null;
+    const layer = this.state.routeLayers[trackKey];
     if (!layer || typeof layer.getLatLngs !== 'function') return null;
     const pts = layer.getLatLngs();
     if (!Array.isArray(pts) || pts.length < 2) return null;
-
-    let bestI = 0;
-    let bestD = Infinity;
-    for (let i = 0; i < pts.length; i++) {
-      const dLat = pts[i].lat - lat;
-      const dLon = pts[i].lng - lon;
-      const d = dLat * dLat + dLon * dLon;
-      if (d < bestD) { bestD = d; bestI = i; }
+    const cached = this._trackGeom.get(trackKey);
+    if (cached && cached.pts === pts) return cached;
+    const cum = new Float64Array(pts.length);
+    let total = 0;
+    for (let i = 1; i < pts.length; i++) {
+      const midLat = (pts[i - 1].lat + pts[i].lat) / 2;
+      const dx = (pts[i].lng - pts[i - 1].lng) * 111320 * Math.cos(midLat * Math.PI / 180);
+      const dy = (pts[i].lat - pts[i - 1].lat) * 110540;
+      total += Math.sqrt(dx * dx + dy * dy);
+      cum[i] = total;
     }
-    const a = bestI < pts.length - 1 ? pts[bestI] : pts[bestI - 1];
-    const c = bestI < pts.length - 1 ? pts[bestI + 1] : pts[bestI];
+    const geom = { pts, cum, total };
+    this._trackGeom.set(trackKey, geom);
+    return geom;
+  }
+
+  // Proietta un punto sul SEGMENTO più vicino della polyline (non sul vertice:
+  // con vertici radi o curve strette il vertice più vicino può appartenere al
+  // segmento sbagliato). Longitudine scalata con cos(lat) per non distorcere.
+  // Ritorna: s = posizione d'arco in metri, distM = distanza perpendicolare,
+  // segIdx = indice del segmento.
+  projectToTrack(geom, lat, lon) {
+    const pts = geom.pts;
+    const kLon = Math.cos(lat * Math.PI / 180);
+    let bestD2 = Infinity, bestI = 0, bestT = 0;
+    for (let i = 0; i < pts.length - 1; i++) {
+      const ax = (pts[i].lng - lon) * kLon, ay = pts[i].lat - lat;
+      const bx = (pts[i + 1].lng - lon) * kLon, by = pts[i + 1].lat - lat;
+      const dx = bx - ax, dy = by - ay;
+      const len2 = dx * dx + dy * dy;
+      // t = proiezione scalare della vettura sul segmento, clampata [0,1]
+      const t = len2 > 0 ? Math.max(0, Math.min(1, -(ax * dx + ay * dy) / len2)) : 0;
+      const px = ax + t * dx, py = ay + t * dy;
+      const d2 = px * px + py * py;
+      if (d2 < bestD2) { bestD2 = d2; bestI = i; bestT = t; }
+    }
+    const segLen = geom.cum[bestI + 1] - geom.cum[bestI];
+    return {
+      s: geom.cum[bestI] + bestT * segLen,
+      distM: Math.sqrt(bestD2) * 111320,
+      segIdx: bestI
+    };
+  }
+
+  // Punto (e heading) alla posizione d'arco s. Avanza dall'hint: il moto
+  // dell'animatore è monotono, quindi il costo è ammortizzato O(1).
+  trackPointAt(geom, s, hintIdx) {
+    const pts = geom.pts, cum = geom.cum;
+    const target = Math.max(0, Math.min(s, geom.total));
+    let i = Math.max(0, Math.min(hintIdx || 0, pts.length - 2));
+    if (cum[i] > target) i = 0; // hint oltre il target (snap all'indietro): riparti
+    while (i < pts.length - 2 && cum[i + 1] < target) i++;
+    const segLen = cum[i + 1] - cum[i];
+    const t = segLen > 0 ? (target - cum[i]) / segLen : 0;
+    return {
+      lat: pts[i].lat + (pts[i + 1].lat - pts[i].lat) * t,
+      lng: pts[i].lng + (pts[i + 1].lng - pts[i].lng) * t,
+      heading: this.computeBearing(pts[i].lat, pts[i].lng, pts[i + 1].lat, pts[i + 1].lng),
+      segIdx: i
+    };
+  }
+
+  // Heading dedotto dalla geometria del tracciato per linea+destinazione:
+  // direzione del segmento più vicino VERSO il capolinea di destinazione
+  // (la polyline della Race va da partenza a destinazione).
+  // Null se il tracciato non è ancora disponibile.
+  computeTrackHeading(lineCode, destination, lat, lon) {
+    const geom = this.getTrackGeometry(`${lineCode}_${normalizeKey(destination)}`);
+    if (!geom) return null;
+    const p = this.projectToTrack(geom, lat, lon);
+    const a = geom.pts[p.segIdx], c = geom.pts[p.segIdx + 1];
     return this.computeBearing(a.lat, a.lng, c.lat, c.lng);
+  }
+
+  // ===== Animatore dead-reckoning =====
+  // Fra un fix GPS reale e l'altro (~20s) ogni bus con tracciato avanza lungo
+  // la polyline alla velocità stimata dagli ultimi fix (EMA), con un tetto
+  // prudente (capS) ancorato all'ultimo fix reale; al fix nuovo il gap si
+  // chiude in ~REJOIN_S secondi, MAI in retromarcia. I bus senza tracciato,
+  // fuori rotta o con prefers-reduced-motion non hanno record e restano al
+  // comportamento classico (glide CSS in retta fra i fix).
+
+  // Chiamata dall'enrichment per ogni bus a ogni ciclo. Ritorna l'heading da
+  // mostrare (direzione del segmento corrente) o null se non animabile.
+  feedAnimatorFix(bus, key, moved) {
+    if (this._reducedMotion) return null;
+    const A = CONFIG.ANIM;
+    const byKey = this.state.anim.byKey;
+    const trackKey = `${bus.lineCode}_${normalizeKey(bus.destination)}`;
+    const geom = this.getTrackGeometry(trackKey);
+    if (!geom) { delete byKey[key]; return null; }
+    const p = this.projectToTrack(geom, bus.coords[0], bus.coords[1]);
+    if (p.distM > A.OFF_ROUTE_M) { delete byKey[key]; return null; } // deviazione: fallback glide
+
+    const now = Date.now();
+    let rec = byKey[key];
+    const reset = () => {
+      rec = {
+        trackKey, s: p.s, segIdx: p.segIdx,
+        lastFixS: p.s, lastFixAt: now,
+        speed: null,   // ignota finché non osserviamo due fix mossi
+        capS: p.s,     // prima apparizione: mai estrapolare
+        heading: this.trackPointAt(geom, p.s, p.segIdx).heading
+      };
+      byKey[key] = rec;
+    };
+
+    if (!rec || rec.trackKey !== trackKey) {
+      // Prima apparizione o cambio destinazione: piazzato, niente estrapolazione.
+      reset();
+      return rec.heading;
+    }
+
+    if (moved) {
+      const ds = p.s - rec.lastFixS;
+      const dt = Math.min(60, Math.max(3, (now - rec.lastFixAt) / 1000));
+      if (ds < -30) {
+        // Arco all'indietro: corsa/anello nuovo o riproiezione su un altro
+        // ramo. Snap secco: raro e corretto (il bus è davvero ripartito altrove).
+        reset();
+        return rec.heading;
+      }
+      const vNew = Math.min(A.MAX_SPEED_MPS, Math.max(0, ds / dt));
+      rec.speed = rec.speed == null ? vNew : 0.4 * rec.speed + 0.6 * vNew;
+      if (rec.speed < A.MIN_SPEED_MPS) rec.speed = 0;
+
+      const gap = p.s - rec.s;
+      if (gap > A.SNAP_M) {
+        rec.s = p.s;
+        rec.segIdx = p.segIdx;
+        rec.heading = this.trackPointAt(geom, p.s, p.segIdx).heading;
+      } else if (gap < 0) {
+        // Avevamo estrapolato oltre il fix reale (bus fermo alla fermata):
+        // mai retromarcia — posizione tenuta, velocità smorzata; il nuovo
+        // capS (sotto rec.s) congela il marker finché la realtà non arriva.
+        rec.speed *= 0.7;
+      }
+      rec.lastFixS = p.s;
+      rec.lastFixAt = now;
+      rec.capS = p.s + Math.min(A.MAX_EXTRAP_M, A.EXTRAP_FRACTION * (rec.speed || 0) * A.EXPECTED_FIX_S);
+    } else if (now - rec.lastFixAt > A.STOPPED_AFTER_MS) {
+      // ≥2 fix GPS senza spostamento: fermo davvero (capolinea, sosta lunga).
+      rec.speed = 0;
+    }
+    return rec.heading;
+  }
+
+  // Posizione animata corrente di una vettura, o null se non animata.
+  getAnimatedCoords(key) {
+    const rec = this.state.anim.byKey[key];
+    if (!rec) return null;
+    const geom = this.getTrackGeometry(rec.trackKey);
+    if (!geom) return null;
+    const pt = this.trackPointAt(geom, rec.s, rec.segIdx);
+    return [pt.lat, pt.lng];
+  }
+
+  stopBusAnimator() {
+    if (this.state.anim.rafId != null) cancelAnimationFrame(this.state.anim.rafId);
+    this.state.anim.rafId = null;
+    this.state.anim.lastStepTs = 0;
+  }
+
+  // Avvia/ferma il loop secondo lo stato: fermo con documento nascosto,
+  // reduced-motion o nessun record che possa ancora avanzare. NON si ferma
+  // durante map-interacting: il CSS disattiva già l'easing, e fermarlo
+  // bloccherebbe il follow (il cui setView genera movestart).
+  syncBusAnimator() {
+    const anim = this.state.anim;
+    // Avanzabile = c'è strada davanti E una velocità che la percorra
+    // (stimata, oppure il gap di ricongiungimento). Stessa semantica del loop.
+    const canRun = !document.hidden && !this._reducedMotion &&
+      Object.values(anim.byKey).some(r =>
+        r.s < Math.max(r.capS, r.lastFixS) && ((r.speed || 0) > 0 || r.s < r.lastFixS));
+    if (canRun && anim.rafId == null) {
+      anim.lastStepTs = 0;
+      anim.rafId = requestAnimationFrame(this._busAnimStep);
+    } else if (!canRun && anim.rafId != null) {
+      this.stopBusAnimator();
+    }
+  }
+
+  // Un SOLO loop rAF per tutti i bus; posizioni applicate ogni STEP_MS (~8fps,
+  // lisciate dalla transition corta .bus-anim: a velocità urbane i passi sono
+  // ~1px, il 60fps sarebbe lavoro sprecato).
+  _busAnimStep(ts) {
+    const anim = this.state.anim;
+    anim.rafId = requestAnimationFrame(this._busAnimStep);
+    if (anim.lastStepTs === 0) { anim.lastStepTs = ts; return; }
+    if (ts - anim.lastStepTs < CONFIG.ANIM.STEP_MS) return;
+    const dt = Math.min(1, (ts - anim.lastStepTs) / 1000); // clamp anti-throttling
+    anim.lastStepTs = ts;
+
+    const map = this.state.map;
+    if (!map) return;
+    const zoomScale = this.getBusIconZoomScale(map.getZoom());
+    let anyAdvanceable = false;
+
+    Object.keys(anim.byKey).forEach(key => {
+      const rec = anim.byKey[key];
+      const geom = this.getTrackGeometry(rec.trackKey);
+      if (!geom) return;
+      // capS con pavimento a lastFixS: il fix reale è sempre raggiungibile.
+      const limit = Math.min(Math.max(rec.capS, rec.lastFixS), geom.total);
+      // Ricongiungimento morbido: al gap col fix nuovo si aggiunge velocità
+      // che decade a zero man mano che il gap si chiude (~REJOIN_S secondi).
+      const vEff = (rec.speed || 0) + Math.max(0, rec.lastFixS - rec.s) / CONFIG.ANIM.REJOIN_S;
+      if (rec.s < limit && vEff > 0.01) anyAdvanceable = true;
+      const sNew = Math.min(rec.s + vEff * dt, limit);
+      if (sNew <= rec.s) return;
+
+      const pt = this.trackPointAt(geom, sNew, rec.segIdx);
+      rec.s = sNew;
+      rec.segIdx = pt.segIdx;
+      rec.heading = pt.heading;
+      const vs = this.state.vehicleState[key];
+      if (vs) {
+        vs.heading = pt.heading;
+        if (vs.lastEnrichedBus) vs.lastEnrichedBus.heading = pt.heading;
+      }
+
+      const marker = this.state.busMarkers[key];
+      if (!marker) return;
+      const el = marker.getElement();
+      // Riapplicata a ogni passo: sopravvive alle ricreazioni via setIcon.
+      if (el && !el.classList.contains('bus-anim')) el.classList.add('bus-anim');
+      marker.setLatLng([pt.lat, pt.lng]);
+      this._writeMarkerRotation(marker, pt.heading, zoomScale);
+
+      // Follow: il bus seguito resta inchiodato al centro, in lockstep col passo.
+      if (this.state.isFollowing && this.state.selectedVehicleKey === key) {
+        this.state.lastFollowCoords = [pt.lat, pt.lng];
+        map.setView([pt.lat, pt.lng], map.getZoom(), { animate: false });
+      }
+    });
+
+    if (!anyAdvanceable) this.syncBusAnimator(); // tutti fermi/al cap: loop spento
+  }
+
+  // Rotazione cumulativa ad arco breve: il nuovo angolo resta a ±180° dal
+  // precedente, così la transition CSS non fa mai il giro lungo
+  // (350°→10° = +20° in avanti, non −340° all'indietro).
+  _cumDropRot(marker, targetDeg) {
+    let rot = targetDeg;
+    if (marker && typeof marker._dropRotCum === 'number') {
+      const delta = ((targetDeg - marker._dropRotCum) % 360 + 540) % 360 - 180;
+      rot = marker._dropRotCum + delta;
+    }
+    if (marker) marker._dropRotCum = rot;
+    return rot;
+  }
+
+  // Scrive i due transform di rotazione (wrap ruota+scala, numero contro-ruota).
+  // L'animatore tocca SOLO questi e la posizione: tutto il resto del marker
+  // (HTML, colori, opacità, selezione) resta di proprietà di updateBusMarkers.
+  _writeMarkerRotation(marker, headingDeg, zoomScale) {
+    const el = marker.getElement();
+    if (!el) return;
+    const wrap = el.querySelector('.bus-marker-wrap');
+    if (!wrap) return;
+    const dropRot = this._cumDropRot(marker, headingDeg + 135);
+    wrap.style.transform = `rotate(${dropRot}deg) scale(${zoomScale})`;
+    const span = wrap.querySelector('span');
+    if (span) span.style.transform = `rotate(${-dropRot}deg)`;
   }
 
   // Quando un tracciato arriva (async, dopo il primo render), riorienta le
@@ -3814,6 +4170,34 @@ class BusMagoApp {
     const x = Math.cos(φ1) * Math.sin(φ2) - Math.sin(φ1) * Math.cos(φ2) * Math.cos(Δλ);
     const θ = Math.atan2(y, x);
     return (θ * 180 / Math.PI + 360) % 360;
+  }
+
+  haversineMeters(lat1, lon1, lat2, lon2) {
+    const toRad = x => x * Math.PI / 180;
+    const R = 6371000;
+    const dφ = toRad(lat2 - lat1);
+    const dλ = toRad(lon2 - lon1);
+    const a = Math.sin(dφ / 2) ** 2 +
+      Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dλ / 2) ** 2;
+    return 2 * R * Math.asin(Math.sqrt(a));
+  }
+
+  // Velocità stimata della vettura (dal dead reckoning). Null se ignota
+  // (bus non animato o primo fix): la riga del pannello non compare.
+  getVehicleSpeedText(key) {
+    const rec = this.state.anim.byKey[key];
+    if (!rec || rec.speed == null) return null;
+    const kmh = rec.speed * 3.6;
+    return kmh < 2 ? 'Ferma' : `${Math.round(kmh)} km/h`;
+  }
+
+  // Distanza in linea d'aria utente → bus. Null senza geolocalizzazione.
+  getVehicleDistanceText(bus) {
+    const u = this.state.userLocation;
+    if (!u || !bus || !Array.isArray(bus.coords)) return null;
+    const target = this.getAnimatedCoords(bus.key) || bus.coords;
+    const m = this.haversineMeters(u.lat, u.lon, target[0], target[1]);
+    return m < 1000 ? `${Math.round(m)} m` : `${(m / 1000).toFixed(1)} km`;
   }
 }
 

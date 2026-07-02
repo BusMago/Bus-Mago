@@ -116,6 +116,9 @@ input:focus-visible,
   transition: transform 1.2s cubic-bezier(0.4, 0, 0.2, 1);
   will-change: transform;
 }
+/* Marker animati dal dead-reckoning: passi ~120ms lisciati da una transition
+   corta; la 1.2s standard combatterebbe i setLatLng frequenti dell'animatore. */
+.bus-icon-wrapper.bus-anim { transition: transform 0.18s linear; }
 .leaflet-container.map-interacting .bus-icon-wrapper {
   transition: none;
 }
@@ -128,11 +131,12 @@ input:focus-visible,
 .bus-icon-wrapper.small { width: 30px; height: 30px; }
 
 /* Wrapper rotates (toward heading) + scales (with zoom) */
+/* will-change solo sul .bus-icon-wrapper esterno: un layer di composizione
+   per marker basta, tre (wrapper+wrap+span) sprecavano memoria GPU. */
 .bus-marker-wrap {
   width: 100%; height: 100%;
   display: flex; align-items: center; justify-content: center;
   transform-origin: center center;
-  will-change: transform;
 }
 
 /* Teardrop ("goccia") — glossy gradient, pointed corner faces travel direction */
@@ -146,7 +150,6 @@ input:focus-visible,
 }
 .bus-drop span {
   line-height: 1; font-variant-numeric: tabular-nums;
-  will-change: transform;
 }
 .bus-drop.large { font-size: 15px; }
 .bus-drop.small { font-size: 11px; }
@@ -1279,6 +1282,7 @@ input:focus-visible,
   .install-btn                    { animation: none; }
   #info-update-badge.online       { animation: none; }
   .bus-icon-wrapper               { transition: none; }
+  .bus-icon-wrapper.bus-anim      { transition: none; }
   .bus-marker-wrap                { transition: none; }
   .bus-drop span                  { transition: none; }
   .leaflet-marker-icon.bateo-icon { transition: none; }
