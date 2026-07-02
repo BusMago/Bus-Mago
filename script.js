@@ -1191,6 +1191,17 @@ class BusMagoApp {
     // Menu toggle
     const menuToggle = document.getElementById('menu-toggle');
     if (menuToggle) {
+        // Toglie il focus da input/bottone della barra di ricerca: senza,
+        // l'alone :focus-within resterebbe acceso alla chiusura (il click sul
+        // bottone o l'Escape non spostano da soli il focus fuori dalla barra).
+        const blurSearchBar = () => {
+            const bar = document.getElementById('map-search-bar');
+            const active = document.activeElement;
+            if (bar && active && bar.contains(active) && typeof active.blur === 'function') {
+                active.blur();
+            }
+        };
+
         menuToggle.addEventListener('click', (e) => {
             if (e) {
               e.preventDefault();
@@ -1200,13 +1211,14 @@ class BusMagoApp {
             const willShow = !this.isLegendVisible();
             this.legendDiv.style.display = willShow ? 'block' : 'none';
             if (willShow) this.renderLegend();
+            else blurSearchBar();
         });
 
         document.addEventListener('keydown', (e) => {
             if (e.key !== 'Escape') return;
             if (this.isLegendVisible()) {
                 this.legendDiv.style.display = 'none';
-                menuToggle.focus();
+                blurSearchBar();
             }
         });
     }
@@ -1303,7 +1315,16 @@ class BusMagoApp {
           if (lc === this.state.infoPanel.selectedInfoLine) {
             this.clearInfoLine();
           } else {
-            this.selectInfoLine(lc);
+            // Un'unica vettura in circolazione su questa linea: selezionala
+            // direttamente, come se si fosse premuta sulla mappa, invece di
+            // limitarsi a filtrare le partenze.
+            const busesOnLine = (this.state.lastEnrichedBuses || []).filter(b =>
+              String(b.lineCode) === String(lc) && this.state.lineVisibility[b.lineCode] === true);
+            if (busesOnLine.length === 1) {
+              this.selectVehicleByKey(busesOnLine[0].key);
+            } else {
+              this.selectInfoLine(lc);
+            }
           }
           return;
         }
@@ -1514,6 +1535,28 @@ class BusMagoApp {
     }
 
     setTimeout(clear, 1200);
+  }
+
+  // Seleziona una vettura per chiave, come se si fosse premuto il suo marker
+  // sulla mappa: usata sia dal click sul marker sia dalla chip "Informazioni"
+  // quando una linea ha una sola vettura in circolazione (selezione diretta,
+  // senza passare dal solo filtro linea).
+  selectVehicleByKey(key) {
+    this.state.selectedVehicleKey = key;
+    this.state.updateStatus.lastSelectedMoveAt = 0;
+    this.state.isFollowing = true;
+    this.hapticSelect(); // selezione bus: vibrazione netta
+    this.requestWakeLock();
+    const cur = (this.state.vehicleState[key] && this.state.vehicleState[key].lastEnrichedBus) || null;
+    if (cur && cur.coords) {
+      this.state.lastFollowCoords = [cur.coords[0], cur.coords[1]];
+      this.state.map.panTo(cur.coords, { animate: true });
+    }
+    this.updateInfoFromBus(cur);
+    if (this.legendDiv.style.display === 'block') {
+      this.legendDiv.style.display = 'none';
+    }
+    this.updateBusMarkers(this.state.lastEnrichedBuses);
   }
 
   deselectVehicle() {
@@ -3040,21 +3083,7 @@ class BusMagoApp {
                    L.DomEvent.preventDefault(oe);
                    L.DomEvent.stopPropagation(oe);
                  }
-                 this.state.selectedVehicleKey = markerKey;
-                 this.state.updateStatus.lastSelectedMoveAt = 0;
-                 this.state.isFollowing = true;
-                 this.hapticSelect(); // selezione bus: vibrazione netta
-                 this.requestWakeLock();
-                 const cur = (this.state.vehicleState[markerKey] && this.state.vehicleState[markerKey].lastEnrichedBus) || null;
-                 if (cur && cur.coords) {
-                   this.state.lastFollowCoords = [cur.coords[0], cur.coords[1]];
-                   this.state.map.panTo(cur.coords, { animate: true });
-                 }
-                 this.updateInfoFromBus(cur);
-                 if (this.legendDiv.style.display === 'block') {
-                     this.legendDiv.style.display = 'none';
-                 }
-                 this.updateBusMarkers(this.state.lastEnrichedBuses);
+                 this.selectVehicleByKey(markerKey);
              });
         }
 
@@ -3570,8 +3599,7 @@ class BusMagoApp {
           <div class="info-heading">
             <div class="info-destination">${this.escapeHtmlAttribute(bus.destination || '-')}</div>
             <div class="info-subtitle" title="Partenza: ${this.escapeHtmlAttribute(bus.departure || '-')}">
-              <span aria-hidden="true">🕒</span>
-              <span class="sr-only">Partenza: </span>${this.escapeHtmlAttribute(bus.departure || '-')}
+              <span class="origin-tag">Da</span>${this.escapeHtmlAttribute(bus.departure || '-')}
             </div>
           </div>
           <span id="info-update-badge" class="info-age-badge ${isOffline ? 'info-age-badge--offline' : 'info-age-badge--online'}" title="${this.escapeHtmlAttribute(ageTitle)}">${ageText}</span>
@@ -3595,7 +3623,7 @@ class BusMagoApp {
     const times = it.times && it.times.length ? it.times.map(t => this.escapeHtmlAttribute(t)).join(' · ') : '';
     const destLabel = it.destinationLabel ? this.escapeHtmlAttribute(it.destinationLabel) : this.escapeHtmlAttribute(it.destinationKey || '');
 
-    const meta = it.originLabel ? `<span class="sr-only">Da: </span><span aria-hidden="true">🚏</span> ${this.escapeHtmlAttribute(it.originLabel)}` : '';
+    const meta = it.originLabel ? `<span class="origin-tag">Da</span>${this.escapeHtmlAttribute(it.originLabel)}` : '';
     const runningDot = it.isStarted === true ? `<span class="departures-running-dot" title="Bus in servizio"></span>` : '';
     const right = times
       ? `<div class="departures-times">${runningDot}${times}</div>`
@@ -3883,11 +3911,11 @@ class BusMagoApp {
   // Heading "lisciato": punta verso un punto più avanti sul tracciato (non il
   // solo segmento corrente). Alcune fermate hanno nella geometria del percorso
   // piccoli zig-zag perpendicolari (baia di fermata): guardando solo il
-  // segmento locale la punta del bus li seguirebbe uno a uno. Guardando ~15m
+  // segmento locale la punta del bus li seguirebbe uno a uno. Guardando ~25m
   // più avanti quei micro-segmenti vengono attraversati senza influenzare
   // l'orientamento mostrato.
   headingAlongTrack(geom, s, lat, lng, hintIdx) {
-    const LOOKAHEAD_M = 15;
+    const LOOKAHEAD_M = 25;
     const pts = geom.pts, cum = geom.cum;
     const ahead = Math.min(s + LOOKAHEAD_M, geom.total);
     let j = Math.max(0, Math.min(hintIdx || 0, pts.length - 2));
@@ -4063,33 +4091,46 @@ class BusMagoApp {
       const pt = this.trackPointAt(geom, sNew, rec.segIdx);
       rec.s = sNew;
       rec.segIdx = pt.segIdx;
-      rec.heading = pt.heading;
+      // Filtro passa-basso anche sull'heading mostrato (arco breve, come
+      // _cumDropRot): il lookahead di headingAlongTrack riduce già gli scarti
+      // vicino alle fermate ma non li azzera (la finestra può ricadere dentro
+      // la micro-deviazione); smorzare il CAMBIO di direzione nel tempo pulisce
+      // anche quel residuo.
+      if (rec.dispHeading == null) rec.dispHeading = pt.heading;
+      else {
+        const hDelta = ((pt.heading - rec.dispHeading) % 360 + 540) % 360 - 180;
+        rec.dispHeading += hDelta * 0.3;
+      }
+      const smoothHeading = ((rec.dispHeading % 360) + 360) % 360;
+      rec.heading = smoothHeading;
       const vs = this.state.vehicleState[key];
       if (vs) {
-        vs.heading = pt.heading;
-        if (vs.lastEnrichedBus) vs.lastEnrichedBus.heading = pt.heading;
+        vs.heading = smoothHeading;
+        if (vs.lastEnrichedBus) vs.lastEnrichedBus.heading = smoothHeading;
       }
 
       const marker = this.state.busMarkers[key];
       if (!marker) return;
       const el = marker.getElement();
-      // Riapplicata a ogni passo: sopravvive alle ricreazioni via setIcon.
-      if (el && !el.classList.contains('bus-anim')) el.classList.add('bus-anim');
+      const isFollowedNow = this.state.isFollowing && this.state.selectedVehicleKey === key;
+      if (el) {
+        // Riapplicata a ogni passo: sopravvive alle ricreazioni via setIcon.
+        if (!el.classList.contains('bus-anim')) el.classList.add('bus-anim');
+        // Bus seguito: la posizione si applica di scatto (nessuna transition
+        // propria) perché ci pensa il pan della mappa qui sotto a fornire
+        // tutta la fluidità — due animazioni indipendenti sulla stessa
+        // traslazione (marker + mappa) battevano leggermente fuori fase,
+        // percepito come un tremolio ("balla") durante il follow.
+        el.classList.toggle('bus-following', isFollowedNow);
+      }
       marker.setLatLng([pt.lat, pt.lng]);
-      this._writeMarkerRotation(marker, pt.heading, zoomScale);
+      this._writeMarkerRotation(marker, smoothHeading, zoomScale);
 
-      // Follow: il bus seguito resta inchiodato al centro. `setView({animate:false})`
-      // faceva un reset istantaneo del pane ogni ~120ms E, soprattutto, generava
-      // 'movestart'/'moveend' che accendevano/spegnevano `.map-interacting` a ogni
-      // passo — spegnendo la transition del marker (.bus-anim) di continuo: da qui
-      // gli scatti (più visibili su desktop, dove il reflow costa di più). `panTo`
-      // con `noMoveStart` usa invece il pan animato di Leaflet (rAF su transform,
-      // stessa tecnica del marker) e non tocca `.map-interacting`.
-      if (this.state.isFollowing && this.state.selectedVehicleKey === key) {
+      if (isFollowedNow) {
         this.state.lastFollowCoords = [pt.lat, pt.lng];
         map.panTo([pt.lat, pt.lng], {
           animate: true, noMoveStart: true,
-          duration: CONFIG.ANIM.STEP_MS / 1000, easeLinearity: 1
+          duration: 0.16, easeLinearity: 1
         });
       }
     });

@@ -119,6 +119,11 @@ input:focus-visible,
 /* Marker animati dal dead-reckoning: passi ~120ms lisciati da una transition
    corta; la 1.2s standard combatterebbe i setLatLng frequenti dell'animatore. */
 .bus-icon-wrapper.bus-anim { transition: transform 0.18s linear; }
+/* Bus seguito: la fluidità la dà il pan della mappa (stesso spostamento),
+   quindi la posizione del marker si applica di scatto — due transition
+   indipendenti sulla stessa traslazione (marker + mappa) sfasavano un po'
+   generando un lieve tremolio durante il follow. */
+.bus-icon-wrapper.bus-anim.bus-following { transition: none; }
 .leaflet-container.map-interacting .bus-icon-wrapper {
   transition: none;
 }
@@ -430,9 +435,25 @@ input:focus-visible,
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
 .info-subtitle {
-  display: flex; align-items: center; gap: 4px;
+  display: flex; align-items: center;
   font-size: 11px; color: var(--text-secondary);
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+
+/* Etichetta "Da" per l'origine di una corsa: usata sia nel sottotitolo della
+   card vettura sia nella riga partenze, testo invece di emoji (niente
+   ambiguità di significato fra un orologio e un cartello di fermata). */
+.origin-tag {
+  display: inline-block;
+  font-size: 9px; font-weight: 800; letter-spacing: 0.4px;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  background: var(--surface-inactive);
+  border-radius: 4px;
+  padding: 1px 4px;
+  margin-right: 5px;
+  vertical-align: 1px;
+  flex-shrink: 0;
 }
 .vehicle-deselect-btn {
   flex: 0 0 auto;
