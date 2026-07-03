@@ -81,6 +81,12 @@
 /* --- Base reset --- */
 *, *::before, *::after { box-sizing: border-box; }
 
+/* Toglie l'alone di evidenziazione nativo del tap su mobile (Chrome/Safari):
+   resterebbe "incollato" sul pulsante finché non si tocca altrove, dando
+   l'impressione che rimanga premuto. Il feedback durante la pressione lo dà
+   già :active sui singoli bottoni. */
+button { -webkit-tap-highlight-color: transparent; }
+
 html, body, #map {
   height: 100%;
   height: 100dvh;
@@ -407,9 +413,35 @@ input:focus-visible,
   border-bottom: 1px solid var(--border);
 }
 
-/* Card vettura: un solo pannello con un leggero accento del colore linea in
-   cima, invece del vecchio box glossy annidato (due "scatole" percepite). */
+/* Card vettura: accento del colore linea in cima. Nello skin classic resta
+   così, piatto; nello skin glossy sotto viene arricchito con un box
+   sfumato/tintato (richiesto da Giacomo, era stato tolto perché sembrava una
+   "scatola dentro la scatola" — ripristinato solo per il glossy). */
 .vehicle-info { border-top: 3px solid var(--line-color, var(--brand)); padding-top: 10px; }
+
+/* Skin glossy: box con tinta del colore linea (Google 2026), ripristinato su
+   richiesta. Scoperto solo per data-skin="modern": in classic resta piatto. */
+:root[data-skin="modern"] .vehicle-info {
+  position: relative;
+  border-top: none;
+  /* Margine orizzontale negativo quasi pari al padding: la fermata di
+     partenza nel sottotitolo (spesso lunga) non c'era ancora quando questi
+     valori sono stati scelti la prima volta — senza questo margine più largo
+     torna a troncarsi. */
+  margin: -4px -14px 10px;
+  padding: 12px 14px 10px;
+  border-radius: 16px;
+  background:
+    radial-gradient(140% 120% at 0% 0%, color-mix(in srgb, var(--line-color) 22%, transparent) 0%, transparent 55%),
+    linear-gradient(150deg,
+      color-mix(in srgb, var(--line-color) 16%, var(--surface)) 0%,
+      var(--surface) 70%);
+  border: 1px solid color-mix(in srgb, var(--line-color) 42%, transparent);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.12),
+    0 4px 16px color-mix(in srgb, var(--line-color) 22%, transparent);
+}
+:root[data-skin="modern"] .vehicle-info .info-header { border-bottom-color: color-mix(in srgb, var(--line-color) 28%, transparent); }
 
 /* Round glossy line badge (consistent with bus markers and line tiles) */
 .info-line-badge {
@@ -433,6 +465,7 @@ input:focus-visible,
   text-shadow: 0 1px 2px rgba(0,0,0,0.28);
   flex-shrink: 0;
 }
+.info-line-badge--ended { font-size: 11px; letter-spacing: 0; }
 
 .info-heading { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
 .info-destination {
@@ -445,10 +478,9 @@ input:focus-visible,
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
 
-/* Etichetta "Da" per l'origine di una corsa: usata sia nel sottotitolo della
-   card vettura sia nella riga partenze, testo invece di emoji (niente
-   ambiguità di significato fra un orologio e un cartello di fermata). */
-.origin-tag {
+/* Etichette testuali brevi (Da/Nota): testo invece di emoji, niente
+   ambiguità di significato (es. fra un orologio e un cartello di fermata). */
+.origin-tag, .note-tag {
   display: inline-block;
   font-size: 9px; font-weight: 800; letter-spacing: 0.4px;
   text-transform: uppercase;
@@ -478,8 +510,9 @@ input:focus-visible,
    il badge di aggiornamento nell'header resta sempre visibile). */
 .vehicle-info--collapsed .info-header { margin-bottom: 0; padding-bottom: 0; border-bottom: none; }
 
-/* Griglia compatta a icone: ogni dato è un chip emoji+valore, si adatta da
-   sola alla larghezza del pannello (3 colonne su desktop, 2 su mobile). */
+/* Griglia compatta: ogni dato è un chip etichetta+valore (etichetta sopra,
+   valore sotto), si adatta da sola alla larghezza del pannello (3 colonne su
+   desktop, 2 su mobile). */
 .info-stats {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(92px, 1fr));
@@ -487,10 +520,13 @@ input:focus-visible,
   margin-top: 2px;
 }
 .info-stat {
-  display: flex; align-items: center; gap: 5px;
+  display: flex; flex-direction: column; gap: 1px;
   font-size: 13px; min-width: 0;
 }
-.info-stat-icon  { flex-shrink: 0; font-size: 13px; line-height: 1; }
+.info-stat-label {
+  font-size: 9px; font-weight: 700; letter-spacing: 0.3px;
+  text-transform: uppercase; color: var(--text-secondary); line-height: 1.2;
+}
 .info-stat-value {
   font-weight: 500; font-variant-numeric: tabular-nums;
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
@@ -498,20 +534,14 @@ input:focus-visible,
 .info-stat-pill {
   padding: 2px 8px; border-radius: 10px; border: 1px solid transparent;
   font-weight: 700; font-size: 12px; line-height: 1.3;
+  width: fit-content;
 }
 .info-note {
-  display: flex; align-items: flex-start; gap: 5px;
+  display: flex; align-items: flex-start;
   margin-top: 6px; font-size: 12px; color: var(--accent-warn); font-style: italic;
 }
 .info-empty-note { color: var(--text-secondary); font-size: 12px; margin-top: 4px; }
 .departures-note { margin-top: 3px; font-size: 11px; color: var(--accent-warn); font-style: italic; }
-
-/* Utility: testo per screen reader, invisibile a schermo (etichette dietro
-   le emoji nella griglia compatta e nelle righe partenze). */
-.sr-only {
-  position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
-  overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0;
-}
 
 .departures-running-dot {
   display: inline-block;

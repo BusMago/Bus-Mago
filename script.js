@@ -44,7 +44,19 @@ const CONFIG = {
     // vetture congelate). Vincolo: tenerlo ≥ carico di picco offerto
     // (~fermate_per_ciclo ÷ intervallo_minimo) per non accumulare backlog, e ben
     // SOTTO la soglia reale dell'API. Tarare con lo script api-rate-probe.py.
-    MAX_RPS: 36
+    MAX_RPS: 36,
+    // Throughput REALE misurato via Chrome DevTools Protocol (non è l'API a
+    // rallentare: il server risponde in ~200-350ms costanti anche sotto carico).
+    // Il vero collo di bottiglia è il browser stesso: l'host TPL FVG parla solo
+    // HTTP/1.1 (niente HTTP/2, verificato via ALPN), e ogni browser apre al
+    // massimo 6 connessioni PARALLELE per host in HTTP/1.1 — oltre, le richieste
+    // si accodano internamente prima ancora di partire sulla rete. ACHIEVABLE_RPS
+    // = 6 connessioni ÷ ~350ms/richiesta, con SAFETY_MARGIN di scarto. Usato per
+    // dimensionare il campionamento (CONFIG.SAMPLING) così ogni ciclo resta
+    // dentro quello che il browser può davvero smaltire, invece di sperare che
+    // MAX_RPS basti (non serve: il collo di bottiglia è a monte del rate-limiter).
+    ACHIEVABLE_RPS: 17,
+    SAFETY_MARGIN: 0.8
   },
   ANIM: {
     // Dead reckoning: fra un fix GPS reale e l'altro (~20s) i bus avanzano
@@ -1340,12 +1352,6 @@ class BusMagoApp {
           this.toggleVehicleCollapsed();
           return;
         }
-        if (t && t.closest && t.closest('#vehicle-deselect-btn')) {
-          e.preventDefault();
-          e.stopPropagation();
-          this.deselectVehicle();
-          return;
-        }
       });
     }
   }
@@ -2428,7 +2434,10 @@ class BusMagoApp {
         // intermedie campionate, così prendono gli slot iniziali del rate-limiter e
         // restano freschi anche se il deadline del ciclo taglia la coda sotto carico.
         const terminalStops = new Set();
-        const sampleStops = new Set();
+        // Campionate raccolte PER LINEA (non ancora in un Set unico): servono intatte
+        // per poterle diradare proporzionalmente nel passo successivo, se il totale
+        // non entra nel tempo che il ciclo ha davvero a disposizione.
+        const perLineSamples = [];
         let hasActiveLines = false;
 
         linesConfig.forEach(l => {
@@ -2436,7 +2445,7 @@ class BusMagoApp {
 
             if (isLineActive) {
                 hasActiveLines = true;
-                
+
                 // Campiona le fermate lungo il percorso (ordinate spazialmente).
                 // Campionamento UNIFORME: minimizza il gap massimo fra due fermate
                 // interrogate, che e' cio' che determina se un bus "sfugge" (mrcruns
@@ -2468,7 +2477,7 @@ class BusMagoApp {
                     stopsToUse = picked;
                 }
 
-                stopsToUse.forEach(s => sampleStops.add(s));
+                perLineSamples.push(stopsToUse);
 
                 // Interroga SEMPRE i capolinea: li' convergono tutti i bus della
                 // linea (ogni corsa e' diretta a un capolinea), quindi garantiscono
@@ -2480,12 +2489,36 @@ class BusMagoApp {
 
         // If no lines are active, clear markers
         if (!hasActiveLines) {
-            this.updateBusMarkers([]); 
+            this.updateBusMarkers([]);
             this.updateTrackStyles();
             return;
         }
 
         if (requestId !== this.state.refreshControl.requestSeq) return;
+
+        // Diradamento ADATTIVO delle campionate: quante richieste il ciclo puo'
+        // davvero smaltire entro il suo timeout di sicurezza (cycleTimeoutMs, gia'
+        // calcolato sopra), al throughput REALE del browser (CONFIG.RATE.ACHIEVABLE_RPS,
+        // non MAX_RPS: il collo di bottiglia sono le 6 connessioni HTTP/1.1 per host,
+        // non il rate-limiter). I capolinea sono intoccabili (vengono sempre interrogati
+        // tutti); il budget residuo va alle campionate, ridotte proporzionalmente in
+        // modo UNIFORME su tutte le linee se non entrano — così con poche linee attive
+        // (es. 5) il budget avanza e la precisione resta quella piena calcolata sopra,
+        // mentre con tante linee attive (es. tutte) si riduce solo quel che serve per
+        // non far scartare nulla dal watchdog anti-stallo (mai piu' di quanto il ciclo
+        // possa completare, invece di sperare e perdere pacchetti a meta').
+        const achievableTotal = Math.floor(CONFIG.RATE.ACHIEVABLE_RPS * (cycleTimeoutMs / 1000) * CONFIG.RATE.SAFETY_MARGIN);
+        const sampleBudget = Math.max(0, achievableTotal - terminalStops.size);
+        const desiredSampleTotal = perLineSamples.reduce((sum, stops) => sum + stops.length, 0);
+        const shrink = desiredSampleTotal > sampleBudget && desiredSampleTotal > 0
+            ? sampleBudget / desiredSampleTotal
+            : 1;
+
+        const sampleStops = new Set();
+        perLineSamples.forEach(stops => {
+            const keep = shrink >= 1 ? stops : stops.slice(0, Math.round(stops.length * shrink));
+            keep.forEach(s => sampleStops.add(s));
+        });
 
         // Ordine = capolinea PRIMA, poi le intermedie non già coperte. Il rate-limiter
         // assegna gli slot nell'ordine di questo array, quindi i capolinea partono per primi.
@@ -3291,13 +3324,13 @@ class BusMagoApp {
     badge.classList.toggle('info-age-badge--online', !isOffline);
 
     if (isOffline) {
-      badge.textContent = '🔴 offline';
+      badge.textContent = 'offline';
       badge.title = 'Aggiornamento non riuscito: dati non aggiornati';
       return;
     }
 
     const ageSec = lastSuccessAt ? Math.max(0, Math.floor((now - lastSuccessAt) / 1000)) : null;
-    badge.textContent = `🟢 ${ageSec === null ? '?' : ageSec}s fa`;
+    badge.textContent = `${ageSec === null ? '?' : ageSec}s fa`;
     if (lastSuccessAt) {
       const dt = new Date(lastSuccessAt);
       const hh = String(dt.getHours()).padStart(2, '0');
@@ -3394,14 +3427,14 @@ class BusMagoApp {
     if (!items.length) {
       const hasData = !!(this.state.lastStopDataMap && typeof this.state.lastStopDataMap === 'object');
       if (!hasData) {
-        return `<div class="departures-section"><div class="departures-header"><div class="departures-title"><span aria-hidden="true">🕐</span> Prossime partenze</div></div><div class="departures-body"><div class="departures-empty">In attesa dati…</div></div></div>`;
+        return `<div class="departures-section"><div class="departures-header"><div class="departures-title">Prossime partenze</div></div><div class="departures-body"><div class="departures-empty">In attesa dati…</div></div></div>`;
       }
       return '';
     }
     const body = items.map(it => this.buildDepartureRowHtml(it)).join('');
     return `<div class="departures-section">
     <div class="departures-header">
-      <div class="departures-title"><span aria-hidden="true">🕐</span> Prossime partenze</div>
+      <div class="departures-title">Prossime partenze</div>
       <button id="departures-toggle" class="departures-toggle" type="button" aria-label="${btnLabel}" aria-expanded="${collapsed ? 'false' : 'true'}">${icon}</button>
     </div>
     <div class="departures-body" style="${bodyStyle}">${body}</div>
@@ -3533,7 +3566,7 @@ class BusMagoApp {
       return `
         <div class="vehicle-info" style="--line-color: #777">
           <div class="info-header" style="border-bottom-color: rgba(220, 53, 69, 0.3)">
-            <div class="info-line-badge" style="--line-color: #777">⚠️</div>
+            <div class="info-line-badge info-line-badge--ended" style="--line-color: #777">FINE</div>
             <div class="info-destination" style="color: #ff6b6b">Corsa terminata</div>
           </div>
           <div class="info-empty-note">
@@ -3561,7 +3594,7 @@ class BusMagoApp {
     }
 
     const ageSec = isOffline ? null : Math.max(0, Math.floor((now - lastSuccessAt) / 1000));
-    const ageText = isOffline ? '🔴 offline' : `🟢 ${ageSec}s fa`;
+    const ageText = isOffline ? 'offline' : `${ageSec}s fa`;
     const ageTitle = isOffline ? 'Aggiornamento non riuscito: dati non aggiornati' : `Aggiornato ${ageSec}s fa (${timeStr})`;
     const lineBadgeColor = bus.lineCode ? this.getLegendLineColor(bus.lineCode) : (bus.lineColor || '#666');
     const lineLabel = bus.lineLabel || (bus.lineCode || '-');
@@ -3574,21 +3607,20 @@ class BusMagoApp {
     const speedText = this.getVehicleSpeedText(bus.key);
     const distText = this.getVehicleDistanceText(bus);
 
-    const statChip = (emoji, label, value) => `
-          <div class="info-stat" title="${this.escapeHtmlAttribute(label)}">
-            <span class="info-stat-icon" aria-hidden="true">${emoji}</span>
-            <span class="sr-only">${this.escapeHtmlAttribute(label)}: </span>
+    const statChip = (label, value) => `
+          <div class="info-stat">
+            <span class="info-stat-label">${this.escapeHtmlAttribute(label)}</span>
             <span class="info-stat-value">${this.escapeHtmlAttribute(value)}</span>
           </div>`;
     const statsHtml = [
-      statChip('🔢', 'Corsa', bus.race || '-'),
-      statChip('🚌', 'Vettura', bus.vehicle || '-'),
-      speedText ? statChip('⚡', 'Velocità', speedText) : '',
-      distText ? statChip('📍', 'Distanza da te', distText) : '',
+      statChip('Corsa', bus.race || '-'),
+      statChip('Vettura', bus.vehicle || '-'),
+      speedText ? statChip('Velocità', speedText) : '',
+      distText ? statChip('Distanza da te', distText) : '',
       delayBadge ? `
-          <div class="info-stat" title="Ritardo">
-            <span class="sr-only">Ritardo: </span>
-            <span class="info-stat-pill" style="background: ${delayBadge.bg}; border-color: ${delayBadge.border}; color: ${delayBadge.color}">${delayBadge.emoji} ${this.escapeHtmlAttribute(delayBadge.text)}</span>
+          <div class="info-stat">
+            <span class="info-stat-label">Ritardo</span>
+            <span class="info-stat-pill" style="background: ${delayBadge.bg}; border-color: ${delayBadge.border}; color: ${delayBadge.color}">${this.escapeHtmlAttribute(delayBadge.text)}</span>
           </div>` : ''
     ].join('');
 
@@ -3604,13 +3636,10 @@ class BusMagoApp {
           </div>
           <span id="info-update-badge" class="info-age-badge ${isOffline ? 'info-age-badge--offline' : 'info-age-badge--online'}" title="${this.escapeHtmlAttribute(ageTitle)}">${ageText}</span>
           <button id="vehicle-collapse-toggle" class="vehicle-deselect-btn vehicle-collapse-toggle" type="button" aria-label="${collapseLabel}" aria-expanded="${collapsed ? 'false' : 'true'}" title="${collapsed ? 'Espandi' : 'Comprimi'}">${collapseIcon}</button>
-          <button id="vehicle-deselect-btn" class="vehicle-deselect-btn" type="button" aria-label="Chiudi info vettura" title="Chiudi">
-            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-          </button>
         </div>
         <div class="info-stats" style="${collapseBodyStyle}">${statsHtml}
         </div>
-        ${bus.note ? `<div class="info-note" style="${collapseBodyStyle}"><span aria-hidden="true">📝</span><span class="sr-only">Nota: </span><span>${this.escapeHtmlAttribute(bus.note)}</span></div>` : ''}
+        ${bus.note ? `<div class="info-note" style="${collapseBodyStyle}"><span class="note-tag">Nota</span><span>${this.escapeHtmlAttribute(bus.note)}</span></div>` : ''}
       </div>
     `;
   }
@@ -3635,7 +3664,7 @@ class BusMagoApp {
         <div class="departures-line-main">
           <div class="departures-dest">${destLabel}</div>
           ${meta ? `<div class="departures-meta">${meta}</div>` : ''}
-          ${it.note ? `<div class="departures-note"><span class="sr-only">Nota: </span><span aria-hidden="true">📝</span> ${this.escapeHtmlAttribute(it.note)}</div>` : ''}
+          ${it.note ? `<div class="departures-note"><span class="note-tag">Nota</span>${this.escapeHtmlAttribute(it.note)}</div>` : ''}
           ${right}
         </div>
       </div>
@@ -3674,7 +3703,7 @@ class BusMagoApp {
     return `
       <div class="departures-section">
         <div class="departures-header">
-          <div class="departures-title"><span aria-hidden="true">🕐</span> Prossime partenze</div>
+          <div class="departures-title">Prossime partenze</div>
           <button id="departures-toggle" class="departures-toggle" type="button" aria-label="${btnLabel}" aria-expanded="${collapsed ? 'false' : 'true'}">${icon}</button>
         </div>
         <div class="departures-body" style="${bodyStyle}">
@@ -4213,15 +4242,15 @@ class BusMagoApp {
     const delay = this.computeDelayMinutes(bus);
     if (delay === null) return null;
     if (delay <= -3) {
-      return { text: `In anticipo (${Math.abs(delay)} min)`, bg: 'rgba(26,115,232,0.15)', border: 'rgba(26,115,232,0.4)', color: 'var(--brand)', emoji: '🔵' };
+      return { text: `In anticipo (${Math.abs(delay)} min)`, bg: 'rgba(26,115,232,0.15)', border: 'rgba(26,115,232,0.4)', color: 'var(--brand)' };
     }
     if (delay <= 2) {
-      return { text: 'In orario', bg: 'rgba(60,180,120,0.15)', border: 'rgba(60,180,120,0.4)', color: 'var(--ok)', emoji: '🟢' };
+      return { text: 'In orario', bg: 'rgba(60,180,120,0.15)', border: 'rgba(60,180,120,0.4)', color: 'var(--ok)' };
     }
     if (delay <= 7) {
-      return { text: `+${delay} min`, bg: 'rgba(249,171,0,0.15)', border: 'rgba(249,171,0,0.4)', color: 'var(--fav)', emoji: '🟠' };
+      return { text: `+${delay} min`, bg: 'rgba(249,171,0,0.15)', border: 'rgba(249,171,0,0.4)', color: 'var(--fav)' };
     }
-    return { text: `+${delay} min`, bg: 'rgba(217,48,37,0.15)', border: 'rgba(217,48,37,0.4)', color: 'var(--danger)', emoji: '🔴' };
+    return { text: `+${delay} min`, bg: 'rgba(217,48,37,0.15)', border: 'rgba(217,48,37,0.4)', color: 'var(--danger)' };
   }
 
   computeBearing(lat1, lon1, lat2, lon2) {
