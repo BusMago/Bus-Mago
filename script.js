@@ -317,74 +317,6 @@ class BusMagoApp {
       .replace(/>/g, '&gt;');
   }
 
-  getContrastingTextColor(color) {
-    const c = String(color || '').trim();
-    let r = 0;
-    let g = 0;
-    let b = 0;
-
-    if (c.startsWith('#')) {
-      const hex = c.slice(1);
-      if (hex.length === 3) {
-        r = parseInt(hex[0] + hex[0], 16);
-        g = parseInt(hex[1] + hex[1], 16);
-        b = parseInt(hex[2] + hex[2], 16);
-      } else if (hex.length === 6) {
-        r = parseInt(hex.slice(0, 2), 16);
-        g = parseInt(hex.slice(2, 4), 16);
-        b = parseInt(hex.slice(4, 6), 16);
-      } else {
-        return '#fff';
-      }
-    } else if (c.startsWith('rgb')) {
-      const m = c.match(/rgba?\((\d+)[,\s]+(\d+)[,\s]+(\d+)/i);
-      if (!m) return '#fff';
-      r = parseInt(m[1], 10);
-      g = parseInt(m[2], 10);
-      b = parseInt(m[3], 10);
-    } else {
-      return '#fff';
-    }
-
-    const luminance = (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255;
-    return luminance > 0.62 ? '#111' : '#fff';
-  }
-
-  hslToHex(h, s, l) {
-    const hh = (((h % 360) + 360) % 360) / 360;
-    const ss = Math.max(0, Math.min(1, s / 100));
-    const ll = Math.max(0, Math.min(1, l / 100));
-
-    const hue2rgb = (p, q, t) => {
-      let tt = t;
-      if (tt < 0) tt += 1;
-      if (tt > 1) tt -= 1;
-      if (tt < 1 / 6) return p + (q - p) * 6 * tt;
-      if (tt < 1 / 2) return q;
-      if (tt < 2 / 3) return p + (q - p) * (2 / 3 - tt) * 6;
-      return p;
-    };
-
-    let r;
-    let g;
-    let b;
-
-    if (ss === 0) {
-      r = ll;
-      g = ll;
-      b = ll;
-    } else {
-      const q = ll < 0.5 ? ll * (1 + ss) : ll + ss - ll * ss;
-      const p = 2 * ll - q;
-      r = hue2rgb(p, q, hh + 1 / 3);
-      g = hue2rgb(p, q, hh);
-      b = hue2rgb(p, q, hh - 1 / 3);
-    }
-
-    const toHex = (x) => Math.round(x * 255).toString(16).padStart(2, '0');
-    return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
-  }
-
   getLegendLineColor(code) {
     const rawCode = String(code ?? '');
     // Memoizzato: chiamata decine di volte per ciclo nei loop dei marker, ma
@@ -854,7 +786,6 @@ class BusMagoApp {
   initMap() {
     this.state.map = L.map('map', { zoomControl: false, preferCanvas: true }).setView(CONFIG.MAP.DEFAULT_CENTER, CONFIG.MAP.DEFAULT_ZOOM);
     this.applyTileLayer();
-    L.control.zoom({ position: 'bottomright' }).addTo(this.state.map);
 
     // Smooth bus gliding: disable the CSS transition while the map is moving
     // (drag, zoom, or programmatic pan) — otherwise Leaflet's marker
@@ -1362,23 +1293,6 @@ class BusMagoApp {
     return s && s.display !== 'none' && s.visibility !== 'hidden' && s.opacity !== '0';
   }
 
-  updateKnownDirectionsFromBuses(buses) {
-    const nextKnown = {};
-
-    (Array.isArray(buses) ? buses : []).forEach(b => {
-      if (!b || !b.lineCode) return;
-      if (this.state.lineVisibility[b.lineCode] !== true) return;
-      const destRaw = String(b.destination || '').trim();
-      const destKey = normalizeKey(destRaw);
-      if (!destKey) return;
-
-      if (!nextKnown[b.lineCode]) nextKnown[b.lineCode] = {};
-      if (!nextKnown[b.lineCode][destKey]) nextKnown[b.lineCode][destKey] = destRaw || destKey;
-    });
-
-    this.setKnownDirections(nextKnown);
-  }
-
   updateKnownDirectionsFromStopData(stopDataMap) {
     const nextKnown = {};
 
@@ -1660,10 +1574,6 @@ class BusMagoApp {
   renderLegend({ skipInfoPanel = false } = {}) {
     if (!this.legendDiv) return;
     const prevScrollTop = this.legendDiv.scrollTop;
-    const activeEl = document.activeElement;
-    const wasSearchFocused = !!(activeEl && activeEl.id === 'legend-search');
-    const searchSelStart = wasSearchFocused ? activeEl.selectionStart : null;
-    const searchSelEnd = wasSearchFocused ? activeEl.selectionEnd : null;
     let html = '<div class="sheet-handle" aria-hidden="true"></div>';
     if (this.state.uiTimers.directionsStatusTimeout) {
       clearTimeout(this.state.uiTimers.directionsStatusTimeout);
@@ -1920,14 +1830,7 @@ class BusMagoApp {
 
     this.legendDiv.innerHTML = html;
     this.legendDiv.scrollTop = prevScrollTop;
-    if (wasSearchFocused) {
-      const next = document.getElementById('legend-search');
-      if (next) {
-        next.focus();
-        if (typeof searchSelStart === 'number' && typeof searchSelEnd === 'number') next.setSelectionRange(searchSelStart, searchSelEnd);
-      }
-    }
-    
+
     // Add Listeners
     this.setupLegendListeners();
     if (!skipInfoPanel) this.renderInfoPanel();
@@ -2006,26 +1909,6 @@ class BusMagoApp {
   }
 
   setupLegendListeners() {
-    const legendSearch = document.getElementById('legend-search');
-    if (legendSearch) {
-      legendSearch.addEventListener('input', (e) => {
-        const el = e.target;
-        const value = el.value || '';
-        const start = el.selectionStart;
-        const end = el.selectionEnd;
-        this.state.legend.filterText = value;
-        clearTimeout(this._searchDebounce);
-        this._searchDebounce = setTimeout(() => {
-          this.renderLegend({ skipInfoPanel: true });
-          const next = document.getElementById('legend-search');
-          if (next) {
-            next.focus();
-            if (typeof start === 'number' && typeof end === 'number') next.setSelectionRange(start, end);
-          }
-        }, 80);
-      });
-    }
-
     const viewToggle = document.getElementById('legend-view-toggle');
     if (viewToggle) {
       viewToggle.addEventListener('click', (e) => {
@@ -3356,28 +3239,6 @@ class BusMagoApp {
     this.renderInfoPanel();
   }
 
-  buildFleetChipsHtml() {
-    const buses = this.state.lastEnrichedBuses || [];
-    if (!buses.length) return '';
-    const byLine = {};
-    buses.forEach(b => {
-      if (this.state.lineVisibility[b.lineCode] !== true) return;
-      const key = b.lineLabel || String(b.lineCode || '?');
-      if (!byLine[key]) byLine[key] = { count: 0, color: this.getLegendLineColor(b.lineCode) };
-      byLine[key].count++;
-    });
-    const entries = Object.entries(byLine);
-    if (!entries.length) return '';
-    const isClassicSkin = this.state.skin.mode === 'classic';
-    const chips = entries.map(([label, { count, color }]) => {
-      const bg = isClassicSkin
-        ? color
-        : `radial-gradient(120% 120% at 30% 20%, rgba(255,255,255,0.35) 0%, rgba(255,255,255,0) 48%), linear-gradient(150deg, color-mix(in srgb, ${color} 78%, #fff) 0%, ${color} 58%, color-mix(in srgb, ${color} 88%, #000) 100%)`;
-      return `<span class="fleet-chip" style="background:${bg}"><span class="fleet-chip-code">${this.escapeHtmlAttribute(label)}</span><span class="fleet-chip-count">${count}</span></span>`;
-    }).join('');
-    return `<div class="fleet-chips-wrap"><div class="fleet-chips-bar">${chips}</div></div>`;
-  }
-
   selectInfoLine(lineCode) {
     this.state.infoPanel.selectedInfoLine = lineCode || null;
     this.renderInfoPanel();
@@ -3463,7 +3324,6 @@ class BusMagoApp {
       if (!chipsHtml) {
         this.infoDiv.style.display = 'none';
         this.infoDiv.innerHTML = '';
-        this.infoDiv.classList.remove('info--departures-only', 'info--departures-collapsed');
         return;
       }
       const departuresHtml = selectedInfoLine ? this.buildDeparturesForLine(selectedInfoLine) : '';
@@ -3484,12 +3344,9 @@ class BusMagoApp {
 
     if (!combined) {
       this.infoDiv.style.display = 'none';
-      this.infoDiv.innerHTML = '';
-      this.infoDiv.classList.remove('info--departures-only', 'info--departures-collapsed');
-      return;
+      this.infoDiv.innerHTML = '';      return;
     }
 
-    this.infoDiv.classList.remove('info--departures-only', 'info--departures-collapsed');
     this.infoDiv.innerHTML = combined;
     this.infoDiv.style.display = 'block';
   }
@@ -3506,17 +3363,6 @@ class BusMagoApp {
     // il testo mostrato (niente churn), ma senza di esse il guard anti-re-render
     // bloccherebbe l'aggiornamento delle righe (stesso bug visto per arrivalRaw).
     return `B:${bus.key || ''}|${bus.lineCode || ''}|${bus.destination || ''}|${bus.departure || ''}|${bus.race || ''}|${bus.vehicle || ''}|${bus.note || ''}|${bus.arrivalRaw || ''}|${this.getVehicleSpeedText(bus.key) || ''}|${this.getVehicleDistanceText(bus) || ''}`;
-  }
-
-  getDeparturesSignature(activeLineCodes) {
-    if (!Array.isArray(activeLineCodes) || activeLineCodes.length === 0) return '';
-    const forced = this.getForcedDeparturesFilter();
-    const items = this.getDeparturesItems(forced.lineCodes, forced.forcedDestinationKeyByLine);
-    if (!items || items.length === 0) return 'EMPTY';
-    return items.map(it => {
-      const t = Array.isArray(it.times) && it.times.length ? it.times.join(',') : '';
-      return `${it.lineCode}|${it.destinationKey}|${it.originLabel || ''}|${t}|${it.message || ''}|${it.note || ''}|${it.isStarted ? '1' : '0'}`;
-    }).join('~');
   }
 
   getForcedDeparturesFilter() {

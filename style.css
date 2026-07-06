@@ -52,7 +52,6 @@
   --ctrl-size:     44px;
   --ctrl-gap:      10px;
   --ctrl-bottom:   20px;
-  --ctrl-count-br: 4;
 
   /* iOS status bar / notch clearance for fixed top elements */
   --top-safe: env(safe-area-inset-top, 0px);
@@ -110,7 +109,6 @@ input:focus-visible,
   outline: 2px solid var(--brand);
   outline-offset: 2px;
 }
-.legend-search:focus-visible { outline: none; }
 
 /* =====================================================
    BUS MARKERS
@@ -214,11 +212,6 @@ input:focus-visible,
   padding: 7px 0;
 }
 .map-search-input::placeholder { color: var(--text-muted); font-weight: 400; }
-
-/* Soft divider between input and menu button */
-.map-search-bar::after {
-  content: ""; display: none;
-}
 
 .map-search-menu-btn {
   flex-shrink: 0;
@@ -340,9 +333,6 @@ input:focus-visible,
   to   { transform: rotate(360deg); }
 }
 
-/* Hide Leaflet's built-in zoom — replaced by ctrl-pill custom buttons */
-.leaflet-control-zoom { display: none !important; }
-
 /* =====================================================
    INFO PANEL (selected bus)
    ===================================================== */
@@ -374,34 +364,9 @@ input:focus-visible,
 .info::-webkit-scrollbar-thumb { background: var(--legend-scroll-thumb); border-radius: 8px; }
 .info::-webkit-scrollbar-thumb:hover { background: var(--legend-scroll-thumb-hover); }
 
-/* Collapsed departures-only state */
-.info.info--departures-only.info--departures-collapsed {
-  box-sizing: border-box;
-  top: calc(70px + var(--top-safe));
-  height: 44px;
-  padding: 0 0 0 10px;
-  border-radius: 14px;
-  overflow: hidden;
-  display: flex;
-  align-items: center;
-}
-.info.info--departures-only.info--departures-collapsed .departures-header {
-  height: 44px; flex: 1; margin: 0; align-items: center;
-}
-.info.info--departures-only.info--departures-collapsed .departures-title { line-height: 1; }
-.info.info--departures-only.info--departures-collapsed .departures-toggle {
-  width: 44px; height: 44px; border-radius: 14px; border: none;
-  background: transparent; box-shadow: none;
-  display: flex; align-items: center; justify-content: center;
-  padding: 0; text-indent: -1px;
-}
-
-/* Wide screens: align info panel with the search bar height — applies to both
-   the expanded and the collapsed states. Placed after the collapsed rule so it
-   wins in the cascade at >=900px. */
+/* Wide screens: align info panel with the search bar height */
 @media (min-width: 900px) {
   .info { top: 14px; max-height: calc(100dvh - 30px); }
-  .info.info--departures-only.info--departures-collapsed { top: 14px; }
 }
 
 .info-header {
@@ -718,25 +683,6 @@ input:focus-visible,
   display: inline-flex; align-items: center; justify-content: center;
   cursor: pointer;
 }
-
-/* Search */
-.legend-search-row { display: flex; gap: 10px; align-items: center; margin-bottom: 12px; }
-
-.legend-search {
-  width: 100%; box-sizing: border-box;
-  padding: 10px 14px; border-radius: 12px;
-  border: 1px solid var(--border);
-  background: var(--surface-card);
-  color: var(--text-primary);
-  font-family: inherit; font-size: 14px; outline: none;
-  transition: border-color 0.15s ease, box-shadow 0.15s ease;
-}
-.legend-search:focus {
-  border-color: var(--brand);
-  box-shadow: 0 0 0 3px rgba(var(--brand-rgb), 0.15);
-  background: var(--surface-card);
-}
-.legend-search::placeholder { color: var(--text-muted); }
 
 /* Action buttons */
 .legend-action-btn {
@@ -1127,33 +1073,6 @@ input:focus-visible,
   box-shadow: 0 0 0 2px rgba(255,255,255,0.9);
 }
 
-/* =====================================================
-   FLEET CHIP BAR (info panel — all active buses)
-   ===================================================== */
-.fleet-chips-wrap { margin-top: 2px; }
-
-.fleet-chips-bar {
-  display: flex; flex-wrap: wrap; gap: 5px;
-}
-
-.fleet-chip {
-  display: inline-flex; align-items: center; gap: 4px;
-  padding: 4px 7px 4px 8px; border-radius: 20px;
-  cursor: default; user-select: none;
-}
-
-.fleet-chip-code {
-  font-weight: 800; color: #fff; font-size: 12px; line-height: 1;
-}
-
-.fleet-chip-count {
-  background: rgba(0,0,0,0.22);
-  color: rgba(255,255,255,0.88);
-  border-radius: 10px; padding: 1px 5px;
-  font-size: 11px; font-weight: 700;
-  min-width: 16px; text-align: center; line-height: 1.4;
-}
-
 /* ── Info panel: Informazioni chips ─────────────────── */
 .info-header-row {
   display: flex; align-items: center; gap: 8px;
@@ -1377,6 +1296,4 @@ input:focus-visible,
     scrollbar-width: none; -ms-overflow-style: none;
   }
   .info::-webkit-scrollbar { display: none; }
-
-  .info.info--departures-only.info--departures-collapsed { top: calc(70px + var(--top-safe)); }
 }

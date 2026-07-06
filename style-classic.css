@@ -240,8 +240,7 @@
   box-shadow: 0 0 0 2px var(--legend-active-ring);
 }
 
-/* Fleet chip + badge partenze */
-:root[data-skin="classic"] .fleet-chip { border-radius: 12px; box-shadow: none; }
+/* Badge partenze */
 :root[data-skin="classic"] .departures-line-badge { border-radius: 8px; }
 :root[data-skin="classic"] .departures-line-badge::before { display: none; }
 
