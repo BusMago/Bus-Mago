@@ -528,6 +528,7 @@ class BusMagoApp {
         this.state.directions.waitStartedAtByLine[lineCode] = now;
       }
     });
+    this.initDeepLink();
     this.renderLegend();
     this.setupEvents();
     this.initUserLocation();
@@ -1281,6 +1282,7 @@ class BusMagoApp {
     this.fetchStopRuns(code).finally(() => {
       if (this.state.stopPanel.code === code) this.renderInfoPanel();
     });
+    this.updateUrlHash();
     this.renderInfoPanel();
   }
 
@@ -1289,6 +1291,7 @@ class BusMagoApp {
     if (!code) return;
     this._setStopMarkerSelected(code, false);
     this.state.stopPanel = { code: null, name: null };
+    this.updateUrlHash();
     this.renderInfoPanel();
   }
 
@@ -1396,6 +1399,7 @@ class BusMagoApp {
             <div class="info-subtitle">Fermata ${this.escapeHtmlAttribute(code)}</div>
           </div>
           ${this.buildAgeBadgeHtml()}
+          ${this.buildShareButtonHtml()}
           <button id="stop-deselect-btn" class="vehicle-deselect-btn vehicle-collapse-toggle" type="button" aria-label="Chiudi pannello fermata" title="Chiudi">×</button>
         </div>
         <div class="departures-body">${rows}</div>
@@ -1484,6 +1488,99 @@ class BusMagoApp {
 
   hideConnectionBanner() {
     if (this.connectionBannerDiv) this.connectionBannerDiv.classList.remove('show');
+  }
+
+  // ===== Deep-link (#linea= / #fermata= / #bus=linea:vettura) e condivisione =====
+
+  initDeepLink() {
+    let params;
+    try { params = new URLSearchParams((location.hash || '').replace(/^#/, '')); } catch { return; }
+
+    const activateLine = (code) => {
+      const target = String(code || '').trim().toUpperCase();
+      const known = linesConfig.find(l => String(l.code).toUpperCase() === target);
+      if (!known) return false;
+      if (this.state.lineVisibility[known.code] !== true) {
+        this.state.lineVisibility[known.code] = true;
+        if (!this.state.directions.waitStartedAtByLine[known.code]) {
+          this.state.directions.waitStartedAtByLine[known.code] = Date.now();
+        }
+        this.saveActiveLines();
+      }
+      return true;
+    };
+
+    const linea = params.get('linea');
+    if (linea) activateLine(linea);
+
+    const bus = params.get('bus');
+    if (bus) {
+      // Formato linea:vettura — la linea serve attiva, altrimenti il polling
+      // non intercetterebbe mai quella vettura.
+      const sep = bus.indexOf(':');
+      const lineCode = sep === -1 ? '' : bus.slice(0, sep);
+      const vehicle = sep === -1 ? '' : bus.slice(sep + 1).trim();
+      if (lineCode && vehicle && activateLine(lineCode)) {
+        this._pendingDeepLink = { vehicle, triesLeft: 8 };
+      }
+    }
+
+    const fermata = params.get('fermata');
+    if (fermata) {
+      const code = fermata.trim();
+      // L'indice serve per nome e coordinate: al termine si centra e si apre.
+      this.ensureStopsIndex().then(() => {
+        const stop = this.stopsIndex.byCode.get(code);
+        if (stop && this.state.map) {
+          this.suppressMenuAutoCloseUntilMapSettles();
+          this.state.map.setView([stop.lat, stop.lng], Math.max(CONFIG.STOPS.MIN_ZOOM + 1, this.state.map.getZoom()));
+        }
+        this.selectStop(code);
+      });
+    }
+  }
+
+  // Scrive nella URL la selezione corrente (replaceState: la history resta
+  // pulita). Vettura → #bus=linea:vettura; fermata → #fermata=codice.
+  updateUrlHash() {
+    let hash = '';
+    if (this.state.stopPanel.code) {
+      hash = `fermata=${encodeURIComponent(this.state.stopPanel.code)}`;
+    } else {
+      const bus = this.state.infoPanel ? this.state.infoPanel.selectedBus : null;
+      if (bus && bus.lineCode && bus.vehicle && this.state.selectedVehicleKey) {
+        hash = `bus=${encodeURIComponent(bus.lineCode)}:${encodeURIComponent(bus.vehicle)}`;
+      }
+    }
+    try {
+      history.replaceState(null, '', hash ? `#${hash}` : location.pathname + location.search);
+    } catch {}
+  }
+
+  // Bottone condividi (header pannello vettura e fermata; SVG in
+  // currentColor, si adatta ai temi). Al massimo uno presente per volta.
+  buildShareButtonHtml() {
+    const icon = `<svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor" aria-hidden="true"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81a3 3 0 1 0-3-3c0 .24.04.47.09.7L8.04 9.81A2.99 2.99 0 0 0 3 12a3 3 0 0 0 5.04 2.19l7.12 4.16c-.05.21-.08.43-.08.65a2.92 2.92 0 1 0 2.92-2.92z"/></svg>`;
+    return `<button id="share-btn" class="vehicle-deselect-btn vehicle-collapse-toggle" type="button" aria-label="Condividi link" title="Condividi">${icon}</button>`;
+  }
+
+  async shareSelection() {
+    const url = location.href;
+    try {
+      if (navigator.share) {
+        await navigator.share({ title: 'Bus Mago', url });
+        return;
+      }
+      throw new Error('share-non-supportato');
+    } catch (e) {
+      if (e && e.name === 'AbortError') return; // condivisione annullata
+      try {
+        await navigator.clipboard.writeText(url);
+        this.showToast('Link copiato negli appunti');
+      } catch {
+        this.showToast('Impossibile condividere il link', 'error');
+      }
+    }
   }
 
   showToast(message, type = 'info') {
@@ -1727,6 +1824,13 @@ class BusMagoApp {
           this.deselectStop();
           return;
         }
+        if (t && t.closest && t.closest('#share-btn')) {
+          e.preventDefault();
+          e.stopPropagation();
+          this.hapticTap();
+          this.shareSelection();
+          return;
+        }
       });
     }
   }
@@ -1918,6 +2022,7 @@ class BusMagoApp {
       this.state.map.panTo(cur.coords, { animate: true });
     }
     this.updateInfoFromBus(cur);
+    this.updateUrlHash();
     if (this.legendDiv.style.display === 'block') {
       this.legendDiv.style.display = 'none';
     }
@@ -1939,6 +2044,7 @@ class BusMagoApp {
       this.state.infoPanel.finishedTrip = false;
       this.state.infoPanel.selectedInfoLine = null;
     }
+    this.updateUrlHash();
     this.renderInfoPanel();
     this.updateBusMarkers(this.state.lastEnrichedBuses);
   }
@@ -3051,6 +3157,20 @@ class BusMagoApp {
         // Semaforo ritardi in legenda (solo se visibile, in place).
         this.updateLegendDelayDots();
 
+        // Deep-link #bus= in attesa: la vettura può comparire solo dopo
+        // qualche ciclo (o mai, se non è in servizio).
+        if (this._pendingDeepLink) {
+          const wanted = this._pendingDeepLink.vehicle;
+          const target = enriched.find(b => String(b.vehicle) === wanted);
+          if (target) {
+            this._pendingDeepLink = null;
+            this.selectVehicleByKey(target.key);
+          } else if (--this._pendingDeepLink.triesLeft <= 0) {
+            this._pendingDeepLink = null;
+            this.showToast('Vettura non trovata', 'error');
+          }
+        }
+
     } catch (err) {
         this.state.updateStatus.lastErrorAt = Date.now();
         this.state.updateStatus.lastErrorMessage = (err && err.message) ? String(err.message) : 'Errore di connessione';
@@ -3986,6 +4106,7 @@ class BusMagoApp {
             </div>
           </div>
           <span id="info-update-badge" class="info-age-badge ${isOffline ? 'info-age-badge--offline' : 'info-age-badge--online'}" title="${this.escapeHtmlAttribute(ageTitle)}">${ageText}</span>
+          ${this.buildShareButtonHtml()}
           <button id="vehicle-collapse-toggle" class="vehicle-deselect-btn vehicle-collapse-toggle" type="button" aria-label="${collapseLabel}" aria-expanded="${collapsed ? 'false' : 'true'}" title="${collapsed ? 'Espandi' : 'Comprimi'}">${collapseIcon}</button>
         </div>
         <div class="info-stats" style="${collapseBodyStyle}">${statsHtml}
