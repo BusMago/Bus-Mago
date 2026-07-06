@@ -111,6 +111,18 @@ input:focus-visible,
 }
 
 /* =====================================================
+   USER LOCATION MARKER (il cerchio accuratezza è su canvas,
+   colorato dal JS con getCssVar('--brand'))
+   ===================================================== */
+.user-location-dot {
+  background: var(--brand);
+  width: 14px; height: 14px;
+  border-radius: 50%;
+  border: 3px solid #fff;
+  box-shadow: 0 0 10px color-mix(in srgb, var(--brand) 60%, transparent);
+}
+
+/* =====================================================
    BUS MARKERS
    ===================================================== */
 .bus-icon-wrapper {
@@ -432,6 +444,11 @@ input:focus-visible,
 }
 .info-line-badge--ended { font-size: 11px; letter-spacing: 0; }
 
+/* Corsa terminata: card neutra con accento di pericolo, dai token tema */
+.vehicle-info--ended { --line-color: var(--text-muted); }
+.vehicle-info--ended .info-header { border-bottom-color: color-mix(in srgb, var(--danger) 30%, transparent); }
+.info-destination--ended { color: var(--danger); }
+
 .info-heading { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
 .info-destination {
   font-weight: 600; font-size: 15px;
@@ -501,6 +518,11 @@ input:focus-visible,
   font-weight: 700; font-size: 12px; line-height: 1.3;
   width: fit-content;
 }
+/* Badge ritardo: tinte derivate dalle variabili tema (coerenti fra skin) */
+.delay-pill--early { background: color-mix(in srgb, var(--brand) 15%, transparent); border-color: color-mix(in srgb, var(--brand) 40%, transparent); color: var(--brand); }
+.delay-pill--ok    { background: color-mix(in srgb, var(--ok) 15%, transparent); border-color: color-mix(in srgb, var(--ok) 40%, transparent); color: var(--ok); }
+.delay-pill--minor { background: color-mix(in srgb, var(--fav) 15%, transparent); border-color: color-mix(in srgb, var(--fav) 40%, transparent); color: var(--accent-warn); }
+.delay-pill--major { background: color-mix(in srgb, var(--danger) 15%, transparent); border-color: color-mix(in srgb, var(--danger) 40%, transparent); color: var(--danger); }
 .info-note {
   display: flex; align-items: flex-start;
   margin-top: 6px; font-size: 12px; color: var(--accent-warn); font-style: italic;
@@ -522,8 +544,8 @@ input:focus-visible,
   flex: 0 0 auto; padding: 2px 8px; border-radius: 10px; font-size: 11px;
   border: 1px solid transparent; white-space: nowrap;
 }
-.info-age-badge--online  { background: rgba(60,180,120,0.15); border-color: rgba(60,180,120,0.4); }
-.info-age-badge--offline { background: rgba(180,60,60,0.2);  border-color: rgba(180,60,60,0.4); }
+.info-age-badge--online  { background: color-mix(in srgb, var(--ok) 15%, transparent); border-color: color-mix(in srgb, var(--ok) 40%, transparent); }
+.info-age-badge--offline { background: color-mix(in srgb, var(--danger) 20%, transparent); border-color: color-mix(in srgb, var(--danger) 40%, transparent); }
 .info-section-divider { height: 1px; background: var(--border); margin: 8px 0; }
 
 .departures-section { margin-top: 0; }
@@ -589,7 +611,7 @@ input:focus-visible,
 
 @media (max-width: 768px) {
   .info {
-    left: 12px; right: 68px; top: 70px;
+    left: 12px; right: 68px; top: calc(70px + var(--top-safe));
     max-width: none; min-width: 0;
     font-size: 13px; padding: 12px 14px;
     max-height: calc(100dvh - 86px);
@@ -1070,7 +1092,7 @@ input:focus-visible,
 .selected-line-chip.is-active {
   background: rgba(0,0,0,0.18);
   border-color: rgba(255,255,255,0.5);
-  box-shadow: 0 0 0 2px rgba(255,255,255,0.9);
+  box-shadow: 0 0 0 2px var(--selected-line-chip-ring);
 }
 
 /* ── Info panel: Informazioni chips ─────────────────── */

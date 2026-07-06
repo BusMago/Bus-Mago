@@ -821,6 +821,7 @@ class BusMagoApp {
 
     this.applyTileLayer();
     this.syncThemeColorMeta();
+    this.restyleUserLocation();
 
     this.renderLegend();
     this.updateBusMarkers(this.state.lastEnrichedBuses);
@@ -847,8 +848,29 @@ class BusMagoApp {
 
     this.applyTileLayer();
     this.syncThemeColorMeta();
+    this.restyleUserLocation();
     this.renderLegend();
     this.updateBusMarkers(this.state.lastEnrichedBuses);
+  }
+
+  // Valore CORRENTE di una variabile CSS del tema: serve dove i colori non
+  // passano dal CSS (layer canvas di Leaflet: cerchio accuratezza, marker
+  // fermate). Va riletto a ogni cambio tema/skin.
+  getCssVar(name) {
+    try {
+      return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+    } catch {
+      return '';
+    }
+  }
+
+  // Riapplica il colore brand agli elementi disegnati su canvas (non
+  // ristilizzabili via CSS) dopo un cambio tema/skin.
+  restyleUserLocation() {
+    const circle = this.state.userAccuracyCircle;
+    if (!circle) return;
+    const brand = this.getCssVar('--brand') || '#0077ff';
+    circle.setStyle({ color: brand, fillColor: brand });
   }
 
   // Allinea <meta theme-color> (colore barra di stato del browser/PWA) al --bg
@@ -1524,19 +1546,24 @@ class BusMagoApp {
           userMarker = L.marker([lat, lon], {
             icon: L.divIcon({
               className: 'user-location-marker',
-              html: '<div style="background-color: #0077ff; width: 14px; height: 14px; border-radius: 50%; border: 3px solid #fff; box-shadow: 0 0 10px rgba(0,119,255,0.6);"></div>',
+              // Colore via classe CSS: segue var(--brand) di tema/skin.
+              html: '<div class="user-location-dot"></div>',
               iconSize: [20, 20],
               iconAnchor: [10, 10]
             })
           }).addTo(this.state.map).bindPopup("Areo qua! 📍");
-          
+
+          // Il cerchio è disegnato su canvas: il colore va letto dal tema e
+          // riapplicato a ogni cambio skin/tema (restyleUserLocation).
+          const brand = this.getCssVar('--brand') || '#0077ff';
           userAccuracyCircle = L.circle([lat, lon], {
-            color: '#0077ff',
-            fillColor: '#0077ff',
+            color: brand,
+            fillColor: brand,
             fillOpacity: 0.15,
             radius: accuracy,
             weight: 1
           }).addTo(this.state.map);
+          this.state.userAccuracyCircle = userAccuracyCircle;
         }
         
         if (firstLocationUpdate) {
@@ -3410,10 +3437,10 @@ class BusMagoApp {
 
     if (this.state.infoPanel && this.state.infoPanel.finishedTrip && this.state.selectedVehicleKey && !this.state.selectedVehicleKey.startsWith('TRACK_')) {
       return `
-        <div class="vehicle-info" style="--line-color: #777">
-          <div class="info-header" style="border-bottom-color: rgba(220, 53, 69, 0.3)">
-            <div class="info-line-badge info-line-badge--ended" style="--line-color: #777">FINE</div>
-            <div class="info-destination" style="color: #ff6b6b">Corsa terminata</div>
+        <div class="vehicle-info vehicle-info--ended">
+          <div class="info-header">
+            <div class="info-line-badge info-line-badge--ended">FINE</div>
+            <div class="info-destination info-destination--ended">Corsa terminata</div>
           </div>
           <div class="info-empty-note">
             Il veicolo non è più rilevato dal sistema. È probabile che abbia raggiunto il capolinea.
@@ -3466,7 +3493,7 @@ class BusMagoApp {
       delayBadge ? `
           <div class="info-stat">
             <span class="info-stat-label">Ritardo</span>
-            <span class="info-stat-pill" style="background: ${delayBadge.bg}; border-color: ${delayBadge.border}; color: ${delayBadge.color}">${this.escapeHtmlAttribute(delayBadge.text)}</span>
+            <span class="info-stat-pill delay-pill--${delayBadge.cls}">${this.escapeHtmlAttribute(delayBadge.text)}</span>
           </div>` : ''
     ].join('');
 
@@ -4084,19 +4111,15 @@ class BusMagoApp {
     return Math.round((predicted - scheduled) / 60000);
   }
 
+  // I colori del badge vengono dalle classi .delay-pill--* (variabili tema),
+  // così restano coerenti in entrambe le skin e in tema chiaro/scuro.
   getDelayBadge(bus) {
     const delay = this.computeDelayMinutes(bus);
     if (delay === null) return null;
-    if (delay <= -3) {
-      return { text: `In anticipo (${Math.abs(delay)} min)`, bg: 'rgba(26,115,232,0.15)', border: 'rgba(26,115,232,0.4)', color: 'var(--brand)' };
-    }
-    if (delay <= 2) {
-      return { text: 'In orario', bg: 'rgba(60,180,120,0.15)', border: 'rgba(60,180,120,0.4)', color: 'var(--ok)' };
-    }
-    if (delay <= 7) {
-      return { text: `+${delay} min`, bg: 'rgba(249,171,0,0.15)', border: 'rgba(249,171,0,0.4)', color: 'var(--fav)' };
-    }
-    return { text: `+${delay} min`, bg: 'rgba(217,48,37,0.15)', border: 'rgba(217,48,37,0.4)', color: 'var(--danger)' };
+    if (delay <= -3) return { text: `In anticipo (${Math.abs(delay)} min)`, cls: 'early' };
+    if (delay <= 2) return { text: 'In orario', cls: 'ok' };
+    if (delay <= 7) return { text: `+${delay} min`, cls: 'minor' };
+    return { text: `+${delay} min`, cls: 'major' };
   }
 
   computeBearing(lat1, lon1, lat2, lon2) {

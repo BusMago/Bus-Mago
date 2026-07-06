@@ -4,8 +4,8 @@
   "description": "🧙‍♂️ La magia dei bus a Trieste in tempo reale",
   "start_url": "./index.html",
   "display": "standalone",
-  "background_color": "#121212",
-  "theme_color": "#121212",
+  "background_color": "#111111",
+  "theme_color": "#111111",
   "icons": [
     {
       "src": "img/icona_bus_mago.webp",
