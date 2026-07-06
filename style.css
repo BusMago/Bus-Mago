@@ -1142,6 +1142,30 @@ input:focus-visible,
   box-shadow: 0 0 0 2px var(--selected-line-chip-ring);
 }
 
+/* Banner persistente di stato connessione (sotto la search bar) */
+.connection-banner {
+  position: fixed;
+  top: calc(64px + var(--top-safe));
+  left: 50%;
+  transform: translateX(-50%) translateY(-6px);
+  z-index: var(--z-map-controls);
+  max-width: min(440px, calc(100vw - 24px));
+  padding: 7px 14px;
+  border-radius: 999px;
+  font-size: 12.5px; font-weight: 600;
+  color: var(--text-primary);
+  background: color-mix(in srgb, var(--danger) 18%, var(--surface));
+  border: 1px solid color-mix(in srgb, var(--danger) 45%, transparent);
+  box-shadow: 0 6px 18px rgba(0,0,0,0.25);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s ease, transform 0.25s ease;
+}
+.connection-banner.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
 /* Semaforo ritardo mediano della linea (aggiornato in place dal ciclo) */
 .line-delay-dot {
   flex-shrink: 0;

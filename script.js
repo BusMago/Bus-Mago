@@ -274,6 +274,9 @@ class BusMagoApp {
         lastErrorMessage: '',
         lastSelectedMoveAt: 0
       },
+      connection: {
+        consecutiveErrors: 0
+      },
       uiTimers: {
         infoAgeInterval: null,
         refreshTimeout: null,
@@ -511,6 +514,7 @@ class BusMagoApp {
     this.loadVehicleCollapsed();
     this.initMap();
     this.initToast();
+    this.initConnectionBanner();
     this.initInstall();
     this.initVisibility();
     this.loadActiveLines();
@@ -1459,6 +1463,29 @@ class BusMagoApp {
     document.body.appendChild(this.toastDiv);
   }
 
+  // ===== Banner persistente di stato connessione =====
+  // A differenza del toast (3s) resta visibile finché i dati non tornano
+  // freschi: senza vettura selezionata era l'unico indicatore mancante.
+  initConnectionBanner() {
+    this.connectionBannerDiv = document.createElement('div');
+    this.connectionBannerDiv.className = 'connection-banner';
+    this.connectionBannerDiv.setAttribute('role', 'status');
+    this.connectionBannerDiv.textContent = '⚠ Dati non aggiornati — problemi di connessione';
+    document.body.appendChild(this.connectionBannerDiv);
+  }
+
+  isConnectionBannerVisible() {
+    return !!(this.connectionBannerDiv && this.connectionBannerDiv.classList.contains('show'));
+  }
+
+  showConnectionBanner() {
+    if (this.connectionBannerDiv) this.connectionBannerDiv.classList.add('show');
+  }
+
+  hideConnectionBanner() {
+    if (this.connectionBannerDiv) this.connectionBannerDiv.classList.remove('show');
+  }
+
   showToast(message, type = 'info') {
     if (!this.toastDiv) return;
     this.toastDiv.textContent = message;
@@ -1589,6 +1616,11 @@ class BusMagoApp {
         }
       });
     }
+
+    // Stato rete del browser: offline → banner subito; online → si nasconde
+    // (il primo ciclo buono conferma e azzera il contatore errori).
+    window.addEventListener('offline', () => this.showConnectionBanner());
+    window.addEventListener('online', () => this.hideConnectionBanner());
 
     // Custom zoom buttons (replace Leaflet built-in)
     const zoomInBtn = document.getElementById('zoom-in-btn');
@@ -3002,6 +3034,9 @@ class BusMagoApp {
         }
         this.state.updateStatus.lastSuccessAt = Date.now();
         this.state.updateStatus.lastErrorMessage = '';
+        // Ciclo buono: lo stato di connessione degradata rientra da solo.
+        this.state.connection.consecutiveErrors = 0;
+        this.hideConnectionBanner();
 
         if (selected && selected.key === this.state.selectedVehicleKey && selected.moved) {
           this.state.updateStatus.lastSelectedMoveAt = Date.now();
@@ -3020,7 +3055,14 @@ class BusMagoApp {
         this.state.updateStatus.lastErrorAt = Date.now();
         this.state.updateStatus.lastErrorMessage = (err && err.message) ? String(err.message) : 'Errore di connessione';
         if (DEBUG) console.error("Errore aggiornamento dati", err);
-        this.showToast("Errore di connessione. Riprovo...", "error");
+        // Dopo qualche errore consecutivo (anti-flap sul singolo timeout) il
+        // toast temporaneo lascia il posto al banner persistente.
+        this.state.connection.consecutiveErrors++;
+        if (this.state.connection.consecutiveErrors >= 3) {
+          this.showConnectionBanner();
+        } else if (!this.isConnectionBannerVisible()) {
+          this.showToast("Errore di connessione. Riprovo...", "error");
+        }
         this.renderInfoPanel();
     } finally {
         clearTimeout(cycleDeadline);
