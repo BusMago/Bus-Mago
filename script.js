@@ -256,6 +256,12 @@ class BusMagoApp {
         collapsed: false,
         collapsedStorageKey: 'busmago:vehicleCollapsed:v1'
       },
+      // Fermata selezionata sulla mappa (pannello arrivi). Mutuamente
+      // esclusiva con la selezione vettura: il pannello .info è unico.
+      stopPanel: {
+        code: null,
+        name: null
+      },
       lastStopDataMap: null,
       userLocation: null, // {lat, lon, accuracy} dall'ultimo watchPosition
       legendPaletteIndexByCode: {},
@@ -540,7 +546,7 @@ class BusMagoApp {
     setTimeout(() => { this.ensureStopsIndex(); }, 2500);
 
     this.state.uiTimers.infoAgeInterval = setInterval(() => {
-      if (this.state.selectedVehicleKey) this.updateInfoAgeBadge();
+      if (this.state.selectedVehicleKey || this.state.stopPanel.code) this.updateInfoAgeBadge();
     }, 1000);
   }
 
@@ -1204,18 +1210,24 @@ class BusMagoApp {
     }
     const wantedCodes = new Set(wanted.map(s => s.code));
 
+    const selectedCode = this.state.stopPanel.code;
     for (const [code, marker] of [...markers]) {
       if (!wantedCodes.has(code)) {
         this.stopsLayer.removeLayer(marker);
         markers.delete(code);
       } else if (restyle) {
-        marker.setStyle(this.getStopMarkerStyle(false));
+        marker.setStyle(this.getStopMarkerStyle(code === selectedCode));
       }
     }
     wanted.forEach(stop => {
       if (markers.has(stop.code)) return;
-      const marker = L.circleMarker([stop.lat, stop.lng], this.getStopMarkerStyle(false))
-        .bindTooltip(stop.name, { direction: 'top', offset: [0, -6] });
+      // bubblingMouseEvents:false — il click NON deve risalire alla mappa,
+      // dove il listener globale deselezionerebbe subito la fermata.
+      const marker = L.circleMarker([stop.lat, stop.lng], {
+        ...this.getStopMarkerStyle(stop.code === selectedCode),
+        bubblingMouseEvents: false
+      }).bindTooltip(stop.name, { direction: 'top', offset: [0, -6] });
+      marker.on('click', () => this.selectStop(stop.code));
       marker.addTo(this.stopsLayer);
       markers.set(stop.code, marker);
     });
@@ -1233,6 +1245,158 @@ class BusMagoApp {
       fillColor: this.getCssVar('--surface') || '#ffffff',
       fillOpacity: 0.9
     };
+  }
+
+  _setStopMarkerSelected(code, isSelected) {
+    const marker = this._stopMarkersByCode.get(String(code || ''));
+    if (marker) marker.setStyle(this.getStopMarkerStyle(isSelected));
+  }
+
+  // ===== Pannello arrivi a fermata =====
+
+  selectStop(stopCode) {
+    const code = String(stopCode || '');
+    if (!code) return;
+    const prev = this.state.stopPanel.code;
+    if (prev === code) return;
+    if (prev) this._setStopMarkerSelected(prev, false);
+
+    // Mutua esclusione col pannello vettura (il .info è unico).
+    this.deselectVehicle();
+    this.state.isFollowing = false;
+    this.releaseWakeLock();
+
+    const stop = this.stopsIndex.byCode.get(code) || null;
+    this.state.stopPanel = { code, name: stop ? stop.name : code };
+    this._setStopMarkerSelected(code, true);
+    this.hapticSelect();
+
+    // Prima richiesta subito (passa da rate-limiter, cache e inFlight
+    // condivisi col ciclo); poi la fermata resta fresca perché refreshData
+    // la mette in testa alla lista di ogni ciclo.
+    this.fetchStopRuns(code).finally(() => {
+      if (this.state.stopPanel.code === code) this.renderInfoPanel();
+    });
+    this.renderInfoPanel();
+  }
+
+  deselectStop() {
+    const code = this.state.stopPanel.code;
+    if (!code) return;
+    this._setStopMarkerSelected(code, false);
+    this.state.stopPanel = { code: null, name: null };
+    this.renderInfoPanel();
+  }
+
+  // "3 min" → 3, "In transito" → 0, "HH:MM" → minuti da adesso (per ordinare
+  // gli arrivi); null se non interpretabile.
+  parseArrivalToMinutes(raw) {
+    const s = String(raw || '').trim();
+    if (!s) return null;
+    if (/^in transito$/i.test(s)) return 0;
+    const m = /^(\d+)\s*min/i.exec(s);
+    if (m) return parseInt(m[1], 10);
+    const hm = /^(\d{1,2}):(\d{2})$/.exec(s);
+    if (hm) {
+      const now = new Date();
+      let mins = (parseInt(hm[1], 10) * 60 + parseInt(hm[2], 10)) - (now.getHours() * 60 + now.getMinutes());
+      if (mins < -60) mins += 1440; // orario oltre la mezzanotte
+      return mins;
+    }
+    return null;
+  }
+
+  // Arrivi alla fermata selezionata, SOLO dalla cache (zero richieste extra):
+  // le corse arrivano da mrcruns già scaricata. Raggruppati per linea e
+  // destinazione (una riga con più orari), ordinati per arrivo più vicino.
+  // Ritorna null se i dati non sono ancora mai arrivati.
+  getStopArrivalItems(stopCode) {
+    const entry = this.state.stopCache.entries[stopCode];
+    const runs = entry && Array.isArray(entry.data) ? entry.data : null;
+    if (!runs) return null;
+
+    const byKey = new Map();
+    runs.forEach(r => {
+      const lineCode = String(r.LineCode || '').trim().toUpperCase();
+      const destRaw = String(r.Destination || '').trim();
+      if (!lineCode && !destRaw) return;
+      const arrivalRaw = String(r.ArrivalTime || '').trim();
+      const eta = this.parseArrivalToMinutes(arrivalRaw);
+      const key = `${lineCode}|${normalizeKey(destRaw)}`;
+      let item = byKey.get(key);
+      if (!item) {
+        // Le linee fuori da lines.js (es. extraurbane in transito) non hanno
+        // un colore in palette: badge neutro invece di un colore fuorviante.
+        const isKnownLine = this.state.legendPaletteIndexByCode[lineCode] !== undefined;
+        item = {
+          lineCode: lineCode || '?',
+          destinationKey: normalizeKey(destRaw),
+          destinationLabel: destRaw,
+          originLabel: '',
+          times: [],
+          note: '',
+          isStarted: false,
+          badgeColor: isKnownLine ? null : 'var(--text-muted)',
+          etaMin: null
+        };
+        byKey.set(key, item);
+      }
+      if (arrivalRaw && item.times.length < 4) item.times.push(arrivalRaw);
+      if (!item.note && r.Note) item.note = String(r.Note).trim();
+      if (r.IsStarted !== false) item.isStarted = true;
+      if (eta !== null && (item.etaMin === null || eta < item.etaMin)) item.etaMin = eta;
+    });
+
+    const items = [...byKey.values()];
+    items.sort((a, b) => {
+      const ea = a.etaMin === null ? Infinity : a.etaMin;
+      const eb = b.etaMin === null ? Infinity : b.etaMin;
+      if (ea !== eb) return ea - eb;
+      return a.lineCode.localeCompare(b.lineCode, undefined, { numeric: true, sensitivity: 'base' });
+    });
+    return items;
+  }
+
+  // Badge età dati condiviso (stesso markup del pannello vettura, aggiornato
+  // in place da updateInfoAgeBadge).
+  buildAgeBadgeHtml() {
+    const now = Date.now();
+    const lastSuccessAt = this.state.updateStatus.lastSuccessAt || 0;
+    const lastErrorAt = this.state.updateStatus.lastErrorAt || 0;
+    const isOffline = lastErrorAt > lastSuccessAt;
+    const ageSec = isOffline || !lastSuccessAt ? null : Math.max(0, Math.floor((now - lastSuccessAt) / 1000));
+    const ageText = isOffline ? 'offline' : `${ageSec === null ? '?' : ageSec}s fa`;
+    const ageTitle = isOffline ? 'Aggiornamento non riuscito: dati non aggiornati' : `Aggiornato ${ageSec}s fa`;
+    return `<span id="info-update-badge" class="info-age-badge ${isOffline ? 'info-age-badge--offline' : 'info-age-badge--online'}" title="${this.escapeHtmlAttribute(ageTitle)}">${ageText}</span>`;
+  }
+
+  buildStopPanelHtml() {
+    const { code, name } = this.state.stopPanel;
+    if (!code) return '';
+    const items = this.getStopArrivalItems(code);
+    let rows;
+    if (items === null) {
+      rows = `<div class="departures-empty">In attesa dati…</div>`;
+    } else if (!items.length) {
+      rows = `<div class="departures-empty">Nessuna corsa imminente</div>`;
+    } else {
+      rows = items.map(it => this.buildDepartureRowHtml(it)).join('');
+    }
+    const tplUrl = `https://realtime.tplfvg.it/?stopcode=${encodeURIComponent(code)}`;
+    return `
+      <div class="stop-panel">
+        <div class="info-header">
+          <div class="stop-panel-icon" aria-hidden="true">🚏</div>
+          <div class="info-heading">
+            <div class="info-destination">${this.escapeHtmlAttribute(name || code)}</div>
+            <div class="info-subtitle">Fermata ${this.escapeHtmlAttribute(code)}</div>
+          </div>
+          ${this.buildAgeBadgeHtml()}
+          <button id="stop-deselect-btn" class="vehicle-deselect-btn vehicle-collapse-toggle" type="button" aria-label="Chiudi pannello fermata" title="Chiudi">×</button>
+        </div>
+        <div class="departures-body">${rows}</div>
+        <a class="stop-panel-tpl-link" href="${tplUrl}" target="_blank">Orari ufficiali TPL FVG ↗</a>
+      </div>`;
   }
 
   initToast() {
@@ -1312,6 +1476,7 @@ class BusMagoApp {
         if (t.closest('.leaflet-interactive, .leaflet-marker-icon, .leaflet-marker-shadow')) return;
       }
       this.deselectVehicle();
+      this.deselectStop();
       this.state.isFollowing = false;
       this.releaseWakeLock();
     });
@@ -1466,6 +1631,12 @@ class BusMagoApp {
           e.preventDefault();
           e.stopPropagation();
           this.toggleVehicleCollapsed();
+          return;
+        }
+        if (t && t.closest && t.closest('#stop-deselect-btn')) {
+          e.preventDefault();
+          e.stopPropagation();
+          this.deselectStop();
           return;
         }
       });
@@ -1647,6 +1818,7 @@ class BusMagoApp {
   // quando una linea ha una sola vettura in circolazione (selezione diretta,
   // senza passare dal solo filtro linea).
   selectVehicleByKey(key) {
+    this.deselectStop(); // mutua esclusione col pannello fermata
     this.state.selectedVehicleKey = key;
     this.state.updateStatus.lastSelectedMoveAt = 0;
     this.state.isFollowing = true;
@@ -2560,8 +2732,11 @@ class BusMagoApp {
             }
         });
 
-        // If no lines are active, clear markers
-        if (!hasActiveLines) {
+        // Nessuna linea attiva: si esce subito, A MENO CHE una fermata sia
+        // selezionata — in quel caso il ciclo prosegue interrogando solo lei
+        // (si può guardare una fermata senza accendere linee).
+        const selectedStopCode = this.state.stopPanel.code;
+        if (!hasActiveLines && !selectedStopCode) {
             this.updateBusMarkers([]);
             this.updateTrackStyles();
             return;
@@ -2593,9 +2768,16 @@ class BusMagoApp {
             keep.forEach(s => sampleStops.add(s));
         });
 
-        // Ordine = capolinea PRIMA, poi le intermedie non già coperte. Il rate-limiter
-        // assegna gli slot nell'ordine di questo array, quindi i capolinea partono per primi.
-        const stopsList = [...terminalStops, ...[...sampleStops].filter(s => !terminalStops.has(s))];
+        // Ordine = fermata selezionata PRIMA di tutto (pannello arrivi: deve
+        // restare fresca, costo max +1 richiesta/ciclo — gratis se è già un
+        // capolinea/campionata grazie a cache+inFlight), poi capolinea, poi le
+        // intermedie non già coperte. Il rate-limiter assegna gli slot
+        // nell'ordine di questo array.
+        const stopsList = [
+            ...(selectedStopCode ? [selectedStopCode] : []),
+            ...[...terminalStops].filter(s => s !== selectedStopCode),
+            ...[...sampleStops].filter(s => !terminalStops.has(s) && s !== selectedStopCode)
+        ];
 
         // 2. Fetch data (Async/Await)
         // TTL dinamico: leggermente inferiore all'intervallo di refresh così
@@ -2755,6 +2937,8 @@ class BusMagoApp {
         }
 
         this.updateInfoFromBus(selected);
+        // Pannello fermata: ridisegno con gli arrivi appena scaricati.
+        if (this.state.stopPanel.code) this.renderInfoPanel();
 
     } catch (err) {
         this.state.updateStatus.lastErrorAt = Date.now();
@@ -3383,7 +3567,7 @@ class BusMagoApp {
 
   updateInfoAgeBadge() {
     if (!this.infoDiv || this.infoDiv.style.display === 'none') return;
-    const vehicleRoot = this.infoDiv.querySelector('.vehicle-info');
+    const vehicleRoot = this.infoDiv.querySelector('.vehicle-info, .stop-panel');
     if (!vehicleRoot) return;
     const badge = vehicleRoot.querySelector('#info-update-badge');
     if (!badge) return;
@@ -3501,8 +3685,13 @@ class BusMagoApp {
 
     // Build content based on mode
     let combined = '';
+    const stopCode = this.state.stopPanel.code;
 
-    if (vehicleSelected || (this.state.selectedVehicleKey && this.state.selectedVehicleKey.startsWith('TRACK_'))) {
+    if (stopCode) {
+      // MODE 4: fermata selezionata — arrivi in tempo reale (esclusiva con
+      // la selezione vettura, garantita da selectStop/selectVehicleByKey).
+      combined = this.buildStopPanelHtml();
+    } else if (vehicleSelected || (this.state.selectedVehicleKey && this.state.selectedVehicleKey.startsWith('TRACK_'))) {
       // MODE 3: vehicle/track selected — existing behavior
       const vehicleHtml = this.buildVehicleInfoHtml();
       const departuresHtml = this.buildDeparturesHtml();
@@ -3514,6 +3703,7 @@ class BusMagoApp {
       if (!chipsHtml) {
         this.infoDiv.style.display = 'none';
         this.infoDiv.innerHTML = '';
+        this.state.lastInfoSignature = null;
         return;
       }
       const departuresHtml = selectedInfoLine ? this.buildDeparturesForLine(selectedInfoLine) : '';
@@ -3528,7 +3718,14 @@ class BusMagoApp {
     const vehicleSig = this.getVehicleInfoSignature();
     const fleetSig = (this.state.lastEnrichedBuses || []).filter(b => this.state.lineVisibility[b.lineCode] === true).length;
     const depSig = selectedInfoLine ? `L:${selectedInfoLine}` : (vehicleSelected ? `V:${this.state.selectedVehicleKey}` : '');
-    const signature = `${vehicleSig}|${depSig}|${this.state.departures.collapsed ? 1 : 0}|${this.state.infoPanel.collapsed ? 1 : 0}|${activeLineCodes.join(',')}|${this.state.directions.lastKnownSignature || ''}|${this.state.selectedVehicleKey || ''}|${selectedInfoLine || ''}|${this.state.updateStatus.lastSuccessAt || 0}|${fleetSig}`;
+    // Firma della modalità fermata: senza, il guard qui sotto congelerebbe il
+    // pannello ad arrivi invariati (stesso bug già visto per arrivalRaw).
+    let stopSig = '';
+    if (stopCode) {
+      const stopItems = this.getStopArrivalItems(stopCode);
+      stopSig = `S:${stopCode}:` + (stopItems === null ? 'wait' : stopItems.map(it => `${it.lineCode}|${it.destinationKey}|${it.times.join(',')}|${it.note}|${it.isStarted ? 1 : 0}`).join('~'));
+    }
+    const signature = `${vehicleSig}|${depSig}|${this.state.departures.collapsed ? 1 : 0}|${this.state.infoPanel.collapsed ? 1 : 0}|${activeLineCodes.join(',')}|${this.state.directions.lastKnownSignature || ''}|${this.state.selectedVehicleKey || ''}|${selectedInfoLine || ''}|${this.state.updateStatus.lastSuccessAt || 0}|${fleetSig}|${stopSig}`;
     if (signature === this.state.lastInfoSignature) return;
     this.state.lastInfoSignature = signature;
 
@@ -3684,7 +3881,7 @@ class BusMagoApp {
   // buildDeparturesHtml (vettura selezionata) e buildDeparturesForLine (chip
   // "Informazioni" senza vettura) così le due modalità restano allineate.
   buildDepartureRowHtml(it) {
-    const badgeColor = this.getLegendLineColor(it.lineCode);
+    const badgeColor = it.badgeColor || this.getLegendLineColor(it.lineCode);
     const times = it.times && it.times.length ? it.times.map(t => this.escapeHtmlAttribute(t)).join(' · ') : '';
     const destLabel = it.destinationLabel ? this.escapeHtmlAttribute(it.destinationLabel) : this.escapeHtmlAttribute(it.destinationKey || '');
 
