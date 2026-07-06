@@ -1399,6 +1399,60 @@ class BusMagoApp {
       </div>`;
   }
 
+  // Sezione FERMATE nella tendina della legenda: match per nome (senza
+  // accenti/maiuscole) o per codice esatto, max SEARCH_MAX_RESULTS risultati.
+  buildStopSearchResultsHtml(rawFilter) {
+    const q = normalizeSearchText(rawFilter);
+    if (q.length < 2) return '';
+    if (!this.stopsIndex.list.length) {
+      // Indice non ancora pronto: kick del caricamento e re-render al termine.
+      this.ensureStopsIndex().then(() => {
+        if ((this.state.legend.filterText || '').trim() && this.isLegendVisible()) {
+          this.renderLegend({ skipInfoPanel: true });
+        }
+      });
+      return `<div class="legend-header-row"><div class="legend-section-title legend-chip">FERMATE</div></div>
+        <div class="stop-results-empty">Caricamento fermate…</div>`;
+    }
+    // Raccoglie più match del necessario, poi ordina: match più vicino
+    // all'inizio del nome prima, a parità nome più corto (più specifico).
+    const matches = [];
+    for (const stop of this.stopsIndex.list) {
+      const at = stop.nameNorm.indexOf(q);
+      if (at !== -1 || stop.code.toLowerCase() === q) {
+        matches.push({ stop, rank: at === -1 ? -1 : at });
+        if (matches.length >= CONFIG.STOPS.SEARCH_MAX_RESULTS * 5) break;
+      }
+    }
+    matches.sort((a, b) => {
+      const ra = a.rank === -1 ? -1 : a.rank; // match sul codice in cima
+      const rb = b.rank === -1 ? -1 : b.rank;
+      if (ra !== rb) return ra - rb;
+      return a.stop.name.length - b.stop.name.length;
+    });
+    const out = matches.slice(0, CONFIG.STOPS.SEARCH_MAX_RESULTS).map(m => m.stop);
+    if (!out.length) return '';
+    const rows = out.map(s => `<button type="button" class="stop-result" data-stop-code="${this.escapeHtmlAttribute(s.code)}" data-lat="${s.lat}" data-lng="${s.lng}">
+        <span class="stop-result-icon" aria-hidden="true">🚏</span>
+        <span class="stop-result-name">${this.escapeHtmlAttribute(s.name)}</span>
+        <span class="stop-result-code">${this.escapeHtmlAttribute(s.code)}</span>
+      </button>`).join('');
+    return `<div class="legend-header-row"><div class="legend-section-title legend-chip">FERMATE</div></div>
+      <div class="stop-results">${rows}</div>`;
+  }
+
+  // Selezione di una fermata dai risultati di ricerca: chiude la legenda,
+  // porta la mappa sulla fermata (zoom ≥ soglia marker) e apre il pannello.
+  goToStopFromSearch(code, lat, lng) {
+    if (this.legendDiv) this.legendDiv.style.display = 'none';
+    const map = this.state.map;
+    if (map && Number.isFinite(lat) && Number.isFinite(lng)) {
+      this.suppressMenuAutoCloseUntilMapSettles();
+      map.setView([lat, lng], Math.max(CONFIG.STOPS.MIN_ZOOM + 1, map.getZoom()));
+    }
+    this.selectStop(code);
+  }
+
   initToast() {
     this.toastDiv = document.createElement('div');
     this.toastDiv.className = 'toast-notification';
@@ -1527,6 +1581,8 @@ class BusMagoApp {
         this.renderLegend({ skipInfoPanel: true });
       });
       mapSearchInput.addEventListener('focus', () => {
+        // Preload dell'indice fermate: pronto per quando l'utente digita.
+        this.ensureStopsIndex();
         if (!this.isLegendVisible()) {
           this.legendDiv.style.display = 'block';
           this.renderLegend();
@@ -2182,7 +2238,10 @@ class BusMagoApp {
               </div>`;
     });
     html += `</div>`;
-  
+
+    // Risultati fermate: la barra promette "Cerca linea o fermata".
+    html += this.buildStopSearchResultsHtml(filterValue);
+
     // "Select All" (excludes line 777)
     const allSelected = Object.keys(this.state.lineVisibility)
       .filter(k => k !== '777')
@@ -2271,6 +2330,18 @@ class BusMagoApp {
   }
 
   setupLegendListeners() {
+    this.legendDiv.querySelectorAll('.stop-result').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        this.goToStopFromSearch(
+          btn.dataset.stopCode,
+          parseFloat(btn.dataset.lat),
+          parseFloat(btn.dataset.lng)
+        );
+      });
+    });
+
     const viewToggle = document.getElementById('legend-view-toggle');
     if (viewToggle) {
       viewToggle.addEventListener('click', (e) => {
