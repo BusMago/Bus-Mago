@@ -2131,15 +2131,18 @@ class BusMagoApp {
         if (!isExpandable && this.state.directions.expandedLineCode === lineCode) this.state.directions.expandedLineCode = null;
 
         html += `<div class="selected-line-tile" style="--line-color:${lineColor};">`;
+        const delayDot = this.getLineDelayDotHtml(lineCode);
         if (isExpandable) {
           html += `<button type="button" class="selected-line-toggle" data-line="${this.escapeHtmlAttribute(lineCode)}" aria-expanded="${isExpanded ? 'true' : 'false'}">
                     <span class="selected-line-code">${this.escapeHtmlAttribute(lineCode)}</span>
+                    ${delayDot}
                     <span class="selected-line-meta">${this.escapeHtmlAttribute(summary)}</span>
                     <span class="selected-line-chevron" aria-hidden="true"></span>
                   </button>`;
         } else {
           html += `<div class="selected-line-static" aria-label="Linea ${this.escapeHtmlAttribute(lineCode)}">
                     <span class="selected-line-code">${this.escapeHtmlAttribute(lineCode)}</span>
+                    ${delayDot}
                     <span class="selected-line-meta">${this.escapeHtmlAttribute(summary)}</span>
                     <span class="selected-line-spacer" aria-hidden="true"></span>
                   </div>`;
@@ -3010,6 +3013,8 @@ class BusMagoApp {
         this.updateInfoFromBus(selected);
         // Pannello fermata: ridisegno con gli arrivi appena scaricati.
         if (this.state.stopPanel.code) this.renderInfoPanel();
+        // Semaforo ritardi in legenda (solo se visibile, in place).
+        this.updateLegendDelayDots();
 
     } catch (err) {
         this.state.updateStatus.lastErrorAt = Date.now();
@@ -4542,15 +4547,71 @@ class BusMagoApp {
     return Math.round((predicted - scheduled) / 60000);
   }
 
+  // Soglie condivise fra badge vettura e semaforo di linea in legenda.
+  getDelayLevel(delayMin) {
+    if (delayMin <= -3) return 'early';
+    if (delayMin <= 2) return 'ok';
+    if (delayMin <= 7) return 'minor';
+    return 'major';
+  }
+
   // I colori del badge vengono dalle classi .delay-pill--* (variabili tema),
   // così restano coerenti in entrambe le skin e in tema chiaro/scuro.
   getDelayBadge(bus) {
     const delay = this.computeDelayMinutes(bus);
     if (delay === null) return null;
-    if (delay <= -3) return { text: `In anticipo (${Math.abs(delay)} min)`, cls: 'early' };
-    if (delay <= 2) return { text: 'In orario', cls: 'ok' };
-    if (delay <= 7) return { text: `+${delay} min`, cls: 'minor' };
-    return { text: `+${delay} min`, cls: 'major' };
+    const cls = this.getDelayLevel(delay);
+    if (cls === 'early') return { text: `In anticipo (${Math.abs(delay)} min)`, cls };
+    if (cls === 'ok') return { text: 'In orario', cls };
+    return { text: `+${delay} min`, cls };
+  }
+
+  // Ritardo MEDIANO delle corse tracciate di una linea (robusto agli
+  // outlier); null se nessuna corsa ha un countdown interpretabile.
+  // Zero richieste: lavora sui bus già in memoria.
+  computeLineDelayStats(lineCode) {
+    const delays = (this.state.lastEnrichedBuses || [])
+      .filter(b => String(b.lineCode) === String(lineCode))
+      .map(b => this.computeDelayMinutes(b))
+      .filter(d => d !== null)
+      .sort((a, b) => a - b);
+    if (!delays.length) return null;
+    const mid = Math.floor(delays.length / 2);
+    return delays.length % 2 ? delays[mid] : Math.round((delays[mid - 1] + delays[mid]) / 2);
+  }
+
+  getLineDelayDotHtml(lineCode) {
+    const safe = this.escapeHtmlAttribute(lineCode);
+    const delay = this.computeLineDelayStats(lineCode);
+    if (delay === null) return `<span class="line-delay-dot" data-delay-dot="${safe}" hidden></span>`;
+    const level = this.getDelayLevel(delay);
+    const title = this.describeLineDelay(delay);
+    return `<span class="line-delay-dot line-delay-dot--${level}" data-delay-dot="${safe}" title="${this.escapeHtmlAttribute(title)}"></span>`;
+  }
+
+  describeLineDelay(delay) {
+    if (delay <= -3) return `Linea in anticipo (mediana ${Math.abs(delay)} min)`;
+    if (delay <= 2) return 'Linea in orario';
+    return `Linea in ritardo (mediana +${delay} min)`;
+  }
+
+  // Aggiorna i pallini in place (niente re-render della legenda: lo scroll e
+  // l'eventuale menu direzioni aperto restano dove sono).
+  updateLegendDelayDots() {
+    if (!this.legendDiv || !this.isLegendVisible()) return;
+    this.legendDiv.querySelectorAll('[data-delay-dot]').forEach(dot => {
+      const lineCode = dot.dataset.delayDot;
+      const delay = this.computeLineDelayStats(lineCode);
+      if (delay === null) {
+        dot.hidden = true;
+        dot.className = 'line-delay-dot';
+        dot.removeAttribute('title');
+        return;
+      }
+      dot.hidden = false;
+      dot.className = `line-delay-dot line-delay-dot--${this.getDelayLevel(delay)}`;
+      dot.title = this.describeLineDelay(delay);
+    });
   }
 
   computeBearing(lat1, lon1, lat2, lon2) {
