@@ -83,6 +83,18 @@ const CONFIG = {
     DEFAULT_CENTER: [45.653, 13.776],
     DEFAULT_ZOOM: 14,
     FOLLOW_ZOOM: 15
+  },
+  STOPS: {
+    // Indice fermate (nome + coordinate) dal geojson pubblico TPL FVG:
+    // scaricato una tantum, filtrato sulle sole fermate presenti in lines.js
+    // (~1400 su ~9600) e salvato compatto in localStorage (~100 KB).
+    // Host diverso dall'API realtime: non consuma budget di rate-limit.
+    GEOJSON_URL: 'https://tplfvg.it/services/geojson/points/?lang=it',
+    LS_KEY: 'busmago:stopsIndex:v1',
+    TTL_MS: 7 * 24 * 3600 * 1000, // l'elenco fermate cambia di rado
+    MIN_ZOOM: 16,                 // sotto questo zoom: niente marker fermata
+    MAX_MARKERS: 300,             // tetto di sicurezza nel viewport
+    SEARCH_MAX_RESULTS: 8
   }
 };
 
@@ -116,6 +128,11 @@ const easterEggTrack777 = [
 ];
 
 const normalizeKey = (value) => String(value || '').trim().toUpperCase();
+
+// Testo per il matching di ricerca: minuscole e senza accenti, così
+// "universita" trova "Università degli Studi".
+const normalizeSearchText = (value) => String(value || '')
+  .normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim();
 
 // directions can be a legacy array of names OR an object keyed by API
 // direction. Values may be a single name or a list of terminals per direction
@@ -277,6 +294,11 @@ class BusMagoApp {
 
     // Cache geometria tracciati (trackKey -> {pts, cum, total}), vedi getTrackGeometry.
     this._trackGeom = new Map();
+
+    // Indice fermate (da ensureStopsIndex) e marker fermata correnti sulla mappa.
+    this.stopsIndex = { byCode: new Map(), list: [], loading: null };
+    this.stopsLayer = null;
+    this._stopMarkersByCode = new Map();
     this._reducedMotion = !!(typeof window !== 'undefined' && window.matchMedia
       && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
 
@@ -512,6 +534,10 @@ class BusMagoApp {
 
     // Start loop
     this.scheduleNextRefresh(0);
+
+    // Indice fermate in differita: non deve pesare sul primo paint né sul
+    // primo ciclo di refresh.
+    setTimeout(() => { this.ensureStopsIndex(); }, 2500);
 
     this.state.uiTimers.infoAgeInterval = setInterval(() => {
       if (this.state.selectedVehicleKey) this.updateInfoAgeBadge();
@@ -786,6 +812,7 @@ class BusMagoApp {
   initMap() {
     this.state.map = L.map('map', { zoomControl: false, preferCanvas: true }).setView(CONFIG.MAP.DEFAULT_CENTER, CONFIG.MAP.DEFAULT_ZOOM);
     this.applyTileLayer();
+    this.stopsLayer = L.layerGroup().addTo(this.state.map);
 
     // Smooth bus gliding: disable the CSS transition while the map is moving
     // (drag, zoom, or programmatic pan) — otherwise Leaflet's marker
@@ -822,6 +849,7 @@ class BusMagoApp {
     this.applyTileLayer();
     this.syncThemeColorMeta();
     this.restyleUserLocation();
+    this.updateStopMarkers({ restyle: true });
 
     this.renderLegend();
     this.updateBusMarkers(this.state.lastEnrichedBuses);
@@ -849,6 +877,7 @@ class BusMagoApp {
     this.applyTileLayer();
     this.syncThemeColorMeta();
     this.restyleUserLocation();
+    this.updateStopMarkers({ restyle: true });
     this.renderLegend();
     this.updateBusMarkers(this.state.lastEnrichedBuses);
   }
@@ -1074,6 +1103,138 @@ class BusMagoApp {
     return p;
   }
 
+  // ===== Indice fermate (nomi + coordinate) e marker sulla mappa =====
+
+  // Carica l'indice fermate: da localStorage se fresco, altrimenti scarica il
+  // geojson TPL FVG (~3.7 MB), lo filtra sulle fermate note a lines.js e salva
+  // l'estratto compatto. Idempotente: chiamate concorrenti condividono la
+  // stessa promise. Su errore di rete riusa la copia scaduta, se esiste.
+  async ensureStopsIndex() {
+    if (this.stopsIndex.list.length) return this.stopsIndex;
+    if (this.stopsIndex.loading) return this.stopsIndex.loading;
+
+    this.stopsIndex.loading = (async () => {
+      let stored = null;
+      try { stored = JSON.parse(localStorage.getItem(CONFIG.STOPS.LS_KEY)); } catch {}
+      const fresh = !!(stored && Array.isArray(stored.stops)
+        && (Date.now() - (stored.ts || 0)) < CONFIG.STOPS.TTL_MS);
+      if (!fresh) {
+        try {
+          const res = await fetch(CONFIG.STOPS.GEOJSON_URL);
+          if (!res.ok) throw new Error(`HTTP ${res.status}`);
+          const geojson = await res.json();
+          stored = { ts: Date.now(), stops: this._extractStopsFromGeojson(geojson) };
+          try { localStorage.setItem(CONFIG.STOPS.LS_KEY, JSON.stringify(stored)); } catch {}
+        } catch (e) {
+          // Rete giù o risposta rotta: feature degradata in silenzio,
+          // si continua con l'eventuale copia scaduta.
+          if (DEBUG) console.warn('Indice fermate non aggiornato:', e);
+        }
+      }
+      if (stored && Array.isArray(stored.stops)) this._applyStopsIndex(stored.stops);
+      this.stopsIndex.loading = null;
+      return this.stopsIndex;
+    })();
+    return this.stopsIndex.loading;
+  }
+
+  _extractStopsFromGeojson(geojson) {
+    if (!this._knownStopCodes) {
+      this._knownStopCodes = new Set(
+        linesConfig.flatMap(l => Array.isArray(l.stops) ? l.stops : []).map(String)
+      );
+    }
+    const out = [];
+    const seen = new Set();
+    const features = geojson && Array.isArray(geojson.features) ? geojson.features : [];
+    features.forEach(f => {
+      const props = f && f.properties;
+      const code = props ? String(props.code || '') : '';
+      if (!code || seen.has(code) || !this._knownStopCodes.has(code)) return;
+      const coords = f.geometry && Array.isArray(f.geometry.coordinates) ? f.geometry.coordinates : null;
+      if (!coords || coords.length < 2) return;
+      seen.add(code);
+      // Formato compatto per localStorage: [code, name, lat, lng]
+      out.push([code, String(props.name || code), +(+coords[1]).toFixed(6), +(+coords[0]).toFixed(6)]);
+    });
+    return out;
+  }
+
+  _applyStopsIndex(rows) {
+    const list = [];
+    const byCode = new Map();
+    rows.forEach(row => {
+      if (!Array.isArray(row) || row.length < 4) return;
+      const stop = {
+        code: String(row[0]),
+        name: String(row[1]),
+        lat: +row[2],
+        lng: +row[3],
+        nameNorm: normalizeSearchText(row[1])
+      };
+      if (!Number.isFinite(stop.lat) || !Number.isFinite(stop.lng)) return;
+      list.push(stop);
+      byCode.set(stop.code, stop);
+    });
+    this.stopsIndex.list = list;
+    this.stopsIndex.byCode = byCode;
+    this.updateStopMarkers();
+  }
+
+  // Marker fermata: solo a zoom alto e solo nel viewport (con margine), con
+  // tetto di sicurezza e diff per codice (si tocca solo il delta, niente churn
+  // durante il pan). Disegnati su canvas (preferCanvas): i colori non passano
+  // dal CSS, quindi vanno riletti dal tema con getCssVar e riapplicati al
+  // cambio tema/skin (restyle:true).
+  updateStopMarkers({ restyle = false } = {}) {
+    const map = this.state.map;
+    if (!map || !this.stopsLayer) return;
+    const markers = this._stopMarkersByCode;
+    const zoomOk = map.getZoom() >= CONFIG.STOPS.MIN_ZOOM;
+
+    const wanted = [];
+    if (zoomOk && this.stopsIndex.list.length) {
+      const bounds = map.getBounds().pad(0.15);
+      for (const stop of this.stopsIndex.list) {
+        if (bounds.contains([stop.lat, stop.lng])) {
+          wanted.push(stop);
+          if (wanted.length >= CONFIG.STOPS.MAX_MARKERS) break;
+        }
+      }
+    }
+    const wantedCodes = new Set(wanted.map(s => s.code));
+
+    for (const [code, marker] of [...markers]) {
+      if (!wantedCodes.has(code)) {
+        this.stopsLayer.removeLayer(marker);
+        markers.delete(code);
+      } else if (restyle) {
+        marker.setStyle(this.getStopMarkerStyle(false));
+      }
+    }
+    wanted.forEach(stop => {
+      if (markers.has(stop.code)) return;
+      const marker = L.circleMarker([stop.lat, stop.lng], this.getStopMarkerStyle(false))
+        .bindTooltip(stop.name, { direction: 'top', offset: [0, -6] });
+      marker.addTo(this.stopsLayer);
+      markers.set(stop.code, marker);
+    });
+  }
+
+  getStopMarkerStyle(isSelected) {
+    const stroke = isSelected
+      ? (this.getCssVar('--brand') || '#0077ff')
+      : (this.getCssVar('--text-secondary') || '#888888');
+    return {
+      radius: isSelected ? 7 : 5,
+      weight: 2,
+      color: stroke,
+      opacity: 0.9,
+      fillColor: this.getCssVar('--surface') || '#ffffff',
+      fillOpacity: 0.9
+    };
+  }
+
   initToast() {
     this.toastDiv = document.createElement('div');
     this.toastDiv.className = 'toast-notification';
@@ -1135,6 +1296,8 @@ class BusMagoApp {
     map.on('zoomend', () => {
       if (this.state.map) this.updateBusMarkers(this.state.lastEnrichedBuses);
     });
+    // Marker fermata: ricalcolo del viewport a fine pan/zoom.
+    map.on('moveend zoomend', () => this.updateStopMarkers());
     map.on('dragstart', () => {
         this.handleInteraction();
         this.state.isFollowing = false;
