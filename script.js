@@ -1266,6 +1266,10 @@ class BusMagoApp {
     if (prev === code) return;
     if (prev) this._setStopMarkerSelected(prev, false);
 
+    // Selezione esplicita di una fermata: il "torna alla fermata" della
+    // vettura non deve più scattare (e deselectVehicle non deve riaprire
+    // la fermata precedente).
+    this._returnToStopCode = null;
     // Mutua esclusione col pannello vettura (il .info è unico).
     this.deselectVehicle();
     this.state.isFollowing = false;
@@ -1322,6 +1326,13 @@ class BusMagoApp {
     const runs = entry && Array.isArray(entry.data) ? entry.data : null;
     if (!runs) return null;
 
+    // Vetture già tracciate dall'app (linea attiva e intercettata dal
+    // polling): le loro righe diventano cliccabili → tracking diretto.
+    const trackedByVehicle = new Map();
+    (this.state.lastEnrichedBuses || []).forEach(b => {
+      if (b && b.vehicle) trackedByVehicle.set(String(b.vehicle), b);
+    });
+
     const byKey = new Map();
     runs.forEach(r => {
       const lineCode = String(r.LineCode || '').trim().toUpperCase();
@@ -1344,7 +1355,8 @@ class BusMagoApp {
           note: '',
           isStarted: false,
           badgeColor: isKnownLine ? null : 'var(--text-muted)',
-          etaMin: null
+          etaMin: null,
+          vehicleKey: null
         };
         byKey.set(key, item);
       }
@@ -1352,6 +1364,10 @@ class BusMagoApp {
       if (!item.note && r.Note) item.note = String(r.Note).trim();
       if (r.IsStarted !== false) item.isStarted = true;
       if (eta !== null && (item.etaMin === null || eta < item.etaMin)) item.etaMin = eta;
+      if (!item.vehicleKey && r.Vehicle) {
+        const tracked = trackedByVehicle.get(String(r.Vehicle));
+        if (tracked) item.vehicleKey = tracked.key;
+      }
     });
 
     const items = [...byKey.values()];
@@ -1555,6 +1571,13 @@ class BusMagoApp {
     try {
       history.replaceState(null, '', hash ? `#${hash}` : location.pathname + location.search);
     } catch {}
+  }
+
+  // Freccia "torna alla fermata": compare solo quando la vettura è stata
+  // selezionata dal pannello fermata (_returnToStopCode).
+  buildBackToStopButtonHtml() {
+    if (!this._returnToStopCode) return '';
+    return `<button id="vehicle-back-btn" class="vehicle-deselect-btn vehicle-collapse-toggle" type="button" aria-label="Torna alla fermata" title="Torna alla fermata">←</button>`;
   }
 
   // Bottone condividi (header pannello vettura e fermata; SVG in
@@ -1831,6 +1854,23 @@ class BusMagoApp {
           this.shareSelection();
           return;
         }
+        if (t && t.closest && t.closest('#vehicle-back-btn')) {
+          e.preventDefault();
+          e.stopPropagation();
+          this.hapticTap();
+          this.deselectVehicle(); // torna alla fermata (_returnToStopCode)
+          return;
+        }
+        const followRow = t && t.closest ? t.closest('[data-vehicle-key]') : null;
+        if (followRow) {
+          e.preventDefault();
+          e.stopPropagation();
+          // Dal pannello fermata: tracking della vettura, con ritorno alla
+          // fermata alla deselezione.
+          if (this.state.stopPanel.code) this._returnToStopCode = this.state.stopPanel.code;
+          this.selectVehicleByKey(followRow.dataset.vehicleKey);
+          return;
+        }
       });
     }
   }
@@ -2033,6 +2073,9 @@ class BusMagoApp {
     const hadVehicle = !!this.state.selectedVehicleKey;
     const hadInfoLine = !!(this.state.infoPanel && this.state.infoPanel.selectedInfoLine);
     if (!hadVehicle && !hadInfoLine) return;
+    // Vettura selezionata DAL pannello fermata: alla deselezione si torna lì.
+    const returnStop = hadVehicle ? this._returnToStopCode : null;
+    this._returnToStopCode = null;
     if (hadVehicle) {
       this.releaseWakeLock();
       this.state.selectedVehicleKey = null;
@@ -2047,6 +2090,7 @@ class BusMagoApp {
     this.updateUrlHash();
     this.renderInfoPanel();
     this.updateBusMarkers(this.state.lastEnrichedBuses);
+    if (returnStop) this.selectStop(returnStop);
   }
 
   initUserLocation() {
@@ -2269,18 +2313,15 @@ class BusMagoApp {
         if (!isExpandable && this.state.directions.expandedLineCode === lineCode) this.state.directions.expandedLineCode = null;
 
         html += `<div class="selected-line-tile" style="--line-color:${lineColor};">`;
-        const delayDot = this.getLineDelayDotHtml(lineCode);
         if (isExpandable) {
           html += `<button type="button" class="selected-line-toggle" data-line="${this.escapeHtmlAttribute(lineCode)}" aria-expanded="${isExpanded ? 'true' : 'false'}">
                     <span class="selected-line-code">${this.escapeHtmlAttribute(lineCode)}</span>
-                    ${delayDot}
                     <span class="selected-line-meta">${this.escapeHtmlAttribute(summary)}</span>
                     <span class="selected-line-chevron" aria-hidden="true"></span>
                   </button>`;
         } else {
           html += `<div class="selected-line-static" aria-label="Linea ${this.escapeHtmlAttribute(lineCode)}">
                     <span class="selected-line-code">${this.escapeHtmlAttribute(lineCode)}</span>
-                    ${delayDot}
                     <span class="selected-line-meta">${this.escapeHtmlAttribute(summary)}</span>
                     <span class="selected-line-spacer" aria-hidden="true"></span>
                   </div>`;
@@ -2310,6 +2351,10 @@ class BusMagoApp {
         }, Math.max(0, Math.ceil(nextRerenderInMs + 25)));
       }
     }
+
+    // Risultati fermate PRIMA del blocco linee: la barra promette
+    // "Cerca linea o fermata" e chi cerca per nome cerca quasi sempre una fermata.
+    html += this.buildStopSearchResultsHtml(filterValue);
 
     html += `<div class="legend-header-row">
               <div class="legend-section-title legend-chip">LINEE</div>
@@ -2379,9 +2424,6 @@ class BusMagoApp {
               </div>`;
     });
     html += `</div>`;
-
-    // Risultati fermate: la barra promette "Cerca linea o fermata".
-    html += this.buildStopSearchResultsHtml(filterValue);
 
     // "Select All" (excludes line 777)
     const allSelected = Object.keys(this.state.lineVisibility)
@@ -3154,8 +3196,6 @@ class BusMagoApp {
         this.updateInfoFromBus(selected);
         // Pannello fermata: ridisegno con gli arrivi appena scaricati.
         if (this.state.stopPanel.code) this.renderInfoPanel();
-        // Semaforo ritardi in legenda (solo se visibile, in place).
-        this.updateLegendDelayDots();
 
         // Deep-link #bus= in attesa: la vettura può comparire solo dopo
         // qualche ciclo (o mai, se non è in servizio).
@@ -3885,6 +3925,7 @@ class BusMagoApp {
       return `<button type="button" class="info-line-chip${selectedClass}" data-info-line="${this.escapeHtmlAttribute(lc)}" style="background:${bg}" aria-pressed="${isSelected}">
       <span class="info-line-chip-code">${this.escapeHtmlAttribute(label)}</span>
       <span class="info-line-chip-count">${busIcon}${count}</span>
+      ${this.getLineDelayDotHtml(lc)}
     </button>`;
     }).join('');
     return `<div class="info-chips-row">${chips}</div>`;
@@ -4037,6 +4078,7 @@ class BusMagoApp {
       return `
         <div class="vehicle-info vehicle-info--ended">
           <div class="info-header">
+            ${this.buildBackToStopButtonHtml()}
             <div class="info-line-badge info-line-badge--ended">FINE</div>
             <div class="info-destination info-destination--ended">Corsa terminata</div>
           </div>
@@ -4098,6 +4140,7 @@ class BusMagoApp {
     return `
       <div class="vehicle-info ${collapsed ? 'vehicle-info--collapsed' : ''}" style="--line-color: ${lineBadgeColor}">
         <div class="info-header">
+          ${this.buildBackToStopButtonHtml()}
           <div class="info-line-badge" style="--line-color: ${lineBadgeColor}">${this.escapeHtmlAttribute(lineLabel)}</div>
           <div class="info-heading">
             <div class="info-destination">${this.escapeHtmlAttribute(bus.destination || '-')}</div>
@@ -4130,8 +4173,15 @@ class BusMagoApp {
       ? `<div class="departures-times">${runningDot}${times}</div>`
       : `<div class="departures-times departures-times--empty">${this.escapeHtmlAttribute(it.message || 'In attesa dati…')}</div>`;
 
+    // Riga cliccabile quando la vettura è già tracciata sulla mappa
+    // (pannello fermata): il tap avvia il follow di quella vettura.
+    const rowClass = it.vehicleKey ? 'departures-line departures-line--clickable' : 'departures-line';
+    const rowAttrs = it.vehicleKey
+      ? ` role="button" tabindex="0" title="Segui questa vettura" data-vehicle-key="${this.escapeHtmlAttribute(it.vehicleKey)}"`
+      : '';
+
     return `
-      <div class="departures-line">
+      <div class="${rowClass}"${rowAttrs}>
         <div class="departures-line-badge" style="background-color:${badgeColor};">${this.escapeHtmlAttribute(it.lineCode)}</div>
         <div class="departures-line-main">
           <div class="departures-dest">${destLabel}</div>
@@ -4139,6 +4189,7 @@ class BusMagoApp {
           ${it.note ? `<div class="departures-note"><span class="note-tag">Nota</span>${this.escapeHtmlAttribute(it.note)}</div>` : ''}
           ${right}
         </div>
+        ${it.vehicleKey ? '<span class="departures-follow-chevron" aria-hidden="true">›</span>' : ''}
       </div>
     `;
   }
@@ -4743,38 +4794,21 @@ class BusMagoApp {
     return delays.length % 2 ? delays[mid] : Math.round((delays[mid - 1] + delays[mid]) / 2);
   }
 
+  // Pallino semaforo nella chip "Informazioni" della linea: il pannello si
+  // ridisegna a ogni ciclo buono (la firma include lastSuccessAt), quindi il
+  // valore resta fresco senza aggiornamenti in place.
   getLineDelayDotHtml(lineCode) {
-    const safe = this.escapeHtmlAttribute(lineCode);
     const delay = this.computeLineDelayStats(lineCode);
-    if (delay === null) return `<span class="line-delay-dot" data-delay-dot="${safe}" hidden></span>`;
+    if (delay === null) return '';
     const level = this.getDelayLevel(delay);
     const title = this.describeLineDelay(delay);
-    return `<span class="line-delay-dot line-delay-dot--${level}" data-delay-dot="${safe}" title="${this.escapeHtmlAttribute(title)}"></span>`;
+    return `<span class="line-delay-dot line-delay-dot--${level}" title="${this.escapeHtmlAttribute(title)}"></span>`;
   }
 
   describeLineDelay(delay) {
     if (delay <= -3) return `Linea in anticipo (mediana ${Math.abs(delay)} min)`;
     if (delay <= 2) return 'Linea in orario';
     return `Linea in ritardo (mediana +${delay} min)`;
-  }
-
-  // Aggiorna i pallini in place (niente re-render della legenda: lo scroll e
-  // l'eventuale menu direzioni aperto restano dove sono).
-  updateLegendDelayDots() {
-    if (!this.legendDiv || !this.isLegendVisible()) return;
-    this.legendDiv.querySelectorAll('[data-delay-dot]').forEach(dot => {
-      const lineCode = dot.dataset.delayDot;
-      const delay = this.computeLineDelayStats(lineCode);
-      if (delay === null) {
-        dot.hidden = true;
-        dot.className = 'line-delay-dot';
-        dot.removeAttribute('title');
-        return;
-      }
-      dot.hidden = false;
-      dot.className = `line-delay-dot line-delay-dot--${this.getDelayLevel(delay)}`;
-      dot.title = this.describeLineDelay(delay);
-    });
   }
 
   computeBearing(lat1, lon1, lat2, lon2) {
