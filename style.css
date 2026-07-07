@@ -909,8 +909,21 @@ input:focus-visible,
 #legend-group-fs .legend-group-icon {
   height: calc(100% - 8px); width: auto; object-fit: contain;
 }
+/* BARCOLA: la foto intera (contain, mai tagliata) centrata sopra una copia
+   sfocata di se stessa che riempie la fascia — niente crop netto. Un filo
+   più alto degli altri bottoni: a 52px la foto intera diventava un
+   francobollo (verificato con screenshot). */
+#legend-group-barcola { position: relative; height: 76px; }
+#legend-group-barcola::before {
+  content: '';
+  position: absolute; inset: 0;
+  background: url('img/barcola.webp') center / cover no-repeat;
+  filter: blur(7px) saturate(1.15);
+  transform: scale(1.2); /* nasconde i bordi trasparenti del blur */
+}
 #legend-group-barcola .legend-group-icon {
-  width: 100%; height: 100%; object-fit: cover; object-position: bottom;
+  position: relative;
+  width: auto; height: 100%; object-fit: contain;
 }
 
 /* =====================================================
