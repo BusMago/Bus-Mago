@@ -2190,7 +2190,12 @@ class BusMagoApp {
     this.state.isFollowing = true;
     this.hapticSelect(); // selezione bus: vibrazione netta
     this.requestWakeLock();
-    const cur = (this.state.vehicleState[key] && this.state.vehicleState[key].lastEnrichedBus) || null;
+    // vehicleState viene POTATO da updateBusMarkers per le vetture senza
+    // marker (= linee non attive), nello stesso ciclo che le arricchisce:
+    // per le vetture selezionate dal pannello fermata va usato il fallback
+    // su lastEnrichedBuses, che non è filtrato per visibilità.
+    let cur = (this.state.vehicleState[key] && this.state.vehicleState[key].lastEnrichedBus) || null;
+    if (!cur) cur = (this.state.lastEnrichedBuses || []).find(b => b.key === key) || null;
     // Selezione nuova: azzera la grazia anti-"corsa terminata" e, se la
     // vettura non ha uno stato noto, scarta l'eventuale bus precedente (la
     // grazia non deve mostrare le info di un'ALTRA vettura).
