@@ -2375,24 +2375,12 @@ class BusMagoApp {
     const fsActive = groupKeys.has('FS');
     const barcolaActive = groupKeys.has('BARCOLA');
     html += `<hr class="legend-grid-separator">`;
-    if (skinMode === 'classic') {
-      // Classic: UNI+FS su una riga, BARCOLA a tutta larghezza sotto —
-      // box stondati come le tile delle linee.
-      html += `<div class="legend-group-row">
-                <button id="legend-group-uni" class="legend-group-btn ${uniActive ? 'is-active' : ''}" type="button" aria-label="Gruppo UNI" aria-pressed="${uniActive ? 'true' : 'false'}"><img class="legend-group-icon" src="img/icona_uni.webp" alt=""></button>
-                <button id="legend-group-fs" class="legend-group-btn ${fsActive ? 'is-active' : ''}" type="button" aria-label="Gruppo FS" aria-pressed="${fsActive ? 'true' : 'false'}"><img class="legend-group-icon" src="img/icona_fs.webp" alt=""></button>
-              </div>
-              <div class="legend-group-row">
-                <button id="legend-group-barcola" class="legend-group-btn ${barcolaActive ? 'is-active' : ''}" type="button" aria-label="Gruppo BARCOLA" aria-pressed="${barcolaActive ? 'true' : 'false'}"><img class="legend-group-icon" src="img/barcola.webp" alt=""></button>
-              </div>`;
-    } else {
-      // Glossy: tre cerchi a tutta larghezza (layout storico)
-      html += `<div class="legend-group-row">
-                <button id="legend-group-uni" class="legend-group-btn ${uniActive ? 'is-active' : ''}" type="button" aria-label="Gruppo UNI" aria-pressed="${uniActive ? 'true' : 'false'}"><img class="legend-group-icon" src="img/icona_uni.webp" alt=""></button>
-                <button id="legend-group-fs" class="legend-group-btn ${fsActive ? 'is-active' : ''}" type="button" aria-label="Gruppo FS" aria-pressed="${fsActive ? 'true' : 'false'}"><img class="legend-group-icon" src="img/icona_fs.webp" alt=""></button>
-                <button id="legend-group-barcola" class="legend-group-btn ${barcolaActive ? 'is-active' : ''}" type="button" aria-label="Gruppo BARCOLA" aria-pressed="${barcolaActive ? 'true' : 'false'}"><img class="legend-group-icon" src="img/barcola.webp" alt=""></button>
-              </div>`;
-    }
+    // Tre cerchi a tutta larghezza per entrambi i temi
+    html += `<div class="legend-group-row">
+              <button id="legend-group-uni" class="legend-group-btn ${uniActive ? 'is-active' : ''}" type="button" aria-label="Gruppo UNI" aria-pressed="${uniActive ? 'true' : 'false'}"><img class="legend-group-icon" src="img/units.webp" alt=""></button>
+              <button id="legend-group-fs" class="legend-group-btn ${fsActive ? 'is-active' : ''}" type="button" aria-label="Gruppo FS" aria-pressed="${fsActive ? 'true' : 'false'}"><img class="legend-group-icon" src="img/icona_fs.webp" alt=""></button>
+              <button id="legend-group-barcola" class="legend-group-btn ${barcolaActive ? 'is-active' : ''}" type="button" aria-label="Gruppo BARCOLA" aria-pressed="${barcolaActive ? 'true' : 'false'}"><img class="legend-group-icon" src="img/barcola.webp" alt=""></button>
+            </div>`;
     html += `<hr class="legend-grid-separator">`;
 
     const activeLineCodes = Object.keys(this.state.lineVisibility).filter(k => this.state.lineVisibility[k] === true);
