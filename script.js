@@ -220,6 +220,12 @@ class BusMagoApp {
         set: new Set(),
         snapshot: null
       },
+      // Fermate preferite: stessa persistenza delle linee (localStorage),
+      // ma insieme separato di codici fermata.
+      stopFavorites: {
+        key: 'busmago:stopFavorites:v1',
+        set: new Set()
+      },
       theme: {
         key: 'busmago:theme:v1',
         mode: 'dark'
@@ -823,6 +829,10 @@ class BusMagoApp {
   initMap() {
     this.state.map = L.map('map', { zoomControl: false, preferCanvas: true }).setView(CONFIG.MAP.DEFAULT_CENTER, CONFIG.MAP.DEFAULT_ZOOM);
     this.applyTileLayer();
+    // Canvas dedicato alle fermate con tolerance: estende l'area di tap dei
+    // circleMarker (raggio pochi px) a una zona premibile col dito senza
+    // dover zoomare al massimo. Non tocca il canvas di default (tracciati).
+    this._stopsRenderer = L.canvas({ tolerance: 12 });
     this.stopsLayer = L.layerGroup().addTo(this.state.map);
 
     // Smooth bus gliding: disable the CSS transition while the map is moving
@@ -941,7 +951,38 @@ class BusMagoApp {
     }
   }
 
+  loadStopFavorites() {
+    try {
+      const raw = localStorage.getItem(this.state.stopFavorites.key);
+      if (!raw) return;
+      const arr = JSON.parse(raw);
+      if (Array.isArray(arr)) this.state.stopFavorites.set = new Set(arr.filter(x => typeof x === 'string'));
+    } catch {
+    }
+  }
+
+  saveStopFavorites() {
+    try {
+      localStorage.setItem(this.state.stopFavorites.key, JSON.stringify(Array.from(this.state.stopFavorites.set)));
+    } catch {
+    }
+  }
+
+  toggleStopFavorite(code) {
+    const c = String(code || '');
+    if (!c) return;
+    if (this.state.stopFavorites.set.has(c)) this.state.stopFavorites.set.delete(c);
+    else this.state.stopFavorites.set.add(c);
+    this.hapticToggle();
+    this.saveStopFavorites();
+    // La stella nel pannello fermata e la sezione preferiti in legenda
+    // riflettono subito il nuovo stato (il flag è nella signature del pannello).
+    this.renderInfoPanel();
+    if (this.isLegendVisible()) this.renderLegend({ skipInfoPanel: true });
+  }
+
   loadFavorites() {
+    this.loadStopFavorites();
     try {
       const raw = localStorage.getItem(this.state.favorites.key);
       if (raw) {
@@ -1230,6 +1271,7 @@ class BusMagoApp {
       // dove il listener globale deselezionerebbe subito la fermata.
       const marker = L.circleMarker([stop.lat, stop.lng], {
         ...this.getStopMarkerStyle(stop.code === selectedCode),
+        renderer: this._stopsRenderer,
         bubblingMouseEvents: false
       }).bindTooltip(stop.name, { direction: 'top', offset: [0, -6] });
       marker.on('click', () => this.selectStop(stop.code));
@@ -1243,7 +1285,7 @@ class BusMagoApp {
       ? (this.getCssVar('--brand') || '#0077ff')
       : (this.getCssVar('--text-secondary') || '#888888');
     return {
-      radius: isSelected ? 7 : 5,
+      radius: isSelected ? 8 : 6,
       weight: 2,
       color: stroke,
       opacity: 0.9,
@@ -1415,6 +1457,11 @@ class BusMagoApp {
             <div class="info-subtitle">Fermata ${this.escapeHtmlAttribute(code)}</div>
           </div>
           ${this.buildAgeBadgeHtml()}
+          ${(() => {
+            const isFav = this.state.stopFavorites.set.has(code);
+            const label = isFav ? 'Rimuovi dai preferiti' : 'Aggiungi ai preferiti';
+            return `<button id="stop-fav-btn" class="vehicle-deselect-btn vehicle-collapse-toggle stop-fav-btn ${isFav ? 'is-active' : ''}" type="button" aria-pressed="${isFav ? 'true' : 'false'}" aria-label="${label}" title="${label}">${isFav ? '★' : '☆'}</button>`;
+          })()}
           ${this.buildShareButtonHtml()}
           <button id="stop-deselect-btn" class="vehicle-deselect-btn vehicle-collapse-toggle" type="button" aria-label="Chiudi pannello fermata" title="Chiudi">×</button>
         </div>
@@ -1449,6 +1496,10 @@ class BusMagoApp {
       }
     }
     matches.sort((a, b) => {
+      // Le preferite salgono in cima ai risultati.
+      const fa = this.state.stopFavorites.set.has(a.stop.code) ? 0 : 1;
+      const fb = this.state.stopFavorites.set.has(b.stop.code) ? 0 : 1;
+      if (fa !== fb) return fa - fb;
       const ra = a.rank === -1 ? -1 : a.rank; // match sul codice in cima
       const rb = b.rank === -1 ? -1 : b.rank;
       if (ra !== rb) return ra - rb;
@@ -1456,13 +1507,41 @@ class BusMagoApp {
     });
     const out = matches.slice(0, CONFIG.STOPS.SEARCH_MAX_RESULTS).map(m => m.stop);
     if (!out.length) return '';
-    const rows = out.map(s => `<button type="button" class="stop-result" data-stop-code="${this.escapeHtmlAttribute(s.code)}" data-lat="${s.lat}" data-lng="${s.lng}">
-        <span class="stop-result-icon" aria-hidden="true">🚏</span>
+    return `<div class="legend-header-row"><div class="legend-section-title legend-chip">FERMATE</div></div>
+      <div class="stop-results">${out.map(s => this.buildStopResultRowHtml(s)).join('')}</div>`;
+  }
+
+  // Riga fermata condivisa fra risultati di ricerca e sezione preferite
+  // (stesso markup → stesso listener delegato .stop-result).
+  buildStopResultRowHtml(s) {
+    const isFav = this.state.stopFavorites.set.has(s.code);
+    return `<button type="button" class="stop-result" data-stop-code="${this.escapeHtmlAttribute(s.code)}" data-lat="${s.lat}" data-lng="${s.lng}">
+        <span class="stop-result-icon" aria-hidden="true">${isFav ? '★' : '🚏'}</span>
         <span class="stop-result-name">${this.escapeHtmlAttribute(s.name)}</span>
         <span class="stop-result-code">${this.escapeHtmlAttribute(s.code)}</span>
-      </button>`).join('');
-    return `<div class="legend-header-row"><div class="legend-section-title legend-chip">FERMATE</div></div>
-      <div class="stop-results">${rows}</div>`;
+      </button>`;
+  }
+
+  // Sezione "FERMATE PREFERITE" in legenda quando non si sta cercando:
+  // accesso rapido persistente, speculare ai preferiti delle linee.
+  buildFavoriteStopsHtml() {
+    const favs = Array.from(this.state.stopFavorites.set);
+    if (!favs.length) return '';
+    if (!this.stopsIndex.list.length) {
+      // Nomi e coordinate arrivano dall'indice: kick e re-render al termine.
+      this.ensureStopsIndex().then(() => {
+        if (this.isLegendVisible()) this.renderLegend({ skipInfoPanel: true });
+      });
+      return `<div class="legend-header-row"><div class="legend-section-title legend-chip">FERMATE PREFERITE</div></div>
+        <div class="stop-results-empty">Caricamento fermate…</div>`;
+    }
+    const stops = favs
+      .map(c => this.stopsIndex.byCode.get(c))
+      .filter(Boolean)
+      .sort((a, b) => a.name.localeCompare(b.name, 'it'));
+    if (!stops.length) return '';
+    return `<div class="legend-header-row"><div class="legend-section-title legend-chip">FERMATE PREFERITE</div></div>
+      <div class="stop-results">${stops.map(s => this.buildStopResultRowHtml(s)).join('')}</div>`;
   }
 
   // Selezione di una fermata dai risultati di ricerca: chiude la legenda,
@@ -1508,23 +1587,28 @@ class BusMagoApp {
 
   // ===== Deep-link (#linea= / #fermata= / #bus=linea:vettura) e condivisione =====
 
+  // Attiva una linea come se fosse stata accesa dalla legenda (persistita).
+  // Usata dai deep-link e dal follow di una vettura la cui linea non è
+  // ancora selezionata. Ritorna false se il codice non è in lines.js.
+  activateLine(code) {
+    const target = String(code || '').trim().toUpperCase();
+    const known = linesConfig.find(l => String(l.code).toUpperCase() === target);
+    if (!known) return false;
+    if (this.state.lineVisibility[known.code] !== true) {
+      this.state.lineVisibility[known.code] = true;
+      if (!this.state.directions.waitStartedAtByLine[known.code]) {
+        this.state.directions.waitStartedAtByLine[known.code] = Date.now();
+      }
+      this.saveActiveLines();
+    }
+    return true;
+  }
+
   initDeepLink() {
     let params;
     try { params = new URLSearchParams((location.hash || '').replace(/^#/, '')); } catch { return; }
 
-    const activateLine = (code) => {
-      const target = String(code || '').trim().toUpperCase();
-      const known = linesConfig.find(l => String(l.code).toUpperCase() === target);
-      if (!known) return false;
-      if (this.state.lineVisibility[known.code] !== true) {
-        this.state.lineVisibility[known.code] = true;
-        if (!this.state.directions.waitStartedAtByLine[known.code]) {
-          this.state.directions.waitStartedAtByLine[known.code] = Date.now();
-        }
-        this.saveActiveLines();
-      }
-      return true;
-    };
+    const activateLine = (code) => this.activateLine(code);
 
     const linea = params.get('linea');
     if (linea) activateLine(linea);
@@ -1727,6 +1811,14 @@ class BusMagoApp {
         }
         this.renderLegend({ skipInfoPanel: true });
       });
+      // Invio = ho finito di digitare: blur per far sparire la tastiera
+      // su mobile (i risultati restano visibili nella legenda).
+      mapSearchInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          mapSearchInput.blur();
+        }
+      });
       mapSearchInput.addEventListener('focus', () => {
         // Preload dell'indice fermate: pronto per quando l'utente digita.
         this.ensureStopsIndex();
@@ -1845,6 +1937,12 @@ class BusMagoApp {
           e.preventDefault();
           e.stopPropagation();
           this.deselectStop();
+          return;
+        }
+        if (t && t.closest && t.closest('#stop-fav-btn')) {
+          e.preventDefault();
+          e.stopPropagation();
+          if (this.state.stopPanel.code) this.toggleStopFavorite(this.state.stopPanel.code);
           return;
         }
         if (t && t.closest && t.closest('#share-btn')) {
@@ -2057,6 +2155,12 @@ class BusMagoApp {
     this.hapticSelect(); // selezione bus: vibrazione netta
     this.requestWakeLock();
     const cur = (this.state.vehicleState[key] && this.state.vehicleState[key].lastEnrichedBus) || null;
+    // Vettura di una linea non ancora selezionata (tipico: arrivi di un'altra
+    // linea nel pannello fermata): senza attivare la linea il polling non la
+    // intercetterebbe e al ciclo dopo risulterebbe "corsa terminata".
+    if (cur && cur.lineCode && this.state.lineVisibility[cur.lineCode] !== true) {
+      if (this.activateLine(cur.lineCode)) this.scheduleNextRefresh(0);
+    }
     if (cur && cur.coords) {
       this.state.lastFollowCoords = [cur.coords[0], cur.coords[1]];
       this.state.map.panTo(cur.coords, { animate: true });
@@ -2354,7 +2458,8 @@ class BusMagoApp {
 
     // Risultati fermate PRIMA del blocco linee: la barra promette
     // "Cerca linea o fermata" e chi cerca per nome cerca quasi sempre una fermata.
-    html += this.buildStopSearchResultsHtml(filterValue);
+    // Senza filtro, al loro posto compaiono le fermate preferite.
+    html += filterValue ? this.buildStopSearchResultsHtml(filterValue) : this.buildFavoriteStopsHtml();
 
     html += `<div class="legend-header-row">
               <div class="legend-section-title legend-chip">LINEE</div>
@@ -4002,7 +4107,7 @@ class BusMagoApp {
     let stopSig = '';
     if (stopCode) {
       const stopItems = this.getStopArrivalItems(stopCode);
-      stopSig = `S:${stopCode}:` + (stopItems === null ? 'wait' : stopItems.map(it => `${it.lineCode}|${it.destinationKey}|${it.times.join(',')}|${it.note}|${it.isStarted ? 1 : 0}`).join('~'));
+      stopSig = `S:${stopCode}:${this.state.stopFavorites.set.has(stopCode) ? 1 : 0}:` + (stopItems === null ? 'wait' : stopItems.map(it => `${it.lineCode}|${it.destinationKey}|${it.times.join(',')}|${it.note}|${it.isStarted ? 1 : 0}`).join('~'));
     }
     const signature = `${vehicleSig}|${depSig}|${this.state.departures.collapsed ? 1 : 0}|${this.state.infoPanel.collapsed ? 1 : 0}|${activeLineCodes.join(',')}|${this.state.directions.lastKnownSignature || ''}|${this.state.selectedVehicleKey || ''}|${selectedInfoLine || ''}|${this.state.updateStatus.lastSuccessAt || 0}|${fleetSig}|${stopSig}`;
     if (signature === this.state.lastInfoSignature) return;
