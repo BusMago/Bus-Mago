@@ -98,35 +98,6 @@ const CONFIG = {
   }
 };
 
-// Static track coordinates for Easter Egg line 777
-const easterEggTrack777 = [
-  [45.651935, 13.773043], // Canal Grande Trieste
-  [45.653091, 13.769098],
-  [45.653535, 13.765801],
-  [45.553794, 13.09220],
-  [45.418835, 12.435624],
-  [45.433784, 12.402343],
-  [45.435350, 12.387535],
-  [45.433848, 12.383699],
-  [45.423099, 12.370691],
-  [45.422033, 12.366322],
-  [45.422757, 12.362378],
-  [45.432441, 12.346999],
-  [45.432508, 12.341332],
-  [45.431358, 12.333801],
-  [45.431367, 12.330536],
-  [45.431688, 12.328907],
-  [45.432614, 12.327703],
-  [45.434557, 12.327197],
-  [45.435488, 12.329295],
-  [45.437289, 12.334968],
-  [45.438531, 12.336207],
-  [45.439543, 12.335579],
-  [45.440329, 12.334030],
-  [45.442156, 12.330163],
-  [45.442325, 12.329644] // Casinò Venezia
-];
-
 const normalizeKey = (value) => String(value || '').trim().toUpperCase();
 
 // Testo per il matching di ricerca: minuscole e senza accenti, così
@@ -204,12 +175,6 @@ class BusMagoApp {
       isFollowing: false,
       suppressMenuAutoClose: false,
       map: null,
-      easterEgg: {
-        active: false,
-        marker: null,
-        interval: null,
-        index: 0
-      },
       stopCache: {
         entries: {},
         inFlight: {}
@@ -831,8 +796,12 @@ class BusMagoApp {
     this.applyTileLayer();
     // Canvas dedicato alle fermate con tolerance: estende l'area di tap dei
     // circleMarker (raggio pochi px) a una zona premibile col dito senza
-    // dover zoomare al massimo. Non tocca il canvas di default (tracciati).
-    this._stopsRenderer = L.canvas({ tolerance: 12 });
+    // dover zoomare al massimo. Il pane dedicato lo tiene SEMPRE sopra il
+    // canvas di default (tracciati, cerchio GPS): quel canvas viene
+    // ri-aggiunto al DOM quando i suoi layer cambiano e senza pane finiva
+    // sopra alle fermate, che smettevano di ricevere hover e click.
+    this.state.map.createPane('stopsPane').style.zIndex = 450; // overlay 400 < fermate < marker 600
+    this._stopsRenderer = L.canvas({ tolerance: 12, pane: 'stopsPane' });
     this.stopsLayer = L.layerGroup().addTo(this.state.map);
 
     // Smooth bus gliding: disable the CSS transition while the map is moving
@@ -1272,6 +1241,7 @@ class BusMagoApp {
       const marker = L.circleMarker([stop.lat, stop.lng], {
         ...this.getStopMarkerStyle(stop.code === selectedCode),
         renderer: this._stopsRenderer,
+        pane: 'stopsPane',
         bubblingMouseEvents: false
       }).bindTooltip(stop.name, { direction: 'top', offset: [0, -6] });
       marker.on('click', () => this.selectStop(stop.code));
@@ -1558,7 +1528,7 @@ class BusMagoApp {
   // Selezione di una fermata dai risultati di ricerca: chiude la legenda,
   // porta la mappa sulla fermata (zoom ≥ soglia marker) e apre il pannello.
   goToStopFromSearch(code, lat, lng) {
-    if (this.legendDiv) this.legendDiv.style.display = 'none';
+    this.hideLegend();
     const map = this.state.map;
     if (map && Number.isFinite(lat) && Number.isFinite(lng)) {
       this.suppressMenuAutoCloseUntilMapSettles();
@@ -1798,15 +1768,19 @@ class BusMagoApp {
             }
             this.hapticTap();
             const willShow = !this.isLegendVisible();
-            this.legendDiv.style.display = willShow ? 'block' : 'none';
-            if (willShow) this.renderLegend();
-            else blurSearchBar();
+            if (willShow) {
+              this.legendDiv.style.display = 'block';
+              this.renderLegend();
+            } else {
+              this.hideLegend();
+              blurSearchBar();
+            }
         });
 
         document.addEventListener('keydown', (e) => {
             if (e.key !== 'Escape') return;
             if (this.isLegendVisible()) {
-                this.legendDiv.style.display = 'none';
+                this.hideLegend();
                 blurSearchBar();
             }
         });
@@ -1817,6 +1791,7 @@ class BusMagoApp {
     if (mapSearchInput) {
       mapSearchInput.addEventListener('input', (e) => {
         this.state.legend.filterText = e.target.value;
+        this.syncSearchClearBtn();
         if (!this.isLegendVisible()) {
           this.legendDiv.style.display = 'block';
         }
@@ -1837,6 +1812,21 @@ class BusMagoApp {
           this.legendDiv.style.display = 'block';
           this.renderLegend();
         }
+      });
+    }
+    const mapSearchClear = document.getElementById('map-search-clear');
+    if (mapSearchClear) {
+      mapSearchClear.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        this.hapticTap();
+        if (mapSearchInput) {
+          mapSearchInput.value = '';
+          mapSearchInput.focus();
+        }
+        this.state.legend.filterText = '';
+        this.syncSearchClearBtn();
+        if (this.isLegendVisible()) this.renderLegend({ skipInfoPanel: true });
       });
     }
 
@@ -2015,6 +2005,27 @@ class BusMagoApp {
     return s && s.display !== 'none' && s.visibility !== 'hidden' && s.opacity !== '0';
   }
 
+  // Chiusura unica della legenda: qualunque via di uscita (toggle, Escape,
+  // interazione mappa, selezione) pulisce anche la barra di ricerca, così
+  // alla riapertura si riparte dall'elenco completo.
+  hideLegend() {
+    if (this.legendDiv) this.legendDiv.style.display = 'none';
+    const input = document.getElementById('map-search-input');
+    this.state.legend.filterText = '';
+    if (input) {
+      input.value = '';
+      if (document.activeElement === input) input.blur();
+    }
+    this.syncSearchClearBtn();
+  }
+
+  // Mostra la ✕ nella barra solo quando c'è del testo da cancellare.
+  syncSearchClearBtn() {
+    const btn = document.getElementById('map-search-clear');
+    const input = document.getElementById('map-search-input');
+    if (btn) btn.style.display = input && input.value ? 'flex' : 'none';
+  }
+
   updateKnownDirectionsFromStopData(stopDataMap) {
     const nextKnown = {};
 
@@ -2157,7 +2168,7 @@ class BusMagoApp {
     if (this.state.suppressMenuAutoClose) return;
     this.state.userHasInteracted = true;
     if (this.legendDiv.style.display === 'block') {
-      this.legendDiv.style.display = 'none';
+      this.hideLegend();
     }
   }
 
@@ -2214,7 +2225,7 @@ class BusMagoApp {
     this.updateInfoFromBus(cur);
     this.updateUrlHash();
     if (this.legendDiv.style.display === 'block') {
-      this.legendDiv.style.display = 'none';
+      this.hideLegend();
     }
     this.updateBusMarkers(this.state.lastEnrichedBuses);
   }
@@ -2351,35 +2362,28 @@ class BusMagoApp {
               </div>
             </div>`;
 
-    html += `<button id="favorites-only-btn" class="legend-action-btn legend-action-toggle ${favoritesOnly ? 'is-active' : ''}" type="button" aria-pressed="${favoritesOnly ? 'true' : 'false'}">PREFERITI</button>`;
-
     const filterText = (this.state.legend.filterText || '').trim().toLowerCase();
 
-    // Clear All Button (UI in italiano come il resto del pannello)
-    html += `<button id="clear-all-lines">Deseleziona tutte</button>`;
+    // Preferiti + Deseleziona tutte: una riga, mezza colonna ciascuno
+    html += `<div class="legend-actions-row">
+              <button id="favorites-only-btn" class="legend-action-btn legend-action-toggle ${favoritesOnly ? 'is-active' : ''}" type="button" aria-pressed="${favoritesOnly ? 'true' : 'false'}">PREFERITI</button>
+              <button id="clear-all-lines" type="button">Deseleziona tutte</button>
+            </div>`;
 
     const groupKeys = (this.state.legend && this.state.legend.groupKeys instanceof Set) ? this.state.legend.groupKeys : new Set();
     const uniActive = groupKeys.has('UNI');
     const fsActive = groupKeys.has('FS');
     const barcolaActive = groupKeys.has('BARCOLA');
     html += `<hr class="legend-grid-separator">`;
-    if (skinMode === 'classic') {
-      // Layout storico (main): UNI+FS su una riga, BARCOLA centrata sotto (16/9)
-      html += `<div class="legend-group-row">
-                <button id="legend-group-uni" class="legend-action-btn legend-action-toggle legend-group-btn ${uniActive ? 'is-active' : ''}" type="button" aria-label="Gruppo UNI" aria-pressed="${uniActive ? 'true' : 'false'}"><img class="legend-group-icon" src="img/icona_uni.webp" alt=""></button>
-                <button id="legend-group-fs" class="legend-action-btn legend-action-toggle legend-group-btn ${fsActive ? 'is-active' : ''}" type="button" aria-label="Gruppo FS" aria-pressed="${fsActive ? 'true' : 'false'}"><img class="legend-group-icon" src="img/icona_fs.webp" alt=""></button>
-              </div>
-              <div class="legend-group-row legend-group-row--centered">
-                <button id="legend-group-barcola" class="legend-action-btn legend-action-toggle legend-group-btn ${barcolaActive ? 'is-active' : ''}" type="button" aria-label="Gruppo BARCOLA" aria-pressed="${barcolaActive ? 'true' : 'false'}"><img class="legend-group-icon" src="img/barcola.webp" alt=""></button>
-              </div>`;
-    } else {
-      // Layout glossy: tre cerchi a tutta larghezza
-      html += `<div class="legend-group-row">
-                <button id="legend-group-uni" class="legend-group-btn ${uniActive ? 'is-active' : ''}" type="button" aria-label="Gruppo UNI" aria-pressed="${uniActive ? 'true' : 'false'}"><img class="legend-group-icon" src="img/icona_uni.webp" alt=""></button>
-                <button id="legend-group-fs" class="legend-group-btn ${fsActive ? 'is-active' : ''}" type="button" aria-label="Gruppo FS" aria-pressed="${fsActive ? 'true' : 'false'}"><img class="legend-group-icon" src="img/icona_fs.webp" alt=""></button>
-                <button id="legend-group-barcola" class="legend-group-btn ${barcolaActive ? 'is-active' : ''}" type="button" aria-label="Gruppo BARCOLA" aria-pressed="${barcolaActive ? 'true' : 'false'}"><img class="legend-group-icon" src="img/barcola.webp" alt=""></button>
-              </div>`;
-    }
+    // UNI+FS su una riga (mezza colonna ciascuno), BARCOLA sotto a tutta
+    // larghezza e con la stessa altezza: stesso layout in entrambe le skin.
+    html += `<div class="legend-group-row">
+              <button id="legend-group-uni" class="legend-group-btn ${uniActive ? 'is-active' : ''}" type="button" aria-label="Gruppo UNI" aria-pressed="${uniActive ? 'true' : 'false'}"><img class="legend-group-icon" src="img/icona_uni.webp" alt=""></button>
+              <button id="legend-group-fs" class="legend-group-btn ${fsActive ? 'is-active' : ''}" type="button" aria-label="Gruppo FS" aria-pressed="${fsActive ? 'true' : 'false'}"><img class="legend-group-icon" src="img/icona_fs.webp" alt=""></button>
+            </div>
+            <div class="legend-group-row">
+              <button id="legend-group-barcola" class="legend-group-btn ${barcolaActive ? 'is-active' : ''}" type="button" aria-label="Gruppo BARCOLA" aria-pressed="${barcolaActive ? 'true' : 'false'}"><img class="legend-group-icon" src="img/barcola.webp" alt=""></button>
+            </div>`;
     html += `<hr class="legend-grid-separator">`;
 
     const activeLineCodes = Object.keys(this.state.lineVisibility).filter(k => this.state.lineVisibility[k] === true);
@@ -2525,12 +2529,12 @@ class BusMagoApp {
     }
     // At night, move night lines to the top; by day keep them at the bottom
     const nightLines = rawLines.filter(l => l && NIGHT_CODES.includes(l.code));
-    const dayLines   = rawLines.filter(l => l && !NIGHT_CODES.includes(l.code) && l.code !== "777");
+    const dayLines   = rawLines.filter(l => l && !NIGHT_CODES.includes(l.code));
     const orderedLines = isNightTime ? [...nightLines, ...dayLines] : [...dayLines, ...nightLines];
 
     let separatorAdded = false;
+    let renderedLineCount = 0;
     orderedLines.forEach(l => {
-      if (l.code === "777") return; // Easter egg line hidden from menu
       // Separator between night and day lines
       if (isNightTime) {
         if (!separatorAdded && !NIGHT_CODES.includes(l.code)) {
@@ -2563,6 +2567,7 @@ class BusMagoApp {
       const hasLabel = l.label && l.label !== l.code;
       const lineName = hasLabel ? l.label : (dirsText || l.code);
       const subText = hasLabel ? dirsText : '';
+      renderedLineCount++;
       const listMeta = viewMode === 'list'
         ? `<span class="legend-line-meta"><span class="legend-line-name"><span>${this.escapeHtmlAttribute(lineName)}</span></span>${subText ? `<span class="legend-line-dirs"><span>${this.escapeHtmlAttribute(subText)}</span></span>` : ''}</span>`
         : '';
@@ -2575,10 +2580,12 @@ class BusMagoApp {
               </div>`;
     });
     html += `</div>`;
+    if (renderedLineCount === 0) {
+      html += `<div class="stop-results-empty">${filterText ? 'Nessuna linea trovata' : 'Nessuna linea nei preferiti'}</div>`;
+    }
 
-    // "Select All" (excludes line 777)
+    // "Select All"
     const allSelected = Object.keys(this.state.lineVisibility)
-      .filter(k => k !== '777')
       .every(k => this.state.lineVisibility[k]);
 
     html += `<button id="select-all-lines-btn" class="legend-action-btn legend-action-toggle ${allSelected ? 'is-active' : ''}" type="button" aria-pressed="${allSelected ? 'true' : 'false'}">SELEZIONA TUTTO</button>`;
@@ -2774,7 +2781,6 @@ class BusMagoApp {
     const selectAllBtn = document.getElementById('select-all-lines-btn');
     if (selectAllBtn) {
       const allSelectedNow = Object.keys(this.state.lineVisibility)
-        .filter(k => k !== '777')
         .every(k => this.state.lineVisibility[k] === true);
       selectAllBtn.classList.toggle('is-active', allSelectedNow);
       selectAllBtn.setAttribute('aria-pressed', allSelectedNow ? 'true' : 'false');
@@ -2785,13 +2791,12 @@ class BusMagoApp {
 
         this.hapticSuccess();
         const allSelectedNext = !Object.keys(this.state.lineVisibility)
-          .filter(k => k !== '777')
           .every(k => this.state.lineVisibility[k] === true);
 
         const now = Date.now();
         lineButtons.forEach(btn => {
           const k = btn.getAttribute('data-key');
-          if (!k || k === '777') return;
+          if (!k) return;
           this.state.lineVisibility[k] = allSelectedNext;
           if (this.legendDiv.dataset.favoritesOnly === '1' && this.state.favorites.snapshot) {
             this.state.favorites.snapshot[k] = allSelectedNext;
@@ -2850,7 +2855,6 @@ class BusMagoApp {
 
           if (selectAllBtn) {
             const allSelectedNow = Object.keys(this.state.lineVisibility)
-              .filter(key => key !== '777')
               .every(key => this.state.lineVisibility[key] === true);
             selectAllBtn.classList.toggle('is-active', allSelectedNow);
             selectAllBtn.setAttribute('aria-pressed', allSelectedNow ? 'true' : 'false');
@@ -3405,13 +3409,6 @@ class BusMagoApp {
     linesConfig.forEach(lineConf => {
         if (this.state.lineVisibility[lineConf.code] !== true) return;
 
-        if (lineConf.code === "777") {
-            const dir = "CASINÒ VENEZIA";
-            this.handleEasterEggTrack(lineConf, dir);
-            visible.add("777_CASINÒ VENEZIA");
-            return;
-        }
-
         const allRuns = [];
         lineConf.stops.forEach(sCode => {
             const runs = stopDataMap[sCode];
@@ -3512,71 +3509,6 @@ class BusMagoApp {
     return pendingFirstTracks;
   }
 
-  handleEasterEggTrack(lineConf, dir) {
-      const trackKey = "777_CASINÒ VENEZIA";
-      const paletteColor = this.getLegendLineColor(lineConf.code);
-      
-      if (!this.state.routeLayers[trackKey]) {
-          const pts = easterEggTrack777;
-          const polyline = L.polyline(pts, { 
-              color: paletteColor, 
-              weight: 3.5, 
-              dashArray: '10, 10' 
-          }).addTo(this.state.map);
-          
-          this.state.routeLayers[trackKey] = polyline;
-          polyline.options.lineCode = lineConf.code;
-          polyline.options.destination = dir;
-
-          polyline.on('click', (e) => {
-              const oe = e && e.originalEvent ? e.originalEvent : e;
-              if (oe) {
-                L.DomEvent.preventDefault(oe);
-                L.DomEvent.stopPropagation(oe);
-              }
-              this.state.selectedVehicleKey = "TRACK_" + trackKey;
-              if (this.state.departures) this.state.departures.collapsed = false;
-              this.updateInfoFromTrack(lineConf, dir);
-              if (this.legendDiv.style.display === 'block') {
-                  this.legendDiv.style.display = 'none';
-              }
-              this.updateBusMarkers(this.state.lastEnrichedBuses);
-          });
-
-          // Endpoints
-          const endpoints = [];
-          if (pts.length > 0) {
-              const startIcon = L.divIcon({ className: 'endpoint-icon start', html: '', iconSize: [12, 12] });
-              const endIcon = L.divIcon({ className: 'endpoint-icon end', html: '', iconSize: [12, 12] });
-              const startMarker = L.marker(pts[0], { icon: startIcon }).addTo(this.state.map);
-              const endMarker = L.marker(pts[pts.length - 1], { icon: endIcon }).addTo(this.state.map);
-              [startMarker, endMarker].forEach(m => {
-                m.off('click');
-                m.on('click', (e) => {
-                  const oe = e && e.originalEvent ? e.originalEvent : e;
-                  if (oe) {
-                    L.DomEvent.preventDefault(oe);
-                    L.DomEvent.stopPropagation(oe);
-                  }
-                  this.state.selectedVehicleKey = "TRACK_" + trackKey;
-                  if (this.state.departures) this.state.departures.collapsed = false;
-                  this.updateInfoFromTrack(lineConf, dir);
-                  if (this.legendDiv.style.display === 'block') {
-                    this.legendDiv.style.display = 'none';
-                  }
-                  this.updateBusMarkers(this.state.lastEnrichedBuses);
-                });
-              });
-              endpoints.push(startMarker);
-              endpoints.push(endMarker);
-              this.state.routeEndpointMarkers[trackKey] = endpoints;
-          }
-          
-          // Initial styles
-          this.updateTrackStyles();
-      }
-  }
-
   updateTrackLayer(trackKey, lineConf, destination, trackData) {
       const paletteColor = this.getLegendLineColor(lineConf.code);
       const pts = [];
@@ -3614,7 +3546,7 @@ class BusMagoApp {
               // la closure diventerebbe stantia se la variante cambia.
               this.updateInfoFromTrack(lineConf, polyline.options.destination);
               if (this.legendDiv.style.display === 'block') {
-                  this.legendDiv.style.display = 'none';
+                  this.hideLegend();
               }
               this.updateBusMarkers(this.state.lastEnrichedBuses);
           });
@@ -3647,7 +3579,7 @@ class BusMagoApp {
                   const layer = this.state.routeLayers[trackKey];
                   this.updateInfoFromTrack(lineConf, layer ? layer.options.destination : destination);
                   if (this.legendDiv.style.display === 'block') {
-                    this.legendDiv.style.display = 'none';
+                    this.hideLegend();
                   }
                   this.updateBusMarkers(this.state.lastEnrichedBuses);
                 });
@@ -3921,65 +3853,6 @@ class BusMagoApp {
         }
     });
 
-    this.updateEasterEggAnimation();
-  }
-
-  updateEasterEggAnimation() {
-    const isVisible = this.state.lineVisibility["777"] === true;
-
-    if (isVisible) {
-        // Start if not active
-        if (!this.state.easterEgg.active) {
-            this.state.easterEgg.active = true;
-            this.state.easterEgg.index = 0;
-            
-            // Create marker
-            const startCoords = easterEggTrack777[0];
-            const icon = L.icon({
-                iconUrl: 'img/icona_bateo_gambling.webp',
-                iconSize: [40, 40],
-                iconAnchor: [20, 20],
-                className: 'bateo-icon' // abilita la transizione fluida 2s (CSS)
-            });
-
-            this.state.easterEgg.marker = L.marker(startCoords, { 
-                icon: icon, 
-                zIndexOffset: 2000 
-            }).addTo(this.state.map);
-            
-            // Bind popup if desired
-            this.state.easterEgg.marker.bindPopup("🎰 777 Bateo Gambling 🎰<br>Verso il Casinò!");
-
-            // Start Animation Loop
-            this.state.easterEgg.interval = setInterval(() => {
-                const nextIndex = this.state.easterEgg.index + 1;
-                if (nextIndex < easterEggTrack777.length) {
-                    this.state.easterEgg.index = nextIndex;
-                    const newCoords = easterEggTrack777[nextIndex];
-                    // Use setLatLng for smooth transition if CSS is applied to .leaflet-marker-icon
-                    this.state.easterEgg.marker.setLatLng(newCoords);
-                } else {
-                    // Reached destination
-                    clearInterval(this.state.easterEgg.interval);
-                    this.state.easterEgg.interval = null;
-                }
-            }, 2000);
-        }
-    } else {
-        // Stop and Cleanup if active
-        if (this.state.easterEgg.active) {
-            this.state.easterEgg.active = false;
-            if (this.state.easterEgg.interval) {
-                clearInterval(this.state.easterEgg.interval);
-                this.state.easterEgg.interval = null;
-            }
-            if (this.state.easterEgg.marker) {
-                this.state.map.removeLayer(this.state.easterEgg.marker);
-                this.state.easterEgg.marker = null;
-            }
-            this.state.easterEgg.index = 0;
-        }
-    }
   }
 
   updateInfoFromBus(bus) {
@@ -4571,9 +4444,9 @@ class BusMagoApp {
   // totale. La cache si valida per IDENTITÀ dell'array di getLatLngs():
   // setLatLngs lo sostituisce, quindi una geometria nuova si invalida da sola
   // (più il delete esplicito in updateTrackLayer, cintura e bretelle).
-  // Null per il 777 (easter egg, tracciato finto) e per tracciati assenti.
+  // Null per i tracciati assenti.
   getTrackGeometry(trackKey) {
-    if (!trackKey || trackKey.startsWith('777_')) return null;
+    if (!trackKey) return null;
     const layer = this.state.routeLayers[trackKey];
     if (!layer || typeof layer.getLatLngs !== 'function') return null;
     const pts = layer.getLatLngs();

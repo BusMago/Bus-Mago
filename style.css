@@ -223,6 +223,22 @@ input:focus-visible,
   outline: none;
   padding: 7px 0;
 }
+/* Il focus è già indicato dal glow della pillola (:focus-within): il ring
+   generico dell'input qui dentro sarebbe un rettangolo doppio. */
+.map-search-input:focus-visible { outline: none; }
+.map-search-clear {
+  flex-shrink: 0;
+  width: 28px; height: 28px;
+  border: none; border-radius: 50%;
+  background: var(--surface-inactive);
+  color: var(--text-secondary);
+  font-size: 15px; line-height: 1;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  padding: 0;
+  transition: background 0.15s, color 0.15s;
+}
+.map-search-clear:hover { background: var(--surface-hover); color: var(--text-primary); }
 .map-search-input::placeholder { color: var(--text-muted); font-weight: 400; }
 
 .map-search-menu-btn {
@@ -824,9 +840,15 @@ input:focus-visible,
 }
 .legend-skin-opt:not(.is-active):hover { color: var(--text-primary); }
 
+/* Preferiti + Deseleziona tutte: una riga, mezza colonna ciascuno */
+.legend-actions-row {
+  display: flex; gap: 10px; margin-bottom: 10px;
+}
+.legend-actions-row > button { flex: 1 1 0; min-width: 0; margin-bottom: 0; }
+
 /* Clear all — rosso (in entrambi i temi) */
 #clear-all-lines {
-  width: 100%; margin-bottom: 10px; padding: 10px;
+  padding: 10px;
   background: rgba(var(--danger-rgb), 0.08);
   color: var(--danger);
   border: 1px solid rgba(var(--danger-rgb), 0.2);
@@ -850,21 +872,21 @@ input:focus-visible,
   color: var(--accent-warn);
 }
 
-/* Group buttons — three large circles filling the full menu width */
+/* Group buttons — UNI+FS mezza riga ciascuno, BARCOLA riga intera sotto,
+   tutti alla stessa altezza */
 .legend-group-row {
-  display: flex; gap: 14px; margin-bottom: 14px;
-  justify-content: space-between; align-items: center;
+  display: flex; gap: 10px; margin-bottom: 10px;
+  align-items: stretch;
 }
 
 .legend-group-btn {
   flex: 1 1 0;
-  width: auto; height: auto;
-  aspect-ratio: 1 / 1;
+  width: auto; height: 52px;
   padding: 0; margin: 0;
   overflow: hidden;
   background: #ffffff;
   border: 2px solid rgba(0,0,0,0.12);
-  border-radius: 50%;
+  border-radius: 14px;
   box-sizing: border-box;
   cursor: pointer;
   display: flex; align-items: center; justify-content: center;
@@ -872,7 +894,7 @@ input:focus-visible,
   transition: box-shadow 0.15s ease, border-color 0.15s ease, transform 0.1s ease;
 }
 .legend-group-btn:hover     { box-shadow: 0 4px 12px rgba(0,0,0,0.22); }
-.legend-group-btn:active    { transform: scale(0.94); }
+.legend-group-btn:active    { transform: scale(0.97); }
 .legend-group-btn.is-active {
   border-color: var(--brand);
   box-shadow: 0 0 0 3px var(--brand), 0 4px 12px rgba(var(--brand-rgb),0.35);
@@ -880,15 +902,15 @@ input:focus-visible,
 
 .legend-group-icon { display: block; pointer-events: none; }
 
-/* Each logo filled into its circle */
+/* Each logo filled into its box */
 #legend-group-uni .legend-group-icon {
-  width: 100%; height: 100%; object-fit: cover; transform: scale(1.15);
+  width: 100%; height: auto; transform: scale(1.25); transform-origin: center;
 }
 #legend-group-fs .legend-group-icon {
-  width: 78%; height: auto; object-fit: contain;
+  height: calc(100% - 8px); width: auto; object-fit: contain;
 }
 #legend-group-barcola .legend-group-icon {
-  width: 100%; height: 100%; object-fit: cover; object-position: center;
+  width: 100%; height: 100%; object-fit: cover; object-position: bottom;
 }
 
 /* =====================================================
@@ -1380,8 +1402,6 @@ input:focus-visible,
 /* CartoDB tiles: no filter needed */
 .dark-mode-tiles { filter: none; }
 
-/* Easter-egg bateo marker */
-.leaflet-marker-icon.bateo-icon { transition: transform 2s linear; }
 
 /* =====================================================
    REDUCED MOTION
@@ -1393,7 +1413,6 @@ input:focus-visible,
   .bus-icon-wrapper.bus-anim      { transition: none; }
   .bus-marker-wrap                { transition: none; }
   .bus-drop span                  { transition: none; }
-  .leaflet-marker-icon.bateo-icon { transition: none; }
   .legend, .welcome-overlay, .welcome-modal { animation: none; }
 }
 

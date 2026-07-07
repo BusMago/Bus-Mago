@@ -4658,13 +4658,5 @@ window.linesConfig = [
             "VIA CUMANO",
             "VIA MURAT"
         ]
-    },
-    {
-        "code": "777",
-        "label": "777 Bateo Gambling",
-        "stops": [],
-        "directions": [
-            "CASINO’ VENEZIA"
-        ]
     }
 ];
