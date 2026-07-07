@@ -1310,8 +1310,10 @@ class BusMagoApp {
 
     // Selezione esplicita di una fermata: il "torna alla fermata" della
     // vettura non deve più scattare (e deselectVehicle non deve riaprire
-    // la fermata precedente).
+    // la fermata precedente); un eventuale aggancio vettura in sospeso
+    // decade (l'utente ha cambiato obiettivo).
     this._returnToStopCode = null;
+    this._pendingDeepLink = null;
     // Mutua esclusione col pannello vettura (il .info è unico).
     this.deselectVehicle();
     this.state.isFollowing = false;
@@ -1397,8 +1399,10 @@ class BusMagoApp {
           note: '',
           isStarted: false,
           badgeColor: isKnownLine ? null : 'var(--text-muted)',
+          knownLine: isKnownLine,
           etaMin: null,
-          vehicleKey: null
+          vehicleKey: null,
+          pendingVehicle: null
         };
         byKey.set(key, item);
       }
@@ -1409,6 +1413,13 @@ class BusMagoApp {
       if (!item.vehicleKey && r.Vehicle) {
         const tracked = trackedByVehicle.get(String(r.Vehicle));
         if (tracked) item.vehicleKey = tracked.key;
+      }
+      // Vettura con matricola ma non (ancora) tracciata: la riga resta
+      // cliccabile lo stesso, il tap attiva la linea e aggancia la vettura
+      // al primo ciclo che la vede (solo linee note: le altre non sono
+      // attivabili né tracciabili).
+      if (item.knownLine && !item.pendingVehicle && r.Vehicle && r.IsStarted !== false) {
+        item.pendingVehicle = String(r.Vehicle).trim();
       }
     });
 
@@ -1967,6 +1978,31 @@ class BusMagoApp {
           // fermata alla deselezione.
           if (this.state.stopPanel.code) this._returnToStopCode = this.state.stopPanel.code;
           this.selectVehicleByKey(followRow.dataset.vehicleKey);
+          return;
+        }
+        const pendingRow = t && t.closest ? t.closest('[data-pending-vehicle]') : null;
+        if (pendingRow) {
+          e.preventDefault();
+          e.stopPropagation();
+          // Nel frattempo la vettura può essere entrata nel tracking (la
+          // riga può essere stantia di un ciclo): follow immediato.
+          const already = (this.state.lastEnrichedBuses || []).find(b =>
+            String(b.vehicle) === pendingRow.dataset.pendingVehicle);
+          if (already) {
+            if (this.state.stopPanel.code) this._returnToStopCode = this.state.stopPanel.code;
+            this.selectVehicleByKey(already.key);
+            return;
+          }
+          // Vettura non ancora tracciata: attiva la sua linea e lascia che
+          // il primo ciclo che la vede la selezioni (stesso meccanismo del
+          // deep-link #bus=). Il pannello fermata resta aperto nel frattempo.
+          if (this.activateLine(pendingRow.dataset.pendingLine)) {
+            if (this.state.stopPanel.code) this._returnToStopCode = this.state.stopPanel.code;
+            this._pendingDeepLink = { vehicle: pendingRow.dataset.pendingVehicle, triesLeft: 8 };
+            this.hapticSelect();
+            this.showToast('Aggancio della vettura…');
+            this.scheduleNextRefresh(0);
+          }
           return;
         }
       });
@@ -4304,12 +4340,17 @@ class BusMagoApp {
       ? `<div class="departures-times">${runningDot}${times}</div>`
       : `<div class="departures-times departures-times--empty">${this.escapeHtmlAttribute(it.message || 'In attesa dati…')}</div>`;
 
-    // Riga cliccabile quando la vettura è già tracciata sulla mappa
-    // (pannello fermata): il tap avvia il follow di quella vettura.
-    const rowClass = it.vehicleKey ? 'departures-line departures-line--clickable' : 'departures-line';
-    const rowAttrs = it.vehicleKey
-      ? ` role="button" tabindex="0" title="Segui questa vettura" data-vehicle-key="${this.escapeHtmlAttribute(it.vehicleKey)}"`
-      : '';
+    // Riga cliccabile (pannello fermata): vettura già tracciata → follow
+    // immediato; vettura nota ma non ancora tracciata → attivazione linea e
+    // aggancio al primo ciclo che la vede.
+    const followable = !!(it.vehicleKey || it.pendingVehicle);
+    const rowClass = followable ? 'departures-line departures-line--clickable' : 'departures-line';
+    let rowAttrs = '';
+    if (it.vehicleKey) {
+      rowAttrs = ` role="button" tabindex="0" title="Segui questa vettura" data-vehicle-key="${this.escapeHtmlAttribute(it.vehicleKey)}"`;
+    } else if (it.pendingVehicle) {
+      rowAttrs = ` role="button" tabindex="0" title="Segui questa vettura" data-pending-vehicle="${this.escapeHtmlAttribute(it.pendingVehicle)}" data-pending-line="${this.escapeHtmlAttribute(it.lineCode)}"`;
+    }
 
     return `
       <div class="${rowClass}"${rowAttrs}>
@@ -4320,7 +4361,7 @@ class BusMagoApp {
           ${it.note ? `<div class="departures-note"><span class="note-tag">Nota</span>${this.escapeHtmlAttribute(it.note)}</div>` : ''}
           ${right}
         </div>
-        ${it.vehicleKey ? '<span class="departures-follow-chevron" aria-hidden="true">›</span>' : ''}
+        ${followable ? '<span class="departures-follow-chevron" aria-hidden="true">›</span>' : ''}
       </div>
     `;
   }
