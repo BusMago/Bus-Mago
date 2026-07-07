@@ -1516,7 +1516,7 @@ class BusMagoApp {
   buildStopResultRowHtml(s) {
     const isFav = this.state.stopFavorites.set.has(s.code);
     return `<button type="button" class="stop-result" data-stop-code="${this.escapeHtmlAttribute(s.code)}" data-lat="${s.lat}" data-lng="${s.lng}">
-        <span class="stop-result-icon" aria-hidden="true">${isFav ? '★' : '🚏'}</span>
+        <span class="stop-result-icon ${isFav ? 'stop-result-icon--fav' : ''}" aria-hidden="true">${isFav ? '★' : '🚏'}</span>
         <span class="stop-result-name">${this.escapeHtmlAttribute(s.name)}</span>
         <span class="stop-result-code">${this.escapeHtmlAttribute(s.code)}</span>
       </button>`;
@@ -2155,6 +2155,11 @@ class BusMagoApp {
     this.hapticSelect(); // selezione bus: vibrazione netta
     this.requestWakeLock();
     const cur = (this.state.vehicleState[key] && this.state.vehicleState[key].lastEnrichedBus) || null;
+    // Selezione nuova: azzera la grazia anti-"corsa terminata" e, se la
+    // vettura non ha uno stato noto, scarta l'eventuale bus precedente (la
+    // grazia non deve mostrare le info di un'ALTRA vettura).
+    this._selectedMissingCycles = 0;
+    if (!cur && this.state.infoPanel) this.state.infoPanel.selectedBus = null;
     // Vettura di una linea non ancora selezionata (tipico: arrivi di un'altra
     // linea nel pannello fermata): senza attivare la linea il polling non la
     // intercetterebbe e al ciclo dopo risulterebbe "corsa terminata".
@@ -3095,6 +3100,12 @@ class BusMagoApp {
         // selezionata — in quel caso il ciclo prosegue interrogando solo lei
         // (si può guardare una fermata senza accendere linee).
         const selectedStopCode = this.state.stopPanel.code;
+        // Fermata "ponte" durante il follow avviato dal pannello fermata:
+        // quella fermata è l'unica che ha già visto la vettura, quindi resta
+        // interrogata finché il campionamento della linea (magari appena
+        // attivata) non la intercetta da solo. Costo max +1 richiesta/ciclo.
+        const followBridgeStop = (!selectedStopCode && this.state.selectedVehicleKey && this._returnToStopCode)
+            ? this._returnToStopCode : null;
         if (!hasActiveLines && !selectedStopCode) {
             this.updateBusMarkers([]);
             this.updateTrackStyles();
@@ -3132,10 +3143,14 @@ class BusMagoApp {
         // capolinea/campionata grazie a cache+inFlight), poi capolinea, poi le
         // intermedie non già coperte. Il rate-limiter assegna gli slot
         // nell'ordine di questo array.
+        const headStops = [];
+        if (selectedStopCode) headStops.push(selectedStopCode);
+        if (followBridgeStop) headStops.push(followBridgeStop);
+        const headSet = new Set(headStops);
         const stopsList = [
-            ...(selectedStopCode ? [selectedStopCode] : []),
-            ...[...terminalStops].filter(s => s !== selectedStopCode),
-            ...[...sampleStops].filter(s => !terminalStops.has(s) && s !== selectedStopCode)
+            ...headStops,
+            ...[...terminalStops].filter(s => !headSet.has(s)),
+            ...[...sampleStops].filter(s => !terminalStops.has(s) && !headSet.has(s))
         ];
 
         // 2. Fetch data (Async/Await)
@@ -3929,6 +3944,16 @@ class BusMagoApp {
   updateInfoFromBus(bus) {
     if (!bus) {
       if (this.state.selectedVehicleKey && !this.state.selectedVehicleKey.startsWith('TRACK_')) {
+        // Vettura selezionata ma assente da QUESTO ciclo: mrcruns può avere
+        // buchi temporanei (tipico subito dopo il follow dal pannello
+        // fermata, con la linea appena attivata). Qualche ciclo di grazia
+        // con le ultime info note (il badge età dice quanto sono vecchie)
+        // prima di dichiarare la corsa terminata.
+        this._selectedMissingCycles = (this._selectedMissingCycles || 0) + 1;
+        if (this._selectedMissingCycles < 3 && this.state.infoPanel.selectedBus) {
+          this.renderInfoPanel();
+          return;
+        }
         this.state.infoPanel.selectedBus = null;
         this.state.infoPanel.selectedTrack = null;
         this.state.infoPanel.finishedTrip = true;
@@ -3939,6 +3964,7 @@ class BusMagoApp {
       this.renderInfoPanel();
       return;
     }
+    this._selectedMissingCycles = 0;
 
     if (this.state.selectedVehicleKey && this.state.selectedVehicleKey.startsWith('TRACK_')) {
       this.state.infoPanel.selectedTrack = null;

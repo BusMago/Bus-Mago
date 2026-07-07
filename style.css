@@ -499,6 +499,7 @@ input:focus-visible,
 .stop-result:hover { background: var(--surface-hover); border-color: color-mix(in srgb, var(--brand) 40%, transparent); }
 .stop-result:active { transform: scale(0.99); }
 .stop-result-icon { flex-shrink: 0; }
+.stop-result-icon--fav { color: var(--fav); }
 .stop-result-name {
   flex: 1; min-width: 0;
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
@@ -542,14 +543,14 @@ input:focus-visible,
   width: 28px; height: 28px;
   border-radius: 50%;
   border: none;
-  background: rgba(255,255,255,0.12);
+  background: var(--surface-inactive);
   color: var(--text-secondary);
   cursor: pointer;
   display: flex; align-items: center; justify-content: center;
   padding: 0; margin-left: 6px;
   transition: background 0.15s, color 0.15s;
 }
-.vehicle-deselect-btn:hover { background: rgba(255,255,255,0.22); color: var(--text-primary); }
+.vehicle-deselect-btn:hover { background: var(--surface-hover); color: var(--text-primary); }
 .vehicle-collapse-toggle { font-size: 13px; line-height: 1; }
 /* Stella preferiti nel pannello fermata: attiva = colore preferiti. */
 .stop-fav-btn { font-size: 15px; }
@@ -631,7 +632,7 @@ input:focus-visible,
   width: 28px; height: 28px;
   border-radius: 50%;
   border: none;
-  background: rgba(255,255,255,0.12);
+  background: var(--surface-inactive);
   color: var(--text-secondary);
   cursor: pointer;
   display: inline-flex; align-items: center; justify-content: center;
@@ -639,7 +640,7 @@ input:focus-visible,
   font-size: 13px; line-height: 1;
   transition: background 0.15s, color 0.15s;
 }
-.departures-toggle:hover { background: rgba(255,255,255,0.22); color: var(--text-primary); }
+.departures-toggle:hover { background: var(--surface-hover); color: var(--text-primary); }
 
 .departures-body    { margin-top: 6px; display: flex; flex-direction: column; gap: 4px; overflow: visible; }
 .departures-empty   { color: var(--text-secondary); font-size: 12px; }
