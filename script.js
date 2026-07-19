@@ -1248,18 +1248,34 @@ class BusMagoApp {
       marker.addTo(this.stopsLayer);
       markers.set(stop.code, marker);
     });
+
+    if (markers.size > 0) this.maybeShowStopHint();
+  }
+
+  // Suggerimento una tantum alla prima comparsa dei marker fermata: i pallini
+  // da soli non comunicano di essere toccabili (su touch niente hover/cursore).
+  maybeShowStopHint() {
+    if (this._stopHintShown) return;
+    this._stopHintShown = true;
+    const KEY = 'busmago:stopHintShown:v1';
+    try {
+      if (localStorage.getItem(KEY)) return;
+      localStorage.setItem(KEY, '1');
+    } catch {}
+    this.showToast('💡 Tocca una fermata per vedere gli arrivi');
   }
 
   getStopMarkerStyle(isSelected) {
-    const stroke = isSelected
-      ? (this.getCssVar('--brand') || '#0077ff')
-      : (this.getCssVar('--text-secondary') || '#888888');
+    // Anello blu brand (non grigio): deve leggersi come elemento interattivo.
+    // Selezionata = pallino pieno invertito (riempimento brand, bordo surface).
+    const brand = this.getCssVar('--brand') || '#0077ff';
+    const surface = this.getCssVar('--surface') || '#ffffff';
     return {
       radius: isSelected ? 8 : 6,
       weight: 2,
-      color: stroke,
+      color: isSelected ? surface : brand,
       opacity: 0.9,
-      fillColor: this.getCssVar('--surface') || '#ffffff',
+      fillColor: isSelected ? brand : surface,
       fillOpacity: 0.9
     };
   }
