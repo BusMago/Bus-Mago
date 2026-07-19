@@ -20,6 +20,10 @@
 <link rel="preconnect" href="https://b.tile.openstreetmap.org">
 <link rel="preconnect" href="https://c.tile.openstreetmap.org">
 <link rel="preconnect" href="https://realtime.tplfvg.it">
+<!-- Anti-flash: tema/skin salvati applicati PRIMA del CSS (i default rispecchiano
+     state.theme.mode/state.skin.mode in script.js), altrimenti chi usa il tema
+     chiaro vede un lampo scuro a ogni avvio. -->
+<script>try{var d=document.documentElement,s=localStorage;d.dataset.theme=s.getItem('busmago:theme:v1')||'dark';d.dataset.skin=s.getItem('busmago:skin:v1')||'classic';}catch(e){}</script>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <link rel="stylesheet" href="style.css"/>
 <link rel="stylesheet" href="style-classic.css"/>
