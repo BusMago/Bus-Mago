@@ -979,6 +979,7 @@ input:focus-visible,
 .legend-lines--grid .legend-line-select {
   width: 100%; border: 0;
   aspect-ratio: 1 / 1;
+  background: var(--line-color); /* fallback senza color-mix() */
   background:
     radial-gradient(120% 120% at 30% 22%, rgba(255,255,255,0.45) 0%, rgba(255,255,255,0) 42%),
     linear-gradient(155deg,
@@ -1013,6 +1014,7 @@ input:focus-visible,
 .legend-line-code {
   display: inline-flex; align-items: center; justify-content: center;
   width: 48px; height: 48px; border-radius: 50%;
+  background: var(--line-color); /* fallback senza color-mix() */
   background:
     radial-gradient(120% 120% at 30% 22%, rgba(255,255,255,0.45) 0%, rgba(255,255,255,0) 42%),
     linear-gradient(155deg,
@@ -1031,12 +1033,15 @@ input:focus-visible,
     0 0 0 3px color-mix(in srgb, var(--line-color) 70%, #fff),
     0 4px 12px color-mix(in srgb, var(--line-color) 55%, transparent);
 }
-/* Inactive: soft, translucent pastel version of the line color */
+/* Inactive: soft, translucent pastel version of the line color.
+   L'ombra resta: senza, il bianco si perde sul pastello in tema chiaro. */
 .legend-line-tile:not(.active-line) .legend-line-code {
   filter: saturate(0.6) brightness(1.12);
   opacity: 0.6;
-  text-shadow: none;
   color: rgba(255,255,255,0.92);
+}
+:root[data-theme="light"] .legend-line-tile:not(.active-line) .legend-line-code {
+  opacity: 0.75;
 }
 .legend-line-tile:not(.active-line):hover .legend-line-code {
   filter: saturate(0.85) brightness(1.05);
@@ -1056,6 +1061,9 @@ input:focus-visible,
 .legend-lines--grid .legend-line-tile:not(.active-line) .legend-line-select {
   filter: saturate(0.6) brightness(1.12);
   opacity: 0.6;
+}
+:root[data-theme="light"] .legend-lines--grid .legend-line-tile:not(.active-line) .legend-line-select {
+  opacity: 0.75;
 }
 .legend-lines--grid .legend-line-tile:not(.active-line):hover .legend-line-select {
   filter: saturate(0.85) brightness(1.05);
@@ -1144,6 +1152,9 @@ input:focus-visible,
 
 .selected-line-tile {
   position: relative; border-radius: 18px; overflow: hidden;
+  /* Fallback tinta piena: senza color-mix() il background sotto cade intero
+     e la tile resterebbe trasparente (testo bianco invisibile in chiaro). */
+  background: var(--line-color);
   background:
     radial-gradient(150% 130% at 0% 0%, rgba(255,255,255,0.30) 0%, rgba(255,255,255,0) 42%),
     linear-gradient(135deg,

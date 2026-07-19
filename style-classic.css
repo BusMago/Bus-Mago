@@ -170,6 +170,9 @@
 :root[data-skin="classic"][data-theme="light"] .legend-chip {
   border-color: rgba(0,0,0,0.08);
   background: rgba(0,0,0,0.04);
+  /* --legend-tile-text resta bianco anche in chiaro (serve alle tile colorate):
+     qui il chip poggia su superficie chiara, il testo deve seguire il tema. */
+  color: var(--text-primary);
 }
 
 
