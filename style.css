@@ -918,17 +918,21 @@ input:focus-visible,
   }
 }
 
-/* Bottom Sheet mobile su schermi fino a 600px */
+/* Pannello mobile compatto in alto: lascia libera la parte più ampia della
+   mappa per poter scegliere un'altra vettura senza doverlo chiudere. */
 @media (max-width: 600px) {
   .info-sheet-handle { display: block; }
   .info {
     left: 10px; right: 10px;
-    top: auto;
-    bottom: calc(10px + env(safe-area-inset-bottom, 0px));
-    max-height: calc(72dvh);
+    top: calc(70px + var(--top-safe));
+    bottom: auto;
+    /* 72dvh occupava quasi tutta la mappa sui telefoni: il contenuto in più
+       resta accessibile con lo scroll interno, non aumentando il foglio. */
+    max-height: min(46dvh, 360px);
     border-radius: 20px;
     padding: 8px 14px 14px;
     box-shadow: 0 -4px 28px rgba(0,0,0,0.25), 0 2px 8px rgba(0,0,0,0.12);
+    overscroll-behavior: contain;
   }
 }
 
@@ -1676,12 +1680,16 @@ input:focus-visible,
   }
 
   .info {
-    left: 12px; right: 12px;
+    /* Mantieni il pannello compatto in alto dichiarato sopra. Questa regola è
+       in fondo al file e non deve alterarne la posizione. */
+    left: 10px; right: 10px;
     top: calc(70px + var(--top-safe));
+    bottom: auto;
     max-width: none; min-width: 0;
-    font-size: 13px; padding: 12px 14px;
-    max-height: calc(100dvh - 80px);
+    font-size: 13px; padding: 8px 14px 14px;
+    max-height: min(46dvh, 360px);
     scrollbar-width: none; -ms-overflow-style: none;
+    overscroll-behavior: contain;
   }
   .info::-webkit-scrollbar { display: none; }
 }
