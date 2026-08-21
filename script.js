@@ -1991,7 +1991,7 @@ class BusMagoApp {
     });
 
     if (this.infoDiv) {
-      // Touch swipe detection per il bottom sheet mobile: swipe giù comprime, swipe su espande
+      // Touch swipe detection per il pannello mobile: swipe giù espande, swipe su comprime.
       let touchStartY = null;
       let touchStartX = null;
       this.infoDiv.addEventListener('touchstart', (e) => {
@@ -2010,17 +2010,17 @@ class BusMagoApp {
 
         if (Math.abs(deltaY) > 40 && Math.abs(deltaY) > deltaX * 1.4) {
           if (deltaY > 0) {
-            // Swipe verso il basso -> comprimi
-            if (this.state.selectedVehicleKey && !this.state.infoPanel.collapsed) {
-              this.toggleVehicleCollapsed();
-            } else if (this.state.stopPanel.code && !this.state.departures.collapsed) {
-              this.toggleDeparturesCollapsed();
-            }
-          } else {
-            // Swipe verso l'alto -> espandi
+            // Swipe verso il basso -> espandi
             if (this.state.selectedVehicleKey && this.state.infoPanel.collapsed) {
               this.toggleVehicleCollapsed();
             } else if (this.state.stopPanel.code && this.state.departures.collapsed) {
+              this.toggleDeparturesCollapsed();
+            }
+          } else {
+            // Swipe verso l'alto -> comprimi
+            if (this.state.selectedVehicleKey && !this.state.infoPanel.collapsed) {
+              this.toggleVehicleCollapsed();
+            } else if (this.state.stopPanel.code && !this.state.departures.collapsed) {
               this.toggleDeparturesCollapsed();
             }
           }

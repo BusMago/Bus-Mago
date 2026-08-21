@@ -921,7 +921,15 @@ input:focus-visible,
 /* Pannello mobile compatto in alto: lascia libera la parte più ampia della
    mappa per poter scegliere un'altra vettura senza doverlo chiudere. */
 @media (max-width: 600px) {
-  .info-sheet-handle { display: block; }
+  .info-sheet-handle {
+    display: block;
+    position: absolute;
+    left: 50%;
+    bottom: 8px;
+    z-index: 1;
+    margin: 0;
+    transform: translateX(-50%);
+  }
   .info {
     left: 10px; right: 10px;
     top: calc(70px + var(--top-safe));
@@ -930,7 +938,8 @@ input:focus-visible,
        resta accessibile con lo scroll interno, non aumentando il foglio. */
     max-height: min(46dvh, 360px);
     border-radius: 20px;
-    padding: 8px 14px 14px;
+    /* Spazio riservato alla maniglia, ora fissata sul bordo inferiore. */
+    padding: 8px 14px 24px;
     box-shadow: 0 -4px 28px rgba(0,0,0,0.25), 0 2px 8px rgba(0,0,0,0.12);
     overscroll-behavior: contain;
   }
@@ -1686,7 +1695,7 @@ input:focus-visible,
     top: calc(70px + var(--top-safe));
     bottom: auto;
     max-width: none; min-width: 0;
-    font-size: 13px; padding: 8px 14px 14px;
+    font-size: 13px; padding: 8px 14px 24px;
     max-height: min(46dvh, 360px);
     scrollbar-width: none; -ms-overflow-style: none;
     overscroll-behavior: contain;
