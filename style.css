@@ -258,6 +258,34 @@ input:focus-visible,
 .map-search-menu-btn:hover  { filter: brightness(1.06); box-shadow: 0 3px 12px rgba(var(--brand-rgb),0.5); }
 .map-search-menu-btn:active { transform: scale(0.92); }
 
+/* Badge contatore linee attive nella search bar */
+.active-lines-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--brand);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 800;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 6px;
+  border-radius: 11px;
+  box-shadow: 0 2px 8px rgba(var(--brand-rgb), 0.35);
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: transform 0.15s ease, filter 0.15s ease;
+  user-select: none;
+  font-variant-numeric: tabular-nums;
+}
+.active-lines-badge:hover {
+  filter: brightness(1.1);
+  transform: scale(1.05);
+}
+.active-lines-badge:active {
+  transform: scale(0.95);
+}
+
 /* Right control pill */
 .ctrl-pill {
   position: fixed;
@@ -549,10 +577,23 @@ input:focus-visible,
 .stop-result:active { transform: scale(0.99); }
 .stop-result-icon { flex-shrink: 0; }
 .stop-result-icon--fav { color: var(--fav); }
+.stop-result-icon--nearby { color: var(--brand); }
 .stop-result-name {
   flex: 1; min-width: 0;
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
   font-weight: 600;
+}
+.stop-result-dist {
+  flex-shrink: 0;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--brand);
+  background: color-mix(in srgb, var(--brand) 12%, transparent);
+  padding: 1px 6px;
+  border-radius: 6px;
+  margin-left: auto;
+  margin-right: 4px;
+  font-variant-numeric: tabular-nums;
 }
 .stop-result-code {
   flex-shrink: 0; padding: 1px 7px; border-radius: 8px;
@@ -647,14 +688,143 @@ input:focus-visible,
 .info-empty-note { color: var(--text-secondary); font-size: 12px; margin-top: 4px; }
 .departures-note { margin-top: 3px; font-size: 11px; color: var(--accent-warn); font-style: italic; }
 
+/* Micro-animazione live pulse per corse in servizio */
 .departures-running-dot {
   display: inline-block;
   width: 7px; height: 7px;
   background: var(--ok);
   border-radius: 50%;
   vertical-align: middle;
-  margin-right: 5px;
-  box-shadow: 0 0 5px rgba(var(--ok-rgb), 0.5);
+  margin-right: 6px;
+  box-shadow: 0 0 0 0 rgba(var(--ok-rgb), 0.7);
+  animation: live-pulse 2s infinite cubic-bezier(0.4, 0, 0.6, 1);
+}
+
+@keyframes live-pulse {
+  0% { box-shadow: 0 0 0 0 rgba(var(--ok-rgb), 0.75); }
+  70% { box-shadow: 0 0 0 6px rgba(var(--ok-rgb), 0); }
+  100% { box-shadow: 0 0 0 0 rgba(var(--ok-rgb), 0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .departures-running-dot {
+    animation: none;
+    box-shadow: 0 0 5px rgba(var(--ok-rgb), 0.5);
+  }
+}
+
+/* Gerarchia visiva orari partenze */
+.departure-time-primary {
+  font-weight: 700;
+  font-size: 13px;
+  color: var(--text-primary);
+}
+.departure-time-primary--transit {
+  color: var(--ok);
+  background: color-mix(in srgb, var(--ok) 16%, transparent);
+  border: 1px solid color-mix(in srgb, var(--ok) 35%, transparent);
+  padding: 1px 6px;
+  border-radius: 6px;
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: 0.2px;
+}
+.departure-times-secondary {
+  font-weight: 500;
+  font-size: 12px;
+  color: var(--text-secondary);
+  opacity: 0.85;
+  margin-left: 4px;
+}
+
+/* =====================================================
+   PROSSIME FERMATE DELLA CORSA (Vehicle Upcoming Stops)
+   ===================================================== */
+.vehicle-stops-section {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
+}
+.vehicle-stops-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+.vehicle-stops-title {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-secondary);
+}
+.vehicle-stops-list {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding-left: 4px;
+}
+.vehicle-stops-line-track {
+  position: absolute;
+  left: 9px;
+  top: 8px;
+  bottom: 8px;
+  width: 2px;
+  background: color-mix(in srgb, var(--line-color, var(--brand)) 35%, var(--border));
+  border-radius: 1px;
+  z-index: 1;
+}
+.vehicle-stop-row {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 6px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.12s ease;
+}
+.vehicle-stop-row:hover { background: var(--surface-hover); }
+.vehicle-stop-row:active { transform: scale(0.98); }
+.vehicle-stop-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--surface);
+  border: 2px solid var(--text-muted);
+  flex-shrink: 0;
+  transition: border-color 0.2s ease, background 0.2s ease;
+}
+.vehicle-stop-dot--next {
+  border-color: var(--brand);
+  background: var(--brand);
+  box-shadow: 0 0 6px rgba(var(--brand-rgb), 0.5);
+}
+.vehicle-stop-name {
+  flex: 1;
+  min-width: 0;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.vehicle-stop-row--next .vehicle-stop-name {
+  color: var(--text-primary);
+  font-weight: 700;
+}
+.vehicle-stop-eta {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
+  flex-shrink: 0;
+}
+.vehicle-stop-row--next .vehicle-stop-eta {
+  color: var(--brand);
 }
 
 .info-age-badge {
@@ -724,6 +894,19 @@ input:focus-visible,
 .departures-times     { margin-top: 4px; font-size: 13px; font-weight: 600; color: var(--text-primary); font-variant-numeric: tabular-nums; word-break: break-word; }
 .departures-times--empty { font-weight: 500; color: var(--text-secondary); }
 
+/* Drag handle per il bottom sheet mobile */
+.info-sheet-handle {
+  display: none;
+  width: 36px;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--text-muted);
+  opacity: 0.4;
+  margin: -4px auto 8px;
+  cursor: grab;
+  touch-action: none;
+}
+
 @media (min-width: 769px) { .info { max-width: 360px; } }
 
 @media (max-width: 768px) {
@@ -732,6 +915,20 @@ input:focus-visible,
     max-width: none; min-width: 0;
     font-size: 13px; padding: 12px 14px;
     max-height: calc(100dvh - 86px);
+  }
+}
+
+/* Bottom Sheet mobile su schermi fino a 600px */
+@media (max-width: 600px) {
+  .info-sheet-handle { display: block; }
+  .info {
+    left: 10px; right: 10px;
+    top: auto;
+    bottom: calc(10px + env(safe-area-inset-bottom, 0px));
+    max-height: calc(72dvh);
+    border-radius: 20px;
+    padding: 8px 14px 14px;
+    box-shadow: 0 -4px 28px rgba(0,0,0,0.25), 0 2px 8px rgba(0,0,0,0.12);
   }
 }
 

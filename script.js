@@ -493,6 +493,7 @@ class BusMagoApp {
     this.loadLegendGroupKeys();
     this.recomputeGroupDefaultFilters();
     this.applyGroupLineSelections();
+    this.updateActiveLinesBadge();
     const now = Date.now();
     Object.keys(this.state.lineVisibility).forEach(lineCode => {
       if (this.state.lineVisibility[lineCode] === true && !this.state.directions.waitStartedAtByLine[lineCode]) {
@@ -990,12 +991,25 @@ class BusMagoApp {
     }
   }
 
+  updateActiveLinesBadge() {
+    const badge = document.getElementById('active-lines-badge');
+    if (!badge) return;
+    const count = Object.keys(this.state.lineVisibility || {}).filter(k => this.state.lineVisibility[k] === true).length;
+    if (count > 0) {
+      badge.textContent = String(count);
+      badge.style.display = 'inline-flex';
+    } else {
+      badge.style.display = 'none';
+    }
+  }
+
   saveActiveLines() {
     try {
       const active = Object.keys(this.state.lineVisibility).filter(k => this.state.lineVisibility[k] === true);
       localStorage.setItem(this.state.persisted.activeLinesKey, JSON.stringify(active));
     } catch {
     }
+    this.updateActiveLinesBadge();
   }
 
   loadActiveLines() {
@@ -1008,13 +1022,20 @@ class BusMagoApp {
         Object.keys(this.state.lineVisibility).forEach(k => {
           this.state.lineVisibility[k] = set.has(k);
         });
+        this.updateActiveLinesBadge();
         return;
       }
 
       const legacyRaw = localStorage.getItem('busmago:activeLines:v1');
-      if (!legacyRaw) return;
+      if (!legacyRaw) {
+        this.updateActiveLinesBadge();
+        return;
+      }
       const legacyArr = JSON.parse(legacyRaw);
-      if (!Array.isArray(legacyArr)) return;
+      if (!Array.isArray(legacyArr)) {
+        this.updateActiveLinesBadge();
+        return;
+      }
 
       const migrated = new Set();
       legacyArr.forEach(x => {
@@ -1035,6 +1056,7 @@ class BusMagoApp {
       }
     } catch {
     }
+    this.updateActiveLinesBadge();
   }
 
   toggleFavorite(key) {
@@ -1508,15 +1530,61 @@ class BusMagoApp {
       <div class="stop-results">${out.map(s => this.buildStopResultRowHtml(s)).join('')}</div>`;
   }
 
-  // Riga fermata condivisa fra risultati di ricerca e sezione preferite
+  computeHaversineDistanceMeters(lat1, lon1, lat2, lon2) {
+    const R = 6371000;
+    const toRad = Math.PI / 180;
+    const dLat = (lat2 - lat1) * toRad;
+    const dLon = (lon2 - lon1) * toRad;
+    const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+              Math.cos(lat1 * toRad) * Math.cos(lat2 * toRad) *
+              Math.sin(dLon / 2) * Math.sin(dLon / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return Math.round(R * c);
+  }
+
+  formatDistance(distMeters) {
+    if (distMeters == null || !Number.isFinite(distMeters)) return '';
+    if (distMeters < 1000) return `${distMeters} m`;
+    return `${(distMeters / 1000).toFixed(1)} km`;
+  }
+
+  // Riga fermata condivisa fra risultati di ricerca, fermate vicine e preferite
   // (stesso markup → stesso listener delegato .stop-result).
-  buildStopResultRowHtml(s) {
+  buildStopResultRowHtml(s, distMeters = null) {
     const isFav = this.state.stopFavorites.set.has(s.code);
+    const distStr = distMeters !== null ? this.formatDistance(distMeters) : '';
+    const distHtml = distStr ? `<span class="stop-result-dist">${this.escapeHtmlAttribute(distStr)}</span>` : '';
+    const icon = distMeters !== null ? '📍' : (isFav ? '★' : '🚏');
+    const iconCls = distMeters !== null ? 'stop-result-icon--nearby' : (isFav ? 'stop-result-icon--fav' : '');
     return `<button type="button" class="stop-result" data-stop-code="${this.escapeHtmlAttribute(s.code)}" data-lat="${s.lat}" data-lng="${s.lng}">
-        <span class="stop-result-icon ${isFav ? 'stop-result-icon--fav' : ''}" aria-hidden="true">${isFav ? '★' : '🚏'}</span>
+        <span class="stop-result-icon ${iconCls}" aria-hidden="true">${icon}</span>
         <span class="stop-result-name">${this.escapeHtmlAttribute(s.name)}</span>
+        ${distHtml}
         <span class="stop-result-code">${this.escapeHtmlAttribute(s.code)}</span>
       </button>`;
+  }
+
+  // Sezione "FERMATE VICINE" in legenda basata sulla posizione GPS dell'utente.
+  buildNearbyStopsHtml() {
+    const uloc = this.state.userLocation;
+    if (!uloc || !Number.isFinite(uloc.lat) || !Number.isFinite(uloc.lon)) return '';
+    if (!this.stopsIndex.list.length) {
+      this.ensureStopsIndex().then(() => {
+        if (this.isLegendVisible()) this.renderLegend({ skipInfoPanel: true });
+      });
+      return '';
+    }
+    const withDist = [];
+    for (const stop of this.stopsIndex.list) {
+      const dist = this.computeHaversineDistanceMeters(uloc.lat, uloc.lon, stop.lat, stop.lng);
+      withDist.push({ stop, dist });
+    }
+    withDist.sort((a, b) => a.dist - b.dist);
+    // Mostra fino a 5 fermate vicine entro 1.2 km
+    const nearby = withDist.filter(item => item.dist <= 1200).slice(0, 5);
+    if (!nearby.length) return '';
+    return `<div class="legend-header-row"><div class="legend-section-title legend-chip">FERMATE VICINE</div></div>
+      <div class="stop-results">${nearby.map(item => this.buildStopResultRowHtml(item.stop, item.dist)).join('')}</div>`;
   }
 
   // Sezione "FERMATE PREFERITE" in legenda quando non si sta cercando:
@@ -1764,6 +1832,7 @@ class BusMagoApp {
     });
 
     // Menu toggle
+    // Menu toggle
     const menuToggle = document.getElementById('menu-toggle');
     if (menuToggle) {
         // Toglie il focus da input/bottone della barra di ricerca: senza,
@@ -1777,7 +1846,7 @@ class BusMagoApp {
             }
         };
 
-        menuToggle.addEventListener('click', (e) => {
+        const toggleMenuFn = (e) => {
             if (e) {
               e.preventDefault();
               e.stopPropagation();
@@ -1791,7 +1860,14 @@ class BusMagoApp {
               this.hideLegend();
               blurSearchBar();
             }
-        });
+        };
+
+        menuToggle.addEventListener('click', toggleMenuFn);
+
+        const activeLinesBadge = document.getElementById('active-lines-badge');
+        if (activeLinesBadge) {
+          activeLinesBadge.addEventListener('click', toggleMenuFn);
+        }
 
         document.addEventListener('keydown', (e) => {
             if (e.key !== 'Escape') return;
@@ -1915,8 +1991,51 @@ class BusMagoApp {
     });
 
     if (this.infoDiv) {
+      // Touch swipe detection per il bottom sheet mobile: swipe giù comprime, swipe su espande
+      let touchStartY = null;
+      let touchStartX = null;
+      this.infoDiv.addEventListener('touchstart', (e) => {
+        if (e.touches && e.touches.length === 1) {
+          touchStartY = e.touches[0].clientY;
+          touchStartX = e.touches[0].clientX;
+        }
+      }, { passive: true });
+
+      this.infoDiv.addEventListener('touchend', (e) => {
+        if (touchStartY === null || !e.changedTouches || e.changedTouches.length !== 1) return;
+        const deltaY = e.changedTouches[0].clientY - touchStartY;
+        const deltaX = Math.abs(e.changedTouches[0].clientX - touchStartX);
+        touchStartY = null;
+        touchStartX = null;
+
+        if (Math.abs(deltaY) > 40 && Math.abs(deltaY) > deltaX * 1.4) {
+          if (deltaY > 0) {
+            // Swipe verso il basso -> comprimi
+            if (this.state.selectedVehicleKey && !this.state.infoPanel.collapsed) {
+              this.toggleVehicleCollapsed();
+            } else if (this.state.stopPanel.code && !this.state.departures.collapsed) {
+              this.toggleDeparturesCollapsed();
+            }
+          } else {
+            // Swipe verso l'alto -> espandi
+            if (this.state.selectedVehicleKey && this.state.infoPanel.collapsed) {
+              this.toggleVehicleCollapsed();
+            } else if (this.state.stopPanel.code && this.state.departures.collapsed) {
+              this.toggleDeparturesCollapsed();
+            }
+          }
+        }
+      }, { passive: true });
+
       this.infoDiv.addEventListener('click', (e) => {
         const t = e && e.target ? e.target : null;
+        if (t && t.closest && t.closest('#info-sheet-handle')) {
+          e.preventDefault();
+          e.stopPropagation();
+          if (this.state.selectedVehicleKey) this.toggleVehicleCollapsed();
+          else if (this.state.stopPanel.code) this.toggleDeparturesCollapsed();
+          return;
+        }
         const chipBtn = t && t.closest ? t.closest('.info-line-chip[data-info-line]') : null;
         if (chipBtn) {
           e.preventDefault();
@@ -1974,6 +2093,14 @@ class BusMagoApp {
           e.stopPropagation();
           this.hapticTap();
           this.deselectVehicle(); // torna alla fermata (_returnToStopCode)
+          return;
+        }
+        const stopRow = t && t.closest ? t.closest('.vehicle-stop-row') : null;
+        if (stopRow && stopRow.dataset.stopCode) {
+          e.preventDefault();
+          e.stopPropagation();
+          this.hapticSelect();
+          this.selectStop(stopRow.dataset.stopCode, stopRow.dataset.stopName || stopRow.dataset.stopCode);
           return;
         }
         const followRow = t && t.closest ? t.closest('[data-vehicle-key]') : null;
@@ -2321,6 +2448,10 @@ class BusMagoApp {
           this.state.map.setView([lat, lon], 15);
           firstLocationUpdate = false;
         }
+
+        if (this.isLegendVisible() && !(this.state.legend.filterText || '').trim()) {
+          this.renderLegend({ skipInfoPanel: true });
+        }
       }, error => {
         if (DEBUG) console.warn("Geolocation access denied or error: " + error.message);
       }, {
@@ -2521,8 +2652,13 @@ class BusMagoApp {
 
     // Risultati fermate PRIMA del blocco linee: la barra promette
     // "Cerca linea o fermata" e chi cerca per nome cerca quasi sempre una fermata.
-    // Senza filtro, al loro posto compaiono le fermate preferite.
-    html += filterValue ? this.buildStopSearchResultsHtml(filterValue) : this.buildFavoriteStopsHtml();
+    // Senza filtro, compaiono le fermate vicine (se GPS attivo) e le preferite.
+    if (filterValue) {
+      html += this.buildStopSearchResultsHtml(filterValue);
+    } else {
+      html += this.buildNearbyStopsHtml();
+      html += this.buildFavoriteStopsHtml();
+    }
 
     html += `<div class="legend-header-row">
               <div class="legend-section-title legend-chip">LINEE</div>
@@ -4068,10 +4204,11 @@ class BusMagoApp {
 
     if (!combined) {
       this.infoDiv.style.display = 'none';
-      this.infoDiv.innerHTML = '';      return;
+      this.infoDiv.innerHTML = '';
+      return;
     }
 
-    this.infoDiv.innerHTML = combined;
+    this.infoDiv.innerHTML = `<div class="info-sheet-handle" id="info-sheet-handle" aria-hidden="true"></div>` + combined;
     this.infoDiv.style.display = 'block';
   }
 
@@ -4117,6 +4254,71 @@ class BusMagoApp {
       }
     }
     return { lineCodes, forcedDestinationKeyByLine };
+  }
+
+  // Prossime fermate della corsa: individua le fermate successive lungo il
+  // tracciato rispetto alla posizione del bus e ne calcola distanza ed ETA stimato.
+  buildVehicleUpcomingStopsHtml(bus, collapseBodyStyle = '') {
+    if (!bus || !bus.lineCode || !bus.destination) return '';
+    const lineCode = String(bus.lineCode).toUpperCase();
+    const lineConf = this._lineByCode ? this._lineByCode.get(lineCode) : linesConfig.find(l => String(l.code).toUpperCase() === lineCode);
+    if (!lineConf || !Array.isArray(lineConf.stops) || !lineConf.stops.length) return '';
+
+    const geom = this.getTrackGeometry(`${bus.lineCode}_${normalizeKey(bus.destination)}`);
+    if (!geom || !this.stopsIndex || !this.stopsIndex.list.length) return '';
+
+    const animRec = this.state.anim && this.state.anim.byKey ? this.state.anim.byKey[bus.key] : null;
+    const busS = (animRec && typeof animRec.s === 'number')
+      ? animRec.s
+      : this.projectToTrack(geom, bus.coords[0], bus.coords[1]).s;
+
+    const candidateStops = [];
+    const seenCodes = new Set();
+    for (const code of lineConf.stops) {
+      const codeStr = String(code);
+      if (seenCodes.has(codeStr)) continue;
+      const stop = this.stopsIndex.byCode.get(codeStr);
+      if (!stop) continue;
+      const proj = this.projectToTrack(geom, stop.lat, stop.lng);
+      if (proj.distM < 75) {
+        seenCodes.add(codeStr);
+        candidateStops.push({ stop, s: proj.s });
+      }
+    }
+
+    const upcoming = candidateStops
+      .filter(item => item.s >= busS - 15 && item.s <= geom.total + 20)
+      .sort((a, b) => a.s - b.s)
+      .slice(0, 5);
+
+    if (!upcoming.length) return '';
+
+    const rowsHtml = upcoming.map((item, idx) => {
+      const remDist = Math.max(0, Math.round(item.s - busS));
+      const distLabel = this.formatDistance(remDist);
+      const etaMin = Math.max(1, Math.round(remDist / 300));
+      const etaLabel = remDist < 70 ? 'In arrivo' : `~${etaMin} min`;
+      const isFirst = idx === 0;
+      return `
+        <div class="vehicle-stop-row ${isFirst ? 'vehicle-stop-row--next' : ''}" role="button" tabindex="0" data-stop-code="${this.escapeHtmlAttribute(item.stop.code)}" data-stop-name="${this.escapeHtmlAttribute(item.stop.name)}" title="Vedi arrivi a ${this.escapeHtmlAttribute(item.stop.name)}">
+          <div class="vehicle-stop-dot ${isFirst ? 'vehicle-stop-dot--next' : ''}"></div>
+          <div class="vehicle-stop-name">${this.escapeHtmlAttribute(item.stop.name)}</div>
+          <div class="vehicle-stop-eta">${this.escapeHtmlAttribute(etaLabel)} · ${this.escapeHtmlAttribute(distLabel)}</div>
+        </div>
+      `;
+    }).join('');
+
+    return `
+      <div class="vehicle-stops-section" style="${collapseBodyStyle}">
+        <div class="vehicle-stops-header">
+          <span class="vehicle-stops-title">🚏 Prossime fermate</span>
+        </div>
+        <div class="vehicle-stops-list">
+          <div class="vehicle-stops-line-track"></div>
+          ${rowsHtml}
+        </div>
+      </div>
+    `;
   }
 
   buildVehicleInfoHtml() {
@@ -4213,6 +4415,7 @@ class BusMagoApp {
         <div class="info-stats" style="${collapseBodyStyle}">${statsHtml}
         </div>
         ${bus.note ? `<div class="info-note" style="${collapseBodyStyle}"><span class="note-tag">Nota</span><span>${this.escapeHtmlAttribute(bus.note)}</span></div>` : ''}
+        ${this.buildVehicleUpcomingStopsHtml(bus, collapseBodyStyle)}
       </div>
     `;
   }
@@ -4222,14 +4425,23 @@ class BusMagoApp {
   // "Informazioni" senza vettura) così le due modalità restano allineate.
   buildDepartureRowHtml(it) {
     const badgeColor = it.badgeColor || this.getLegendLineColor(it.lineCode);
-    const times = it.times && it.times.length ? it.times.map(t => this.escapeHtmlAttribute(t)).join(' · ') : '';
     const destLabel = it.destinationLabel ? this.escapeHtmlAttribute(it.destinationLabel) : this.escapeHtmlAttribute(it.destinationKey || '');
 
     const meta = it.originLabel ? `<span class="origin-tag">Da</span>${this.escapeHtmlAttribute(it.originLabel)}` : '';
     const runningDot = it.isStarted === true ? `<span class="departures-running-dot" title="Bus in servizio"></span>` : '';
-    const right = times
-      ? `<div class="departures-times">${runningDot}${times}</div>`
-      : `<div class="departures-times departures-times--empty">${this.escapeHtmlAttribute(it.message || 'In attesa dati…')}</div>`;
+    
+    let right;
+    if (it.times && it.times.length) {
+      const first = it.times[0];
+      const rest = it.times.slice(1);
+      const isTransit = normalizeSearchText(first).includes('transito');
+      const primaryCls = isTransit ? 'departure-time-primary departure-time-primary--transit' : 'departure-time-primary';
+      const primaryHtml = `<span class="${primaryCls}">${this.escapeHtmlAttribute(first)}</span>`;
+      const secondaryHtml = rest.length ? `<span class="departure-times-secondary">${rest.map(t => this.escapeHtmlAttribute(t)).join(' · ')}</span>` : '';
+      right = `<div class="departures-times">${runningDot}${primaryHtml}${secondaryHtml}</div>`;
+    } else {
+      right = `<div class="departures-times departures-times--empty">${this.escapeHtmlAttribute(it.message || 'In attesa dati…')}</div>`;
+    }
 
     // Riga cliccabile (pannello fermata): vettura già tracciata → follow
     // immediato; vettura nota ma non ancora tracciata → attivazione linea e
