@@ -1,5 +1,5 @@
 // Incrementa questo valore ad ogni deploy per invalidare la cache degli utenti
-const CACHE_NAME = 'bus-mago-cache-v16';
+const CACHE_NAME = 'bus-mago-cache-v17';
 
 // Immagini: cache-first (cambiano raramente, utili offline)
 const STATIC_IMAGES = [
@@ -19,6 +19,7 @@ const APP_FILES = [
   './style-classic.css',
   './script.js',
   './lines.js',
+  './tracks.js',
   './manifest.json'
 ];
 

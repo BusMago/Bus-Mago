@@ -1,5 +1,6 @@
 // Initial configuration
 const linesConfig = window.linesConfig || [];
+const routeTracks = window.routeTracks || {};
 // ponytail: log solo in sviluppo (localhost), silenzio in produzione
 const DEBUG = typeof location !== 'undefined' && (location.hostname === 'localhost' || location.hostname === '127.0.0.1');
 
@@ -170,6 +171,7 @@ class BusMagoApp {
       lastRaces: {},
       trackRefreshCounters: {},
       trackFetchControllers: {},
+      trackTriedRaces: {},
       visibleTrackKeys: new Set(),
       userHasInteracted: false,
       isFollowing: false,
@@ -3289,6 +3291,7 @@ class BusMagoApp {
     };
     this.state.trackRefreshCounters = {};
     this.state.lastRaces = {};
+    this.state.trackTriedRaces = {};
     this.state.visibleTrackKeys = new Set();
     this.state.directions.knownByLine = {};
     this.state.directions.lastKnownSignature = '';
@@ -3687,9 +3690,14 @@ class BusMagoApp {
 
   processTracks(stopDataMap) {
     const visible = new Set();
-    // Promise dei LineGeoTrack per tracciati ANCORA SENZA layer: il chiamante
+    // Le funzioni asincrone avviate sotto consultano lo stesso Set mentre viene
+    // popolato; pubblicarlo subito evita che una corsa valida venga scartata
+    // confrontandola con l'insieme del ciclo precedente.
+    this.state.visibleTrackKeys = visible;
+    // Promise dei tracciati ANCORA SENZA layer: il chiamante
     // può attenderle (con tetto) così il primo render nasce già orientato.
     const pendingFirstTracks = [];
+    const jobs = [];
 
     linesConfig.forEach(lineConf => {
         if (this.state.lineVisibility[lineConf.code] !== true) return;
@@ -3703,79 +3711,78 @@ class BusMagoApp {
             });
         });
 
-        const bestByDest = new Map();
+        const runsByDest = new Map();
         allRuns.forEach(r => {
             const destRaw = (r.Destination || "").trim();
             const destKey = normalizeKey(destRaw);
-            if (!destKey) return;
-            const existing = bestByDest.get(destKey);
-            if (!existing) {
-                bestByDest.set(destKey, r);
-                return;
+            if (!destKey || !r.Race) return;
+            if (!runsByDest.has(destKey)) runsByDest.set(destKey, []);
+            const candidates = runsByDest.get(destKey);
+            const raceKey = `${String(r.Line || r.LineCode || '')}|${String(r.Direction || '')}|${String(r.Race)}`;
+            if (!candidates.some(candidate => candidate.raceKey === raceKey)) {
+              candidates.push({ run: r, raceKey });
             }
-            if (!existing.Race && r.Race) bestByDest.set(destKey, r);
         });
 
-        bestByDest.forEach((bestRun, destKey) => {
-            if (!bestRun || !bestRun.Race) return;
+        // Mostra tutte le destinazioni configurate anche quando nel singolo
+        // campione mrcruns non compare una corsa utile. Le destinazioni osservate
+        // dal realtime coprono subito anche deviazioni e varianti nuove.
+        const destinations = new Map();
+        directionsList(lineConf.directions).forEach(destination => {
+          const key = normalizeKey(destination);
+          if (key) destinations.set(key, String(destination).trim());
+        });
+        runsByDest.forEach((candidates, key) => {
+          const first = candidates[0] && candidates[0].run;
+          if (first && !destinations.has(key)) destinations.set(key, String(first.Destination || key).trim());
+        });
+
+        destinations.forEach((destination, destKey) => {
             if (!this.isDirectionAllowed(lineConf.code, destKey)) return;
 
-            const race = String(bestRun.Race);
-            const destination = (bestRun.Destination || destKey).trim();
             const trackKey = `${lineConf.code}_${destKey}`;
             visible.add(trackKey);
 
             if (!this.state.trackRefreshCounters[trackKey]) this.state.trackRefreshCounters[trackKey] = 0;
-            if (!this.state.lastRaces[trackKey]) this.state.lastRaces[trackKey] = "";
-
             const counter = this.state.trackRefreshCounters[trackKey] || 0;
-            // La geometria del tracciato di una linea/direzione è STATICA: NON va
-            // riscaricata a ogni cambio di Race (prima il refetch su `race !==
-            // prevRace` causava decine di richieste LineGeoTrack sprecate, perché
-            // la corsa "più vicina" cambia di continuo mentre i bus avanzano).
-            // Scarichiamo una sola volta per trackKey, poi rinfreschiamo solo
-            // periodicamente (ogni TRACK_REFRESH_INTERVAL cicli) come sicurezza
-            // contro deviazioni/varianti di percorso.
-            const shouldFetch = race && (!this.state.routeLayers[trackKey] || counter >= CONFIG.REFRESH.TRACK_REFRESH_INTERVAL);
+            const layer = this.state.routeLayers[trackKey];
+            const isExact = !!(layer && layer.options.trackSource === 'api');
 
-            if (!shouldFetch) {
-                this.state.trackRefreshCounters[trackKey] = counter + 1;
-                return;
+            // LineGeoTrack restituisce spesso [] con HTTP 200. Disegniamo subito
+            // la shape stradale statica e la sostituiamo senza flicker se una delle
+            // corse candidate offre poi una geometria realtime più aggiornata.
+            if (!layer) {
+              const staticJob = Promise.resolve(this.ensureStaticTrackLayer(trackKey, lineConf, destination));
+              jobs.push({ promise: staticJob, wasMissing: true });
             }
 
-            this.state.lastRaces[trackKey] = race;
-            this.state.trackRefreshCounters[trackKey] = 0;
+            let candidates = (runsByDest.get(destKey) || []).slice();
+            candidates.sort((a, b) => {
+              const ar = a.run, br = b.run;
+              return Number(br.IsStarted === true) - Number(ar.IsStarted === true)
+                || Number(!!br.Vehicle) - Number(!!ar.Vehicle);
+            });
 
-            let lineCodeForTrack = String(bestRun.Line || '').trim();
-            if (!lineCodeForTrack) {
-                lineCodeForTrack = String(bestRun.LineCode || '').trim();
-                if (lineCodeForTrack && !lineCodeForTrack.startsWith('T')) lineCodeForTrack = `T${lineCodeForTrack}`;
+            let tried = new Set(this.state.trackTriedRaces[trackKey] || []);
+            const periodicRetry = counter >= CONFIG.REFRESH.TRACK_REFRESH_INTERVAL;
+            if (periodicRetry) tried = new Set();
+            const untried = candidates.filter(candidate => !tried.has(candidate.raceKey));
+            const shouldFetch = !this.state.trackFetchControllers[trackKey]
+              && untried.length > 0
+              && (!isExact || periodicRetry);
+
+            if (shouldFetch) {
+              this.state.trackRefreshCounters[trackKey] = 0;
+              const exactJob = this.fetchTrackCandidates(trackKey, lineConf, destination, untried, tried);
+              jobs.push({ promise: exactJob, wasMissing: !layer });
+            } else {
+              this.state.trackRefreshCounters[trackKey] = counter + 1;
             }
-            if (!lineCodeForTrack) return;
-
-            const url = `https://realtime.tplfvg.it/API/v1.0/polemonitor/LineGeoTrack?Line=${encodeURIComponent(lineCodeForTrack)}&Race=${encodeURIComponent(race)}&_=${Date.now()}`;
-
-            if (this.state.trackFetchControllers[trackKey]) {
-              this.state.trackFetchControllers[trackKey].abort();
-            }
-            const trackController = new AbortController();
-            this.state.trackFetchControllers[trackKey] = trackController;
-
-            const isFirstTrack = !this.state.routeLayers[trackKey];
-            const trackPromise = fetch(url, { signal: trackController.signal })
-                .then(r => r.json())
-                .then(track => {
-                    delete this.state.trackFetchControllers[trackKey];
-                    if (!this.state.visibleTrackKeys.has(trackKey)) return;
-                    if (Array.isArray(track)) this.updateTrackLayer(trackKey, lineConf, destination, track);
-                })
-                .catch(err => {
-                    if (err && err.name === 'AbortError') return;
-                    delete this.state.trackFetchControllers[trackKey];
-                    if (DEBUG) console.error(`Errore caricamento tracciato ${trackKey}`, err);
-                });
-            if (isFirstTrack) pendingFirstTracks.push(trackPromise);
         });
+    });
+
+    jobs.forEach(job => {
+      if (job.wasMissing) pendingFirstTracks.push(job.promise);
     });
 
     // Prune stale counters and abort pending fetches for track keys no longer active
@@ -3787,34 +3794,96 @@ class BusMagoApp {
         }
         delete this.state.trackRefreshCounters[key];
         delete this.state.lastRaces[key];
+        delete this.state.trackTriedRaces[key];
       }
     });
 
-    this.state.visibleTrackKeys = visible;
     return pendingFirstTracks;
   }
 
-  updateTrackLayer(trackKey, lineConf, destination, trackData) {
+  async fetchTrackCandidates(trackKey, lineConf, destination, candidates, tried) {
+    const controller = new AbortController();
+    this.state.trackFetchControllers[trackKey] = controller;
+    try {
+      for (const candidate of candidates) {
+        if (controller.signal.aborted || !this.state.visibleTrackKeys.has(trackKey)) return false;
+        tried.add(candidate.raceKey);
+        this.state.trackTriedRaces[trackKey] = Array.from(tried);
+
+        const run = candidate.run;
+        let lineToken = String(run.Line || run.LineCode || '').trim();
+        if (lineToken && !/^T/i.test(lineToken)) lineToken = `T${lineToken}`;
+        const race = String(run.Race || '').trim();
+        const direction = String(run.Direction || '').trim();
+        if (!lineToken || !race) continue;
+
+        const url = `https://realtime.tplfvg.it/API/v1.0/polemonitor/LineGeoTrack?Line=${encodeURIComponent(lineToken)}&Direction=${encodeURIComponent(direction)}&Race=${encodeURIComponent(race)}&_=${Date.now()}`;
+        try {
+          await this._rateSlot();
+          if (controller.signal.aborted) return false;
+          const response = await fetch(url, { signal: controller.signal });
+          if (!response.ok) throw new Error(`HTTP ${response.status}`);
+          const track = await response.json();
+          if (!this.state.visibleTrackKeys.has(trackKey)) return false;
+          if (this.updateTrackLayer(trackKey, lineConf, destination, track, 'api')) {
+            this.state.lastRaces[trackKey] = race;
+            return true;
+          }
+        } catch (err) {
+          if (err && err.name === 'AbortError') return false;
+          if (DEBUG) console.warn(`Tracciato ${trackKey}, corsa ${race} non disponibile:`, err);
+        }
+      }
+      return false;
+    } finally {
+      if (this.state.trackFetchControllers[trackKey] === controller) {
+        delete this.state.trackFetchControllers[trackKey];
+      }
+    }
+  }
+
+  ensureStaticTrackLayer(trackKey, lineConf, destination) {
+    const existing = this.state.routeLayers[trackKey];
+    if (existing && existing.options.trackSource === 'api') return true;
+    if (!this.state.visibleTrackKeys.has(trackKey)) return false;
+    if (this.state.lineVisibility[lineConf.code] !== true) return false;
+
+    const coordinates = routeTracks[trackKey];
+    if (!Array.isArray(coordinates)) return false;
+    if (coordinates.length < 2) return false;
+    return this.updateTrackLayer(trackKey, lineConf, destination, [coordinates], 'static');
+  }
+
+  updateTrackLayer(trackKey, lineConf, destination, trackData, source = 'api') {
       const paletteColor = this.getLegendLineColor(lineConf.code);
       const pts = [];
-      trackData.forEach(segment => {
+      (Array.isArray(trackData) ? trackData : []).forEach(segment => {
           if (Array.isArray(segment)) {
               segment.forEach(pair => {
                   if (Array.isArray(pair) && pair.length === 2) {
-                      pts.push([pair[1], pair[0]]);
+                      const lat = Number(pair[1]);
+                      const lng = Number(pair[0]);
+                      if (Number.isFinite(lat) && Number.isFinite(lng)) pts.push([lat, lng]);
                   }
               });
           }
       });
+      if (pts.length < 2) return false;
+
+      const current = this.state.routeLayers[trackKey];
+      // Una shape statica arrivata in ritardo non deve degradare una
+      // geometria precisa già caricata dall'API.
+      if (source !== 'api' && current && current.options.trackSource === 'api') return true;
 
       // Update existing or create new
-      if (this.state.routeLayers[trackKey]) {
+      if (current) {
           // Just update geometry, do not remove/add (prevents flicker and layout thrashing)
-          this.state.routeLayers[trackKey].setLatLngs(pts);
-          this.state.routeLayers[trackKey].options.destination = destination;
+          current.setLatLngs(pts);
+          current.options.destination = destination;
+          current.options.trackSource = source;
           this._trackGeom.delete(trackKey); // geometria cambiata: invalida la cache
       } else {
-          const polyline = L.polyline(pts, { color: paletteColor, weight: 3.5 }).addTo(this.state.map);
+          const polyline = L.polyline(pts, { color: paletteColor, weight: 3.5, trackSource: source }).addTo(this.state.map);
           this.state.routeLayers[trackKey] = polyline;
           polyline.options.lineCode = lineConf.code;
           polyline.options.destination = destination;
@@ -3881,6 +3950,7 @@ class BusMagoApp {
       // Il tracciato è appena arrivato: orienta subito le vetture che erano
       // apparse prima che fosse pronto (così non restano puntate "in su").
       this.reorientStationaryBuses();
+      return true;
   }
 
   updateBusMarkers(buses) {
