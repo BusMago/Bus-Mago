@@ -1,6 +1,7 @@
 // Initial configuration
 const linesConfig = window.linesConfig || [];
 const routeTracks = window.routeTracks || {};
+const staticStops = window.staticStops || [];
 // ponytail: log solo in sviluppo (localhost), silenzio in produzione
 const DEBUG = typeof location !== 'undefined' && (location.hostname === 'localhost' || location.hostname === '127.0.0.1');
 
@@ -86,16 +87,20 @@ const CONFIG = {
     FOLLOW_ZOOM: 15
   },
   STOPS: {
-    // Indice fermate (nome + coordinate) dal geojson pubblico TPL FVG:
-    // scaricato una tantum, filtrato sulle sole fermate presenti in lines.js
-    // (~1400 su ~9600) e salvato compatto in localStorage (~100 KB).
-    // Host diverso dall'API realtime: non consuma budget di rate-limit.
+    // stops.js contiene già le sole fermate usate dall'app. Il GeoJSON pubblico
+    // TPL FVG e la copia in localStorage restano un fallback per pacchetti
+    // statici incompleti o temporaneamente non disponibili.
     GEOJSON_URL: 'https://tplfvg.it/services/geojson/points/?lang=it',
     LS_KEY: 'busmago:stopsIndex:v1',
     TTL_MS: 7 * 24 * 3600 * 1000, // l'elenco fermate cambia di rado
     MIN_ZOOM: 16,                 // sotto questo zoom: niente marker fermata
     MAX_MARKERS: 300,             // tetto di sicurezza nel viewport
     SEARCH_MAX_RESULTS: 8
+  },
+  STATIC_TRANSIT: {
+    URL: './trips.json',
+    TIME_TOLERANCE_MIN: 2,
+    MAX_AGE_MS: 45 * 24 * 3600 * 1000
   }
 };
 
@@ -187,6 +192,12 @@ class BusMagoApp {
         entries: {},
         inFlight: {},
         controllers: {}
+      },
+      staticTransit: {
+        data: null,
+        loading: null,
+        failed: false,
+        shapeCache: new Map()
       },
       lastInfoSignature: null,
       favorites: {
@@ -283,6 +294,7 @@ class BusMagoApp {
 
     // Cache geometria tracciati (trackKey -> {pts, cum, total}), vedi getTrackGeometry.
     this._trackGeom = new Map();
+    this._decodedRouteTracks = new Map();
 
     // Indice fermate (da ensureStopsIndex) e marker fermata correnti sulla mappa.
     this.stopsIndex = { byCode: new Map(), list: [], loading: null };
@@ -526,6 +538,10 @@ class BusMagoApp {
 
     // Start loop
     this.scheduleNextRefresh(0);
+
+    // Il pacchetto GTFS esatto viene caricato in background: non blocca il primo
+    // paint e sostituisce richieste realtime solo dopo i controlli di coerenza.
+    setTimeout(() => { this.ensureStaticTransitData(); }, 0);
 
     // Indice fermate in differita: non deve pesare sul primo paint né sul
     // primo ciclo di refresh.
@@ -1150,6 +1166,140 @@ class BusMagoApp {
     return p;
   }
 
+  decodeRoutePolyline(encoded) {
+    if (typeof encoded !== 'string' || !encoded) return [];
+    const points = [];
+    let index = 0;
+    let lat = 0;
+    let lng = 0;
+    const readDelta = () => {
+      let result = 0;
+      let shift = 0;
+      let byte;
+      do {
+        if (index >= encoded.length || shift > 30) throw new Error('Polyline statica non valida');
+        byte = encoded.charCodeAt(index++) - 63;
+        result |= (byte & 0x1f) << shift;
+        shift += 5;
+      } while (byte >= 0x20);
+      return (result & 1) ? ~(result >> 1) : (result >> 1);
+    };
+    try {
+      while (index < encoded.length) {
+        lat += readDelta();
+        lng += readDelta();
+        points.push([lng / 1e5, lat / 1e5]);
+      }
+    } catch {
+      return [];
+    }
+    return points;
+  }
+
+  getDefaultTrackCoordinates(trackKey) {
+    const stored = routeTracks[trackKey];
+    if (Array.isArray(stored)) return stored;
+    if (typeof stored !== 'string') return [];
+    if (this._decodedRouteTracks.has(trackKey)) return this._decodedRouteTracks.get(trackKey);
+    const decoded = this.decodeRoutePolyline(stored);
+    this._decodedRouteTracks.set(trackKey, decoded);
+    return decoded;
+  }
+
+  ensureStaticTransitData() {
+    const store = this.state.staticTransit;
+    if (store.data) return Promise.resolve(store.data);
+    if (store.loading) return store.loading;
+    if (store.failed) return Promise.resolve(null);
+    store.loading = fetch(CONFIG.STATIC_TRANSIT.URL)
+      .then(response => {
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        return response.json();
+      })
+      .then(data => {
+        if (!data || !Array.isArray(data.shapes) || !Array.isArray(data.stopPatterns)
+          || !Array.isArray(data.timePatterns) || !data.trips || typeof data.trips !== 'object') {
+          throw new Error('Pacchetto GTFS statico non valido');
+        }
+        const generatedAt = Date.parse(data.generated || '');
+        if (!Number.isFinite(generatedAt) || Date.now() - generatedAt > CONFIG.STATIC_TRANSIT.MAX_AGE_MS) {
+          throw new Error('Pacchetto GTFS statico scaduto');
+        }
+        store.data = data;
+        store.failed = false;
+        return data;
+      })
+      .catch(error => {
+        store.failed = true;
+        if (DEBUG) console.warn('Dati GTFS statici non disponibili:', error);
+        return null;
+      })
+      .finally(() => { store.loading = null; });
+    return store.loading;
+  }
+
+  normalizeTransitLabel(value) {
+    return normalizeSearchText(value).replace(/[^a-z0-9]+/g, ' ').trim().toUpperCase();
+  }
+
+  parseScheduledMinute(value) {
+    const match = String(value || '').match(/(?:T|^)(\d{1,2}):(\d{2})(?::\d{2})?/);
+    return match ? Number(match[1]) * 60 + Number(match[2]) : null;
+  }
+
+  getStaticTripMatch(item) {
+    const data = this.state.staticTransit.data;
+    if (!data || !item) return null;
+    const lineCode = String(item.lineCode || item.LineCode || '').toUpperCase();
+    const direction = normalizeKey(item.direction || item.Direction || '');
+    const race = String(item.race || item.Race || '');
+    const destination = item.destination || item.Destination || '';
+    const stopCode = String(item.detectedAtStop || item._detectedAtStop || '');
+    const scheduled = item.scheduledTime || item.Time || '';
+    if (!lineCode || !direction || !race || !destination || !stopCode || !scheduled) return null;
+
+    const tripKey = `${lineCode}|${direction}|${race}`;
+    const entry = data.trips[tripKey];
+    if (!Array.isArray(entry) || entry.length < 5) return null;
+    const [shapeIndex, stopPatternIndex, timePatternIndex, startMinute, staticDestination] = entry;
+    if (this.normalizeTransitLabel(destination) !== this.normalizeTransitLabel(staticDestination)) return null;
+
+    const stopPattern = data.stopPatterns[stopPatternIndex];
+    const timePattern = data.timePatterns[timePatternIndex];
+    if (!Array.isArray(stopPattern) || !Array.isArray(timePattern) || stopPattern.length !== timePattern.length) return null;
+    const liveMinute = this.parseScheduledMinute(scheduled);
+    if (!Number.isFinite(liveMinute)) return null;
+    const consistent = stopPattern.some((code, index) => {
+      if (String(code) !== stopCode) return false;
+      const expected = Number(startMinute) + Number(timePattern[index]);
+      const delta = Math.abs((((expected - liveMinute) % 1440) + 2160) % 1440 - 720);
+      return delta <= CONFIG.STATIC_TRANSIT.TIME_TOLERANCE_MIN;
+    });
+    if (!consistent) return null;
+
+    let coordinates = this.state.staticTransit.shapeCache.get(shapeIndex);
+    if (!coordinates) {
+      coordinates = this.decodeRoutePolyline(data.shapes[shapeIndex]);
+      if (coordinates.length < 2) return null;
+      this.state.staticTransit.shapeCache.set(shapeIndex, coordinates);
+    }
+    return { tripKey, coordinates, stopPattern, timePattern, startMinute: Number(startMinute) };
+  }
+
+  buildStaticTimetableEntry(bus) {
+    const match = this.getStaticTripMatch(bus);
+    if (!match) return null;
+    const stops = match.stopPattern.map((code, index) => {
+      const indexed = this.stopsIndex.byCode.get(String(code));
+      return {
+        code: String(code),
+        name: indexed ? indexed.name : '',
+        scheduledMinute: match.startMinute + Number(match.timePattern[index])
+      };
+    });
+    return { status: 'ready', source: 'gtfs', stops };
+  }
+
   getTimetableKey(bus) {
     if (!bus || !bus.race || !bus.direction) return '';
     const lineToken = String(bus.lineToken || bus.lineCode || '').trim();
@@ -1171,7 +1321,12 @@ class BusMagoApp {
     if (!key) return Promise.resolve(null);
     const store = this.state.timetables;
     const cached = store.entries[key];
-    if (cached && cached.status === 'ready') return Promise.resolve(cached);
+    if (cached && cached.status === 'ready') {
+      // Le chiavi Race possono essere riutilizzate: una voce GTFS resta valida
+      // solo finché anche l'osservazione realtime più recente coincide.
+      if (cached.source !== 'gtfs' || this.getStaticTripMatch(bus)) return Promise.resolve(cached);
+      delete store.entries[key];
+    }
     if (cached && cached.status === 'error' && cached.retryAt > Date.now()) return Promise.resolve(cached);
     if (store.inFlight[key]) return store.inFlight[key];
 
@@ -1184,29 +1339,41 @@ class BusMagoApp {
     if (lineToken && !/^T/i.test(lineToken)) lineToken = `T${lineToken}`;
     const url = `https://realtime.tplfvg.it/API/v1.0/polemonitor/getlinetimetable?Line=${encodeURIComponent(lineToken)}&Direction=${encodeURIComponent(bus.direction)}&Race=${encodeURIComponent(bus.race)}`;
 
-    const promise = this._rateSlot()
+    const promise = this.ensureStaticTransitData()
       .then(() => {
         if (controller.signal.aborted) throw new DOMException('Aborted', 'AbortError');
-        return fetch(url, { signal: controller.signal });
-      })
-      .then(response => {
-        if (!response.ok) throw new Error(`HTTP ${response.status}`);
-        return response.json();
-      })
-      .then(data => {
-        if (!Array.isArray(data) || !data.length) throw new Error('Orario corsa vuoto');
-        const stops = data
-          .slice()
-          .sort((a, b) => Number(a.SequenceNumber || 0) - Number(b.SequenceNumber || 0))
-          .map(item => ({
-            code: String(item.StopCode || '').trim(),
-            name: String(item.StopDescription || item.StopName || item.StopCode || '').trim()
-          }))
-          .filter(item => item.code);
-        if (!stops.length) throw new Error('Orario corsa senza fermate');
-        const entry = { status: 'ready', stops };
-        store.entries[key] = entry;
-        return entry;
+        const staticEntry = this.buildStaticTimetableEntry(bus);
+        if (staticEntry) {
+          store.entries[key] = staticEntry;
+          return staticEntry;
+        }
+
+        // Nessuna corrispondenza GTFS certa: il realtime resta la fonte di
+        // verità e mantiene il comportamento precedente.
+        return this._rateSlot()
+          .then(() => {
+            if (controller.signal.aborted) throw new DOMException('Aborted', 'AbortError');
+            return fetch(url, { signal: controller.signal });
+          })
+          .then(response => {
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+            return response.json();
+          })
+          .then(data => {
+            if (!Array.isArray(data) || !data.length) throw new Error('Orario corsa vuoto');
+            const stops = data
+              .slice()
+              .sort((a, b) => Number(a.SequenceNumber || 0) - Number(b.SequenceNumber || 0))
+              .map(item => ({
+                code: String(item.StopCode || '').trim(),
+                name: String(item.StopDescription || item.StopName || item.StopCode || '').trim()
+              }))
+              .filter(item => item.code);
+            if (!stops.length) throw new Error('Orario corsa senza fermate');
+            const entry = { status: 'ready', source: 'api', stops };
+            store.entries[key] = entry;
+            return entry;
+          });
       })
       .catch(err => {
         if (err && err.name === 'AbortError') {
@@ -1232,15 +1399,29 @@ class BusMagoApp {
 
   // ===== Indice fermate (nomi + coordinate) e marker sulla mappa =====
 
-  // Carica l'indice fermate: da localStorage se fresco, altrimenti scarica il
-  // geojson TPL FVG (~3.7 MB), lo filtra sulle fermate note a lines.js e salva
-  // l'estratto compatto. Idempotente: chiamate concorrenti condividono la
-  // stessa promise. Su errore di rete riusa la copia scaduta, se esiste.
+  // Carica prima l'indice statico generato dal GTFS. Il GeoJSON realtime resta
+  // una rete di sicurezza solo se mancano codici o coordinate valide.
   async ensureStopsIndex() {
     if (this.stopsIndex.list.length) return this.stopsIndex;
     if (this.stopsIndex.loading) return this.stopsIndex.loading;
 
     this.stopsIndex.loading = (async () => {
+      if (!this._knownStopCodes) {
+        this._knownStopCodes = new Set(
+          linesConfig.flatMap(l => Array.isArray(l.stops) ? l.stops : []).map(String)
+        );
+      }
+      const staticRows = Array.isArray(staticStops)
+        ? staticStops.filter(row => Array.isArray(row) && this._knownStopCodes.has(String(row[0])))
+        : [];
+      if (staticRows.length) {
+        this._applyStopsIndex(staticRows);
+        if (this.stopsIndex.byCode.size === this._knownStopCodes.size) {
+          this.stopsIndex.loading = null;
+          return this.stopsIndex;
+        }
+      }
+
       let stored = null;
       try { stored = JSON.parse(localStorage.getItem(CONFIG.STOPS.LS_KEY)); } catch {}
       const fresh = !!(stored && Array.isArray(stored.stops)
@@ -1258,7 +1439,13 @@ class BusMagoApp {
           if (DEBUG) console.warn('Indice fermate non aggiornato:', e);
         }
       }
-      if (stored && Array.isArray(stored.stops)) this._applyStopsIndex(stored.stops);
+      if (stored && Array.isArray(stored.stops)) {
+        const merged = new Map(staticRows.map(row => [String(row[0]), row]));
+        stored.stops.forEach(row => {
+          if (Array.isArray(row) && row.length >= 4) merged.set(String(row[0]), row);
+        });
+        this._applyStopsIndex(Array.from(merged.values()));
+      }
       this.stopsIndex.loading = null;
       return this.stopsIndex;
     })();
@@ -3707,7 +3894,9 @@ class BusMagoApp {
             const runs = stopDataMap[sCode];
             if (!Array.isArray(runs)) return;
             runs.forEach(r => {
-                if ((r.LineCode || "").toUpperCase() === lineConf.code) allRuns.push(r);
+                if ((r.LineCode || "").toUpperCase() === lineConf.code) {
+                  allRuns.push({ ...r, _detectedAtStop: String(sCode) });
+                }
             });
         });
 
@@ -3745,15 +3934,15 @@ class BusMagoApp {
 
             if (!this.state.trackRefreshCounters[trackKey]) this.state.trackRefreshCounters[trackKey] = 0;
             const counter = this.state.trackRefreshCounters[trackKey] || 0;
-            const layer = this.state.routeLayers[trackKey];
-            const isExact = !!(layer && layer.options.trackSource === 'api');
+            let layer = this.state.routeLayers[trackKey];
 
-            // LineGeoTrack restituisce spesso [] con HTTP 200. Disegniamo subito
-            // la shape stradale statica e la sostituiamo senza flicker se una delle
-            // corse candidate offre poi una geometria realtime più aggiornata.
+            // Disegniamo subito la shape stradale predefinita. Se la corsa è
+            // coerente col GTFS usiamo la sua shape esatta; in caso contrario
+            // LineGeoTrack resta il fallback realtime.
             if (!layer) {
               const staticJob = Promise.resolve(this.ensureStaticTrackLayer(trackKey, lineConf, destination));
               jobs.push({ promise: staticJob, wasMissing: true });
+              layer = this.state.routeLayers[trackKey];
             }
 
             let candidates = (runsByDest.get(destKey) || []).slice();
@@ -3763,13 +3952,49 @@ class BusMagoApp {
                 || Number(!!br.Vehicle) - Number(!!ar.Vehicle);
             });
 
+            // Se linea, direzione, corsa, destinazione e orario alla fermata
+            // coincidono col GTFS, la shape specifica di quella corsa è sicura e
+            // non serve interrogare LineGeoTrack. Qualunque incongruenza lascia
+            // invece lavorare il realtime qui sotto.
+            const staticMatch = candidates
+              .map(candidate => ({ candidate, match: this.getStaticTripMatch(candidate.run) }))
+              .find(item => item.match);
+            if (staticMatch) {
+              const current = this.state.routeLayers[trackKey];
+              const sameRealtimeRace = current && current.options.trackSource === 'api'
+                && current.options.trackRaceKey === staticMatch.candidate.raceKey;
+              if (!sameRealtimeRace && (!current || current.options.trackRaceKey !== staticMatch.candidate.raceKey
+                || current.options.trackSource === 'static')) {
+                this.updateTrackLayer(
+                  trackKey,
+                  lineConf,
+                  destination,
+                  [staticMatch.match.coordinates],
+                  'gtfs',
+                  staticMatch.candidate.raceKey
+                );
+              }
+              this.state.lastRaces[trackKey] = String(staticMatch.candidate.run.Race || '');
+              this.state.trackRefreshCounters[trackKey] = counter + 1;
+              return;
+            }
+
+            // Il JSON viene caricato in background. Aspettiamo il ciclo seguente
+            // prima di ripiegare sul realtime, evitando richieste premature.
+            if (!this.state.staticTransit.data && !this.state.staticTransit.failed) {
+              this.state.trackRefreshCounters[trackKey] = counter + 1;
+              return;
+            }
+
             let tried = new Set(this.state.trackTriedRaces[trackKey] || []);
             const periodicRetry = counter >= CONFIG.REFRESH.TRACK_REFRESH_INTERVAL;
             if (periodicRetry) tried = new Set();
             const untried = candidates.filter(candidate => !tried.has(candidate.raceKey));
+            const isExact = !!(layer && layer.options.trackSource === 'api');
+            const exactRaceStillPresent = isExact && candidates.some(candidate => candidate.raceKey === layer.options.trackRaceKey);
             const shouldFetch = !this.state.trackFetchControllers[trackKey]
               && untried.length > 0
-              && (!isExact || periodicRetry);
+              && (!isExact || periodicRetry || !exactRaceStillPresent);
 
             if (shouldFetch) {
               this.state.trackRefreshCounters[trackKey] = 0;
@@ -3825,7 +4050,7 @@ class BusMagoApp {
           if (!response.ok) throw new Error(`HTTP ${response.status}`);
           const track = await response.json();
           if (!this.state.visibleTrackKeys.has(trackKey)) return false;
-          if (this.updateTrackLayer(trackKey, lineConf, destination, track, 'api')) {
+          if (this.updateTrackLayer(trackKey, lineConf, destination, track, 'api', candidate.raceKey)) {
             this.state.lastRaces[trackKey] = race;
             return true;
           }
@@ -3848,13 +4073,12 @@ class BusMagoApp {
     if (!this.state.visibleTrackKeys.has(trackKey)) return false;
     if (this.state.lineVisibility[lineConf.code] !== true) return false;
 
-    const coordinates = routeTracks[trackKey];
-    if (!Array.isArray(coordinates)) return false;
+    const coordinates = this.getDefaultTrackCoordinates(trackKey);
     if (coordinates.length < 2) return false;
     return this.updateTrackLayer(trackKey, lineConf, destination, [coordinates], 'static');
   }
 
-  updateTrackLayer(trackKey, lineConf, destination, trackData, source = 'api') {
+  updateTrackLayer(trackKey, lineConf, destination, trackData, source = 'api', raceKey = '') {
       const paletteColor = this.getLegendLineColor(lineConf.code);
       const pts = [];
       (Array.isArray(trackData) ? trackData : []).forEach(segment => {
@@ -3873,7 +4097,8 @@ class BusMagoApp {
       const current = this.state.routeLayers[trackKey];
       // Una shape statica arrivata in ritardo non deve degradare una
       // geometria precisa già caricata dall'API.
-      if (source !== 'api' && current && current.options.trackSource === 'api') return true;
+      if (source !== 'api' && current && current.options.trackSource === 'api'
+        && (!raceKey || current.options.trackRaceKey === raceKey)) return true;
 
       // Update existing or create new
       if (current) {
@@ -3881,9 +4106,15 @@ class BusMagoApp {
           current.setLatLngs(pts);
           current.options.destination = destination;
           current.options.trackSource = source;
+          current.options.trackRaceKey = raceKey;
           this._trackGeom.delete(trackKey); // geometria cambiata: invalida la cache
       } else {
-          const polyline = L.polyline(pts, { color: paletteColor, weight: 3.5, trackSource: source }).addTo(this.state.map);
+          const polyline = L.polyline(pts, {
+            color: paletteColor,
+            weight: 3.5,
+            trackSource: source,
+            trackRaceKey: raceKey
+          }).addTo(this.state.map);
           this.state.routeLayers[trackKey] = polyline;
           polyline.options.lineCode = lineConf.code;
           polyline.options.destination = destination;
@@ -4519,7 +4750,8 @@ class BusMagoApp {
         candidateStops.push({
           stop: { ...stop, name: source.name || stop.name },
           s: proj.s,
-          distFromTrack: proj.distM
+          distFromTrack: proj.distM,
+          scheduledMinute: Number.isFinite(source.scheduledMinute) ? source.scheduledMinute : null
         });
       }
     }
@@ -4553,12 +4785,20 @@ class BusMagoApp {
 
     if (!upcoming.length) return '';
 
+    const liveDelay = this.computeDelayMinutes(bus);
     const rowsHtml = upcoming.map((item, idx) => {
       const remDist = Math.max(0, Math.round(item.progress - busProgress));
       const distLabel = this.formatDistance(remDist);
       const speedMps = animRec && Number(animRec.speed) >= 2 ? Number(animRec.speed) : 5;
       const etaMin = Math.max(1, Math.round(remDist / speedMps / 60));
-      const etaLabel = remDist < 70 ? 'In arrivo' : `~${etaMin} min`;
+      let etaLabel = remDist < 70 ? 'In arrivo' : `~${etaMin} min`;
+      if (Number.isFinite(item.scheduledMinute)) {
+        const predicted = item.scheduledMinute + (Number.isFinite(liveDelay) ? liveDelay : 0);
+        const dayMinute = ((predicted % 1440) + 1440) % 1440;
+        const hh = String(Math.floor(dayMinute / 60)).padStart(2, '0');
+        const mm = String(Math.round(dayMinute % 60)).padStart(2, '0');
+        etaLabel = `${hh}:${mm} ${Number.isFinite(liveDelay) ? 'stimato' : 'programmato'}`;
+      }
       const isFirst = idx === 0;
       return `
         <button type="button" class="vehicle-stop-row ${isFirst ? 'vehicle-stop-row--next' : ''}" data-stop-code="${this.escapeHtmlAttribute(item.stop.code)}" data-stop-name="${this.escapeHtmlAttribute(item.stop.name)}" title="Vedi arrivi a ${this.escapeHtmlAttribute(item.stop.name)}">
