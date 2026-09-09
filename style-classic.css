@@ -251,7 +251,7 @@
    Tile OSM scurite in tema notte (come sul main).
    La classe è applicata al tile layer solo in classic+dark.
    ===================================================== */
-.dark-mode-tiles {
+:root[data-skin="classic"] .dark-mode-tiles {
   filter: invert(100%) hue-rotate(180deg) brightness(85%) contrast(90%);
 }
-:root[data-theme="light"] .dark-mode-tiles { filter: none; }
+:root[data-skin="classic"][data-theme="light"] .dark-mode-tiles { filter: none; }

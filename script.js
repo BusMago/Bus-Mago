@@ -140,13 +140,13 @@ const LEGEND_GROUPS = {
     '17/': ['SAN CILINO'],
     '4': ['VILLA CARSIA'],
     '3': ['CONCONELLO'],
-    '51': []   // array vuoto = mostra tutte le corse della 51 (nessun filtro destinazione)
+    '51': ['VILLA CARSIA', 'GROZZANA', 'AREA DI RICERCA', 'VIA KETTE 10 (BASOVIZZA)', 'PIAZZA OBERDAN']
   },
   FS: {
     '17/': ['STAZIONE FERROVIARIA'],
     '17': ['VIA DI CAMPO MARZIO'],
     '4': ['PIAZZA OBERDAN', 'PIAZZA TOMMASEO'],
-    '51': [],   // array vuoto = mostra tutte le corse della 51 (nessun filtro destinazione)
+    '51': ['STAZIONE FERROVIARIA'],
     '3': ['STAZIONE FERROVIARIA']
   },
   BARCOLA: {
@@ -178,6 +178,13 @@ class BusMagoApp {
       stopCache: {
         entries: {},
         inFlight: {}
+      },
+      // Sequenza reale delle fermate per corsa, caricata solo quando una
+      // vettura viene selezionata. Una richiesta per race, poi cache di sessione.
+      timetables: {
+        entries: {},
+        inFlight: {},
+        controllers: {}
       },
       lastInfoSignature: null,
       favorites: {
@@ -622,13 +629,14 @@ class BusMagoApp {
       open() {
         prevFocus = document.activeElement;
         overlay.addEventListener('keydown', onKeydown);
-        const nodes = focusables();
-        if (nodes.length) {
-          nodes[0].focus();
-        } else {
-          overlay.setAttribute('tabindex', '-1');
-          overlay.focus();
-        }
+        // Il solo controllo focusabile della guida è il pulsante in fondo:
+        // focalizzarlo all'apertura faceva scorrere il dialogo fino al CTA,
+        // nascondendo logo, titolo e primo passaggio. Il contenitore del dialogo
+        // è un punto di ingresso accessibile e non altera la posizione di scroll.
+        const dialog = overlay.querySelector('[role="dialog"]') || overlay;
+        dialog.setAttribute('tabindex', '-1');
+        dialog.scrollTop = 0;
+        dialog.focus({ preventScroll: true });
       },
       close() {
         overlay.removeEventListener('keydown', onKeydown);
@@ -754,28 +762,19 @@ class BusMagoApp {
   }
 
   getTileUrl(themeMode, skinMode) {
-    const skin = skinMode || this.state.skin.mode;
-    // Classic skin → tile OSM standard (come sul main, niente variante dark).
-    if (skin === 'classic') {
-      return 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
-    }
-    return themeMode === 'dark'
-      ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
-      : 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png';
+    return 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
   }
 
   applyTileLayer() {
     if (!this.state.map) return;
-    const isClassic = this.state.skin.mode === 'classic';
     const isDark = this.state.theme.mode === 'dark';
     const url = this.getTileUrl(this.state.theme.mode, this.state.skin.mode);
-    const attribution = isClassic
-      ? '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-      : '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>';
-    // Classic usa tile OSM (nessuna variante dark nativa): in tema scuro le
-    // scuriamo via filtro CSS, come sul main. Modern usa già le tile CartoDB
-    // dark/light, quindi nessun filtro.
-    const className = (isClassic && isDark) ? 'dark-mode-tiles' : '';
+    const attribution = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors';
+    // OSM è la base affidabile per entrambe le skin. Il tema scuro viene
+    // ottenuto via CSS; Glossy mantiene una resa leggermente più morbida.
+    const className = isDark
+      ? (this.state.skin.mode === 'modern' ? 'dark-mode-tiles modern-dark-mode-tiles' : 'dark-mode-tiles')
+      : (this.state.skin.mode === 'modern' ? 'modern-light-mode-tiles' : '');
     if (this.tileLayer) {
       this.state.map.removeLayer(this.tileLayer);
       this.tileLayer = null;
@@ -784,7 +783,7 @@ class BusMagoApp {
       maxZoom: 19,
       attribution,
       className,
-      subdomains: isClassic ? 'abc' : 'abcd',
+      subdomains: 'abc',
       keepBuffer: 15,
       updateWhenIdle: false,
       updateWhenZooming: false,
@@ -997,6 +996,9 @@ class BusMagoApp {
     const count = Object.keys(this.state.lineVisibility || {}).filter(k => this.state.lineVisibility[k] === true).length;
     if (count > 0) {
       badge.textContent = String(count);
+      const label = count === 1 ? '1 linea attiva' : `${count} linee attive`;
+      badge.setAttribute('aria-label', `${label}, apri pannello`);
+      badge.title = `${label}: apri pannello`;
       badge.style.display = 'inline-flex';
     } else {
       badge.style.display = 'none';
@@ -1144,6 +1146,86 @@ class BusMagoApp {
 
     this.state.stopCache.inFlight[stopCode] = p;
     return p;
+  }
+
+  getTimetableKey(bus) {
+    if (!bus || !bus.race || !bus.direction) return '';
+    const lineToken = String(bus.lineToken || bus.lineCode || '').trim();
+    if (!lineToken) return '';
+    return `${lineToken}|${normalizeKey(bus.direction)}|${String(bus.race)}`;
+  }
+
+  abortTimetableRequestsExcept(keepKey = '') {
+    const controllers = this.state.timetables.controllers;
+    Object.keys(controllers).forEach(key => {
+      if (key === keepKey) return;
+      controllers[key].abort();
+      delete controllers[key];
+    });
+  }
+
+  ensureVehicleTimetable(bus) {
+    const key = this.getTimetableKey(bus);
+    if (!key) return Promise.resolve(null);
+    const store = this.state.timetables;
+    const cached = store.entries[key];
+    if (cached && cached.status === 'ready') return Promise.resolve(cached);
+    if (cached && cached.status === 'error' && cached.retryAt > Date.now()) return Promise.resolve(cached);
+    if (store.inFlight[key]) return store.inFlight[key];
+
+    this.abortTimetableRequestsExcept(key);
+    const controller = new AbortController();
+    store.controllers[key] = controller;
+    store.entries[key] = { status: 'loading', stops: [] };
+
+    let lineToken = String(bus.lineToken || bus.lineCode || '').trim();
+    if (lineToken && !/^T/i.test(lineToken)) lineToken = `T${lineToken}`;
+    const url = `https://realtime.tplfvg.it/API/v1.0/polemonitor/getlinetimetable?Line=${encodeURIComponent(lineToken)}&Direction=${encodeURIComponent(bus.direction)}&Race=${encodeURIComponent(bus.race)}`;
+
+    const promise = this._rateSlot()
+      .then(() => {
+        if (controller.signal.aborted) throw new DOMException('Aborted', 'AbortError');
+        return fetch(url, { signal: controller.signal });
+      })
+      .then(response => {
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        return response.json();
+      })
+      .then(data => {
+        if (!Array.isArray(data) || !data.length) throw new Error('Orario corsa vuoto');
+        const stops = data
+          .slice()
+          .sort((a, b) => Number(a.SequenceNumber || 0) - Number(b.SequenceNumber || 0))
+          .map(item => ({
+            code: String(item.StopCode || '').trim(),
+            name: String(item.StopDescription || item.StopName || item.StopCode || '').trim()
+          }))
+          .filter(item => item.code);
+        if (!stops.length) throw new Error('Orario corsa senza fermate');
+        const entry = { status: 'ready', stops };
+        store.entries[key] = entry;
+        return entry;
+      })
+      .catch(err => {
+        if (err && err.name === 'AbortError') {
+          delete store.entries[key];
+          return null;
+        }
+        store.entries[key] = { status: 'error', stops: [], retryAt: Date.now() + 60000 };
+        if (DEBUG) console.warn('Sequenza corsa non disponibile:', err);
+        return store.entries[key];
+      })
+      .finally(() => {
+        delete store.inFlight[key];
+        delete store.controllers[key];
+        if (this.state.selectedVehicleKey === bus.key) {
+          this.state.lastInfoSignature = null;
+          this.renderInfoPanel();
+        }
+      });
+
+    store.inFlight[key] = promise;
+    return promise;
   }
 
   // ===== Indice fermate (nomi + coordinate) e marker sulla mappa =====
@@ -1548,6 +1630,38 @@ class BusMagoApp {
     return `${(distMeters / 1000).toFixed(1)} km`;
   }
 
+  // Estrae esattamente target codici distinti distribuiti sull'intero elenco.
+  // Viene usato sia dal campionamento iniziale sia dal diradamento adattivo:
+  // tagliare la testa dell'array concentrerebbe tutte le richieste nella prima
+  // metà del percorso quando molte linee sono attive.
+  sampleUniformDistinct(stops, target) {
+    const unique = [];
+    const seenCodes = new Set();
+    (Array.isArray(stops) ? stops : []).forEach(stopCode => {
+      const code = String(stopCode || '');
+      if (!code || seenCodes.has(code)) return;
+      seenCodes.add(code);
+      unique.push(code);
+    });
+    const wanted = Math.max(0, Math.min(unique.length, Math.floor(Number(target) || 0)));
+    if (wanted === 0) return [];
+    if (unique.length <= wanted) return unique;
+    if (wanted === 1) return [unique[Math.floor((unique.length - 1) / 2)]];
+
+    const picked = [];
+    const usedIndexes = new Set();
+    const lastIdx = unique.length - 1;
+    for (let i = 0; i < wanted; i++) {
+      let idx = Math.round((i / (wanted - 1)) * lastIdx);
+      while (usedIndexes.has(idx) && idx < lastIdx) idx++;
+      while (usedIndexes.has(idx) && idx > 0) idx--;
+      if (usedIndexes.has(idx)) continue;
+      usedIndexes.add(idx);
+      picked.push(unique[idx]);
+    }
+    return picked;
+  }
+
   // Riga fermata condivisa fra risultati di ricerca, fermate vicine e preferite
   // (stesso markup → stesso listener delegato .stop-result).
   buildStopResultRowHtml(s, distMeters = null) {
@@ -1580,8 +1694,27 @@ class BusMagoApp {
       withDist.push({ stop, dist });
     }
     withDist.sort((a, b) => a.dist - b.dist);
-    // Mostra fino a 5 fermate vicine entro 1.2 km
-    const nearby = withDist.filter(item => item.dist <= 1200).slice(0, 5);
+    // Prima un risultato per luogo: nodi come Piazza Goldoni hanno molte
+    // paline a pochi metri e non devono occupare da soli tutta la sezione.
+    // Se entro 1.2 km ci sono meno di cinque luoghi distinti, completiamo con
+    // le altre paline in ordine di distanza.
+    const withinRange = withDist.filter(item => item.dist <= 1200);
+    const nearby = [];
+    const deferred = [];
+    const seenNames = new Set();
+    withinRange.forEach(item => {
+      const nameKey = normalizeSearchText(item.stop.name);
+      if (nameKey && !seenNames.has(nameKey) && nearby.length < 5) {
+        seenNames.add(nameKey);
+        nearby.push(item);
+      } else {
+        deferred.push(item);
+      }
+    });
+    for (const item of deferred) {
+      if (nearby.length >= 5) break;
+      nearby.push(item);
+    }
     if (!nearby.length) return '';
     return `<div class="legend-header-row"><div class="legend-section-title legend-chip">FERMATE VICINE</div></div>
       <div class="stop-results">${nearby.map(item => this.buildStopResultRowHtml(item.stop, item.dist)).join('')}</div>`;
@@ -2382,6 +2515,7 @@ class BusMagoApp {
     this._returnToStopCode = null;
     if (hadVehicle) {
       this.releaseWakeLock();
+      this.abortTimetableRequestsExcept();
       this.state.selectedVehicleKey = null;
       if (this.state.departures) this.state.departures.collapsed = true;
     }
@@ -3260,25 +3394,7 @@ class BusMagoApp {
                 // DISTINTE pari al target: avanziamo all'indice libero piu' vicino in
                 // caso di collisione di arrotondamento (prima il Set ne perdeva diverse).
                 const src = Array.isArray(l.stops) ? l.stops : [];
-                let stopsToUse;
-                if (src.length <= stopsLimitPerLine) {
-                    stopsToUse = src;
-                } else if (stopsLimitPerLine <= 1) {
-                    stopsToUse = [src[0]];
-                } else {
-                    const lastIdx = src.length - 1;
-                    const seen = new Set();
-                    const picked = [];
-                    for (let i = 0; i < stopsLimitPerLine; i++) {
-                        let idx = Math.round((i / (stopsLimitPerLine - 1)) * lastIdx);
-                        while (seen.has(idx) && idx < lastIdx) idx++;
-                        while (seen.has(idx) && idx > 0) idx--;
-                        if (seen.has(idx)) continue;
-                        seen.add(idx);
-                        picked.push(src[idx]);
-                    }
-                    stopsToUse = picked;
-                }
+                const stopsToUse = this.sampleUniformDistinct(src, stopsLimitPerLine);
 
                 perLineSamples.push(stopsToUse);
 
@@ -3326,9 +3442,28 @@ class BusMagoApp {
             ? sampleBudget / desiredSampleTotal
             : 1;
 
+        // Quote intere con metodo dei maggiori resti: il totale non supera mai
+        // sampleBudget e gli slot residui vanno alle linee più penalizzate
+        // dall'arrotondamento. Ogni quota viene poi ricampionata su TUTTO il suo
+        // percorso, non presa dalla testa dell'array.
+        const quotas = perLineSamples.map(stops => {
+            const exact = stops.length * shrink;
+            return { target: Math.floor(exact), remainder: exact - Math.floor(exact), max: stops.length };
+        });
+        let remainingSlots = Math.max(0, sampleBudget - quotas.reduce((sum, q) => sum + q.target, 0));
+        quotas
+            .map((q, index) => ({ q, index }))
+            .sort((a, b) => b.q.remainder - a.q.remainder || a.index - b.index)
+            .forEach(({ q }) => {
+                if (remainingSlots > 0 && q.target < q.max) {
+                    q.target++;
+                    remainingSlots--;
+                }
+            });
+
         const sampleStops = new Set();
-        perLineSamples.forEach(stops => {
-            const keep = shrink >= 1 ? stops : stops.slice(0, Math.round(stops.length * shrink));
+        perLineSamples.forEach((stops, index) => {
+            const keep = shrink >= 1 ? stops : this.sampleUniformDistinct(stops, quotas[index].target);
             keep.forEach(s => sampleStops.add(s));
         });
 
@@ -3394,6 +3529,7 @@ class BusMagoApp {
                     coords: [lat, lon],
                     vehicle: r.Vehicle || "",
                     race: String(r.Race || ""),
+                    lineToken: String(r.Line || ""),
                     direction: r.Direction || "",
                     destination: r.Destination || "",
                     departure: r.Departure || "",
@@ -4034,6 +4170,15 @@ class BusMagoApp {
     }
     this.state.infoPanel.selectedBus = bus;
     this.state.infoPanel.finishedTrip = false;
+    // Caricamenti indipendenti dal refresh realtime: una sola sequenza per
+    // race e indice fermate condiviso. Al completamento ridisegnano il pannello.
+    this.ensureVehicleTimetable(bus);
+    this.ensureStopsIndex().then(() => {
+      if (this.state.selectedVehicleKey === bus.key) {
+        this.state.lastInfoSignature = null;
+        this.renderInfoPanel();
+      }
+    });
     this.renderInfoPanel();
   }
 
@@ -4070,6 +4215,7 @@ class BusMagoApp {
   }
 
   updateInfoFromTrack(lineConf, direction) {
+    this.abortTimetableRequestsExcept();
     if (!lineConf) {
       this.state.infoPanel.selectedTrack = null;
       this.renderInfoPanel();
@@ -4223,7 +4369,10 @@ class BusMagoApp {
     // Velocità/distanza come stringhe FORMATTATE: cambiano solo quando cambia
     // il testo mostrato (niente churn), ma senza di esse il guard anti-re-render
     // bloccherebbe l'aggiornamento delle righe (stesso bug visto per arrivalRaw).
-    return `B:${bus.key || ''}|${bus.lineCode || ''}|${bus.destination || ''}|${bus.departure || ''}|${bus.race || ''}|${bus.vehicle || ''}|${bus.note || ''}|${bus.arrivalRaw || ''}|${this.getVehicleSpeedText(bus.key) || ''}|${this.getVehicleDistanceText(bus) || ''}`;
+    const timetableKey = this.getTimetableKey(bus);
+    const timetable = timetableKey ? this.state.timetables.entries[timetableKey] : null;
+    const timetableSig = timetable ? `${timetable.status}:${timetable.stops ? timetable.stops.length : 0}` : 'none';
+    return `B:${bus.key || ''}|${bus.lineCode || ''}|${bus.destination || ''}|${bus.departure || ''}|${bus.race || ''}|${bus.vehicle || ''}|${bus.note || ''}|${bus.arrivalRaw || ''}|${this.getVehicleSpeedText(bus.key) || ''}|${this.getVehicleDistanceText(bus) || ''}|${timetableSig}`;
   }
 
   getForcedDeparturesFilter() {
@@ -4267,44 +4416,86 @@ class BusMagoApp {
     const geom = this.getTrackGeometry(`${bus.lineCode}_${normalizeKey(bus.destination)}`);
     if (!geom || !this.stopsIndex || !this.stopsIndex.list.length) return '';
 
+    const timetableKey = this.getTimetableKey(bus);
+    const timetable = timetableKey ? this.state.timetables.entries[timetableKey] : null;
+    if (timetable && timetable.status === 'loading') {
+      return `
+        <div class="vehicle-stops-section" style="${collapseBodyStyle}">
+          <div class="vehicle-stops-header"><span class="vehicle-stops-title">🚏 Prossime fermate</span></div>
+          <div class="vehicle-stops-loading">Caricamento percorso della corsa…</div>
+        </div>`;
+    }
+
+    const exactTimetable = !!(timetable && timetable.status === 'ready' && timetable.stops.length);
+    const sourceStops = exactTimetable
+      ? timetable.stops
+      : lineConf.stops.map(code => ({ code: String(code), name: '' }));
+
     const animRec = this.state.anim && this.state.anim.byKey ? this.state.anim.byKey[bus.key] : null;
-    const busS = (animRec && typeof animRec.s === 'number')
+    const rawBusS = (animRec && typeof animRec.s === 'number')
       ? animRec.s
       : this.projectToTrack(geom, bus.coords[0], bus.coords[1]).s;
 
-    const candidateStops = [];
+    let candidateStops = [];
     const seenCodes = new Set();
-    for (const code of lineConf.stops) {
-      const codeStr = String(code);
+    for (const source of sourceStops) {
+      const codeStr = String(source.code || '');
       if (seenCodes.has(codeStr)) continue;
       const stop = this.stopsIndex.byCode.get(codeStr);
       if (!stop) continue;
       const proj = this.projectToTrack(geom, stop.lat, stop.lng);
       if (proj.distM < 75) {
         seenCodes.add(codeStr);
-        candidateStops.push({ stop, s: proj.s });
+        candidateStops.push({
+          stop: { ...stop, name: source.name || stop.name },
+          s: proj.s,
+          distFromTrack: proj.distM
+        });
       }
     }
 
+    // Il fallback geometrico include tutte le paline della linea, anche quelle
+    // sull'altro lato della strada. Per non mostrare doppioni visivi conserviamo
+    // la palina più vicina al tracciato per ogni nome/area di circa 100 metri.
+    if (!exactTimetable) {
+      const byPlace = new Map();
+      candidateStops.forEach(item => {
+        const placeKey = `${normalizeSearchText(item.stop.name)}|${Math.round(item.stop.lat * 1000)}|${Math.round(item.stop.lng * 1000)}`;
+        const existing = byPlace.get(placeKey);
+        if (!existing || item.distFromTrack < existing.distFromTrack) byPlace.set(placeKey, item);
+      });
+      candidateStops = [...byPlace.values()];
+    }
+
+    // Alcune geometrie arrivano orientate al contrario. La sequenza timetable
+    // stabilisce il verso corretto confrontando la prima e l'ultima proiezione.
+    const firstCandidate = candidateStops[0];
+    const lastCandidate = candidateStops[candidateStops.length - 1];
+    const forward = !exactTimetable || !firstCandidate || !lastCandidate || lastCandidate.s >= firstCandidate.s;
+    const toProgress = s => forward ? s : geom.total - s;
+    const busProgress = toProgress(rawBusS);
+    candidateStops.forEach(item => { item.progress = toProgress(item.s); });
+
     const upcoming = candidateStops
-      .filter(item => item.s >= busS - 15 && item.s <= geom.total + 20)
-      .sort((a, b) => a.s - b.s)
+      .filter(item => item.progress >= busProgress - 15 && item.progress <= geom.total + 20)
+      .sort((a, b) => a.progress - b.progress)
       .slice(0, 5);
 
     if (!upcoming.length) return '';
 
     const rowsHtml = upcoming.map((item, idx) => {
-      const remDist = Math.max(0, Math.round(item.s - busS));
+      const remDist = Math.max(0, Math.round(item.progress - busProgress));
       const distLabel = this.formatDistance(remDist);
-      const etaMin = Math.max(1, Math.round(remDist / 300));
+      const speedMps = animRec && Number(animRec.speed) >= 2 ? Number(animRec.speed) : 5;
+      const etaMin = Math.max(1, Math.round(remDist / speedMps / 60));
       const etaLabel = remDist < 70 ? 'In arrivo' : `~${etaMin} min`;
       const isFirst = idx === 0;
       return `
-        <div class="vehicle-stop-row ${isFirst ? 'vehicle-stop-row--next' : ''}" role="button" tabindex="0" data-stop-code="${this.escapeHtmlAttribute(item.stop.code)}" data-stop-name="${this.escapeHtmlAttribute(item.stop.name)}" title="Vedi arrivi a ${this.escapeHtmlAttribute(item.stop.name)}">
+        <button type="button" class="vehicle-stop-row ${isFirst ? 'vehicle-stop-row--next' : ''}" data-stop-code="${this.escapeHtmlAttribute(item.stop.code)}" data-stop-name="${this.escapeHtmlAttribute(item.stop.name)}" title="Vedi arrivi a ${this.escapeHtmlAttribute(item.stop.name)}">
           <div class="vehicle-stop-dot ${isFirst ? 'vehicle-stop-dot--next' : ''}"></div>
           <div class="vehicle-stop-name">${this.escapeHtmlAttribute(item.stop.name)}</div>
           <div class="vehicle-stop-eta">${this.escapeHtmlAttribute(etaLabel)} · ${this.escapeHtmlAttribute(distLabel)}</div>
-        </div>
+        </button>
       `;
     }).join('');
 
@@ -4448,15 +4639,16 @@ class BusMagoApp {
     // aggancio al primo ciclo che la vede.
     const followable = !!(it.vehicleKey || it.pendingVehicle);
     const rowClass = followable ? 'departures-line departures-line--clickable' : 'departures-line';
+    const rowTag = followable ? 'button' : 'div';
     let rowAttrs = '';
     if (it.vehicleKey) {
-      rowAttrs = ` role="button" tabindex="0" title="Segui questa vettura" data-vehicle-key="${this.escapeHtmlAttribute(it.vehicleKey)}"`;
+      rowAttrs = ` type="button" title="Segui questa vettura" data-vehicle-key="${this.escapeHtmlAttribute(it.vehicleKey)}"`;
     } else if (it.pendingVehicle) {
-      rowAttrs = ` role="button" tabindex="0" title="Segui questa vettura" data-pending-vehicle="${this.escapeHtmlAttribute(it.pendingVehicle)}" data-pending-line="${this.escapeHtmlAttribute(it.lineCode)}"`;
+      rowAttrs = ` type="button" title="Segui questa vettura" data-pending-vehicle="${this.escapeHtmlAttribute(it.pendingVehicle)}" data-pending-line="${this.escapeHtmlAttribute(it.lineCode)}"`;
     }
 
     return `
-      <div class="${rowClass}"${rowAttrs}>
+      <${rowTag} class="${rowClass}"${rowAttrs}>
         <div class="departures-line-badge" style="background-color:${badgeColor};">${this.escapeHtmlAttribute(it.lineCode)}</div>
         <div class="departures-line-main">
           <div class="departures-dest">${destLabel}</div>
@@ -4465,7 +4657,7 @@ class BusMagoApp {
           ${right}
         </div>
         ${followable ? '<span class="departures-follow-chevron" aria-hidden="true">›</span>' : ''}
-      </div>
+      </${rowTag}>
     `;
   }
 
