@@ -539,9 +539,13 @@ class BusMagoApp {
     // Start loop
     this.scheduleNextRefresh(0);
 
-    // Il pacchetto GTFS esatto viene caricato in background: non blocca il primo
-    // paint e sostituisce richieste realtime solo dopo i controlli di coerenza.
-    setTimeout(() => { this.ensureStaticTransitData(); }, 0);
+    // Il pacchetto GTFS esatto (trips.json, ~564 KB) viene caricato quando il
+    // browser è idle, o dopo ~3.5s: scaricarlo e parsarlo non deve competere col
+    // primo paint né col primo ciclo realtime. Sostituisce richieste solo dopo i
+    // controlli di coerenza.
+    const loadStaticTransit = () => this.ensureStaticTransitData();
+    if ('requestIdleCallback' in window) requestIdleCallback(loadStaticTransit, { timeout: 3500 });
+    else setTimeout(loadStaticTransit, 3500);
 
     // Indice fermate in differita: non deve pesare sul primo paint né sul
     // primo ciclo di refresh.

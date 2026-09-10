@@ -1,5 +1,5 @@
 // Incrementa questo valore ad ogni deploy per invalidare la cache degli utenti
-const CACHE_NAME = 'bus-mago-cache-v18';
+const CACHE_NAME = 'bus-mago-cache-v19';
 
 // Immagini: cache-first (cambiano raramente, utili offline)
 const STATIC_IMAGES = [
@@ -11,7 +11,9 @@ const STATIC_IMAGES = [
   './img/barcola.webp'
 ];
 
-// File app: network-first (aggiornati ad ogni push su GitHub)
+// File app: stale-while-revalidate (serviti subito dalla cache, aggiornati in
+// background). trips.json NON è qui: 564 KB che servono solo al matcher statico
+// in background, si mette in cache al primo uso reale.
 const APP_FILES = [
   './',
   './index.html',
@@ -21,7 +23,6 @@ const APP_FILES = [
   './lines.js',
   './stops.js',
   './tracks.js',
-  './trips.json',
   './manifest.json'
 ];
 
@@ -46,46 +47,49 @@ self.addEventListener('activate', (event) => {
   );
 });
 
+// Salva in cache una risposta valida (clonata) senza bloccare il ritorno.
+function cachePut(request, response) {
+  if (response && response.status === 200) {
+    const clone = response.clone();
+    caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
+  }
+  return response;
+}
+
 self.addEventListener('fetch', (event) => {
   const url = event.request.url;
 
-  // Lascia passare le richieste esterne (tile OSM, API TPL FVG)
-  if (url.includes('tile.openstreetmap.org') || url.includes('tplfvg.it') || url.includes('unpkg.com')) {
+  // Lascia passare le richieste esterne dinamiche (tile OSM, API TPL FVG)
+  if (url.includes('tile.openstreetmap.org') || url.includes('tplfvg.it')) {
     return;
   }
 
   // Solo richieste GET
   if (event.request.method !== 'GET') return;
 
-  const isImage = /\.(webp|png|jpg|jpeg|gif|svg|ico)(\?.*)?$/i.test(url);
+  // Cache-first: immagini + Leaflet da unpkg (versione pinnata nell'URL =
+  // immutabile). Così l'app è davvero offline e non fa round-trip a ogni avvio.
+  const cacheFirst = /\.(webp|png|jpg|jpeg|gif|svg|ico)(\?.*)?$/i.test(url)
+    || url.includes('unpkg.com');
 
-  if (isImage) {
-    // Cache-first per le immagini: veloce e disponibile offline
+  if (cacheFirst) {
     event.respondWith(
-      caches.match(event.request).then((cached) => {
-        if (cached) return cached;
-        return fetch(event.request).then((response) => {
-          if (response && response.status === 200) {
-            const clone = response.clone();
-            caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
-          }
-          return response;
-        });
-      })
+      caches.match(event.request).then((cached) =>
+        cached || fetch(event.request).then((response) => cachePut(event.request, response))
+      )
     );
-  } else {
-    // Network-first per HTML/JS/CSS: ad ogni push su GitHub l'utente riceve subito
-    // la versione aggiornata. Se offline, usa la cache come fallback.
-    event.respondWith(
-      fetch(event.request)
-        .then((response) => {
-          if (response && response.status === 200) {
-            const clone = response.clone();
-            caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
-          }
-          return response;
-        })
-        .catch(() => caches.match(event.request))
-    );
+    return;
   }
+
+  // Stale-while-revalidate per HTML/JS/CSS/JSON: risposta immediata dalla cache,
+  // copia nuova scaricata in background ed usata al riavvio successivo. Il bump
+  // di CACHE_NAME a ogni deploy resta la garanzia "versione nuova per tutti".
+  event.respondWith(
+    caches.match(event.request).then((cached) => {
+      const network = fetch(event.request)
+        .then((response) => cachePut(event.request, response))
+        .catch(() => cached);
+      return cached || network;
+    })
+  );
 });
