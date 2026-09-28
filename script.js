@@ -276,7 +276,6 @@ class BusMagoApp {
       refreshControl: {
         inFlight: false,
         requestSeq: 0,
-        lastAppliedRequestSeq: 0,
         abortController: null
       },
       isHardRefreshing: false,
@@ -783,14 +782,10 @@ class BusMagoApp {
     if (modal) modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
   }
 
-  getTileUrl(themeMode, skinMode) {
-    return 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
-  }
-
   applyTileLayer() {
     if (!this.state.map) return;
     const isDark = this.state.theme.mode === 'dark';
-    const url = this.getTileUrl(this.state.theme.mode, this.state.skin.mode);
+    const url = 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
     const attribution = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors';
     // OSM è la base affidabile per entrambe le skin. Il tema scuro viene
     // ottenuto via CSS; Glossy mantiene una resa leggermente più morbida.
@@ -1146,10 +1141,15 @@ class BusMagoApp {
       if (signal && signal.aborted) return cached ? cached.data : [];
       const ts = Date.now();
       return fetch(`https://realtime.tplfvg.it/API/v1.0/polemonitor/mrcruns?StopCode=${stopCode}&IsUrban=true&_=${ts}`, fetchOptions)
-        .then(r => r.json())
+        .then(r => {
+          if (!r.ok) throw new Error(`HTTP ${r.status}`);
+          return r.json();
+        })
         .then(data => {
           const normalized = Array.isArray(data) ? data : [];
-          this.state.stopCache.entries[stopCode] = { data: normalized, expiresAt: ts + ttlMs };
+          // okAt = ultima risposta REALE: refreshData lo usa per capire se il
+          // ciclo ha ricevuto qualcosa o sta girando solo sulla cache.
+          this.state.stopCache.entries[stopCode] = { data: normalized, expiresAt: ts + ttlMs, okAt: ts };
           return normalized;
         });
     })
@@ -1159,7 +1159,7 @@ class BusMagoApp {
           return cached ? cached.data : [];
         }
         const fallback = cached ? cached.data : [];
-        this.state.stopCache.entries[stopCode] = { data: fallback, expiresAt: Date.now() + 1000 };
+        this.state.stopCache.entries[stopCode] = { data: fallback, expiresAt: Date.now() + 1000, okAt: cached ? cached.okAt || 0 : 0 };
         return fallback;
       })
       .finally(() => {
@@ -1214,7 +1214,8 @@ class BusMagoApp {
     const store = this.state.staticTransit;
     if (store.data) return Promise.resolve(store.data);
     if (store.loading) return store.loading;
-    if (store.failed) return Promise.resolve(null);
+    // Errore (es. avvio offline): nuovo tentativo dopo un minuto, non mai più.
+    if (store.failed && Date.now() < (store.retryAt || 0)) return Promise.resolve(null);
     store.loading = fetch(CONFIG.STATIC_TRANSIT.URL)
       .then(response => {
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
@@ -1235,6 +1236,9 @@ class BusMagoApp {
       })
       .catch(error => {
         store.failed = true;
+        // Pacchetto scaduto/non valido: riprova di rado (un deploy nuovo arriva
+        // comunque via SW); errore di rete: riprova dopo un minuto.
+        store.retryAt = Date.now() + (/scaduto|non valido/.test(String(error && error.message)) ? 3600000 : 60000);
         if (DEBUG) console.warn('Dati GTFS statici non disponibili:', error);
         return null;
       })
@@ -1523,12 +1527,15 @@ class BusMagoApp {
     const wantedCodes = new Set(wanted.map(s => s.code));
 
     const selectedCode = this.state.stopPanel.code;
+    // Due stili calcolati UNA volta (getComputedStyle), non per ogni marker.
+    const styleOn = this.getStopMarkerStyle(true);
+    const styleOff = this.getStopMarkerStyle(false);
     for (const [code, marker] of [...markers]) {
       if (!wantedCodes.has(code)) {
         this.stopsLayer.removeLayer(marker);
         markers.delete(code);
       } else if (restyle) {
-        marker.setStyle(this.getStopMarkerStyle(code === selectedCode));
+        marker.setStyle(code === selectedCode ? styleOn : styleOff);
       }
     }
     wanted.forEach(stop => {
@@ -1536,7 +1543,7 @@ class BusMagoApp {
       // bubblingMouseEvents:false — il click NON deve risalire alla mappa,
       // dove il listener globale deselezionerebbe subito la fermata.
       const marker = L.circleMarker([stop.lat, stop.lng], {
-        ...this.getStopMarkerStyle(stop.code === selectedCode),
+        ...(stop.code === selectedCode ? styleOn : styleOff),
         renderer: this._stopsRenderer,
         pane: 'stopsPane',
         bubblingMouseEvents: false
@@ -1779,14 +1786,14 @@ class BusMagoApp {
       return `<div class="legend-header-row"><div class="legend-section-title legend-chip">FERMATE</div></div>
         <div class="stop-results-empty">Caricamento fermate…</div>`;
     }
-    // Raccoglie più match del necessario, poi ordina: match più vicino
-    // all'inizio del nome prima, a parità nome più corto (più specifico).
+    // Raccoglie TUTTI i match (~1400 fermate: costo trascurabile) e poi
+    // ordina: tagliare prima dell'ordinamento perdeva i match migliori.
+    // Match più vicino all'inizio del nome prima, a parità nome più corto.
     const matches = [];
     for (const stop of this.stopsIndex.list) {
       const at = stop.nameNorm.indexOf(q);
       if (at !== -1 || stop.code.toLowerCase() === q) {
-        matches.push({ stop, rank: at === -1 ? -1 : at });
-        if (matches.length >= CONFIG.STOPS.SEARCH_MAX_RESULTS * 5) break;
+        matches.push({ stop, rank: at }); // -1 = match sul codice, in cima
       }
     }
     matches.sort((a, b) => {
@@ -1794,27 +1801,13 @@ class BusMagoApp {
       const fa = this.state.stopFavorites.set.has(a.stop.code) ? 0 : 1;
       const fb = this.state.stopFavorites.set.has(b.stop.code) ? 0 : 1;
       if (fa !== fb) return fa - fb;
-      const ra = a.rank === -1 ? -1 : a.rank; // match sul codice in cima
-      const rb = b.rank === -1 ? -1 : b.rank;
-      if (ra !== rb) return ra - rb;
+      if (a.rank !== b.rank) return a.rank - b.rank;
       return a.stop.name.length - b.stop.name.length;
     });
     const out = matches.slice(0, CONFIG.STOPS.SEARCH_MAX_RESULTS).map(m => m.stop);
     if (!out.length) return '';
     return `<div class="legend-header-row"><div class="legend-section-title legend-chip">FERMATE</div></div>
       <div class="stop-results">${out.map(s => this.buildStopResultRowHtml(s)).join('')}</div>`;
-  }
-
-  computeHaversineDistanceMeters(lat1, lon1, lat2, lon2) {
-    const R = 6371000;
-    const toRad = Math.PI / 180;
-    const dLat = (lat2 - lat1) * toRad;
-    const dLon = (lon2 - lon1) * toRad;
-    const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-              Math.cos(lat1 * toRad) * Math.cos(lat2 * toRad) *
-              Math.sin(dLon / 2) * Math.sin(dLon / 2);
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-    return Math.round(R * c);
   }
 
   formatDistance(distMeters) {
@@ -1883,7 +1876,7 @@ class BusMagoApp {
     }
     const withDist = [];
     for (const stop of this.stopsIndex.list) {
-      const dist = this.computeHaversineDistanceMeters(uloc.lat, uloc.lon, stop.lat, stop.lng);
+      const dist = Math.round(this.haversineMeters(uloc.lat, uloc.lon, stop.lat, stop.lng));
       withDist.push({ stop, dist });
     }
     withDist.sort((a, b) => a.dist - b.dist);
@@ -2085,8 +2078,9 @@ class BusMagoApp {
     if (!this.toastDiv) return;
     this.toastDiv.textContent = message;
     this.toastDiv.className = `toast-notification show ${type}`;
-    // Hide after timeout
-    setTimeout(() => {
+    // Hide after timeout (il timer del toast precedente non deve chiudere questo)
+    clearTimeout(this._toastTimer);
+    this._toastTimer = setTimeout(() => {
         if (this.toastDiv) this.toastDiv.classList.remove('show');
     }, CONFIG.UI.TOAST_DURATION_MS);
   }
@@ -2157,7 +2151,6 @@ class BusMagoApp {
       this.releaseWakeLock();
     });
 
-    // Menu toggle
     // Menu toggle
     const menuToggle = document.getElementById('menu-toggle');
     if (menuToggle) {
@@ -2539,7 +2532,6 @@ class BusMagoApp {
     this.state.directions.lastKnownSignature = nextSignature;
 
     const filterByLine = this.state.directions.filterByLine || {};
-    const modeByLine = this.state.directions.overrideModeByLine || {};
     Object.keys(filterByLine).forEach(lineCode => {
       const set = filterByLine[lineCode];
       if (!(set instanceof Set)) return;
@@ -2771,12 +2763,21 @@ class BusMagoApp {
         }
         
         if (firstLocationUpdate) {
-          this.suppressMenuAutoCloseUntilMapSettles();
-          this.state.map.setView([lat, lon], 15);
           firstLocationUpdate = false;
+          // Link condiviso (#fermata=/#bus=) o selezione già attiva: il primo
+          // fix non deve portare via la vista dall'oggetto aperto.
+          if (!this.state.stopPanel.code && !this.state.selectedVehicleKey && !this._pendingDeepLink) {
+            this.suppressMenuAutoCloseUntilMapSettles();
+            this.state.map.setView([lat, lon], 15);
+          }
         }
 
-        if (this.isLegendVisible() && !(this.state.legend.filterText || '').trim()) {
+        // "Fermate vicine" in legenda: ridisegno solo se ci si è spostati
+        // davvero (con alta precisione i fix arrivano anche ogni secondo).
+        const lr = this._legendLocAt;
+        const movedForLegend = !lr || this.haversineMeters(lr[0], lr[1], lat, lon) > 25;
+        if (movedForLegend && this.isLegendVisible() && !(this.state.legend.filterText || '').trim()) {
+          this._legendLocAt = [lat, lon];
           this.renderLegend({ skipInfoPanel: true });
         }
       }, error => {
@@ -2836,7 +2837,7 @@ class BusMagoApp {
               </div>
             </div>`;
 
-    const filterText = (this.state.legend.filterText || '').trim().toLowerCase();
+    const filterText = normalizeSearchText(this.state.legend.filterText);
 
     // Preferiti + Deseleziona tutte: una riga, mezza colonna ciascuno
     html += `<div class="legend-actions-row">
@@ -3011,24 +3012,20 @@ class BusMagoApp {
     let separatorAdded = false;
     let renderedLineCount = 0;
     orderedLines.forEach(l => {
-      // Separator between night and day lines
-      if (isNightTime) {
-        if (!separatorAdded && !NIGHT_CODES.includes(l.code)) {
-          html += '<hr class="legend-grid-separator">';
-          separatorAdded = true;
-        }
-      } else {
-        if (!separatorAdded && NIGHT_CODES.includes(l.code)) {
-          html += '<hr class="legend-grid-separator">';
-          separatorAdded = true;
-        }
-      }
-
       const isFavorite = this.state.favorites.set.has(l.code);
       if (favoritesOnly && !isFavorite) return;
       if (filterText) {
-        const hay = `${l.code} ${l.label} ${directionsList(l.directions).join(' ')}`.toLowerCase();
+        // Stessa normalizzazione della ricerca fermate: senza accenti/maiuscole.
+        const hay = normalizeSearchText(`${l.code} ${l.label} ${directionsList(l.directions).join(' ')}`);
         if (!hay.includes(filterText)) return;
+      }
+
+      // Separatore notte/giorno solo DOPO i filtri e solo fra due tile
+      // effettivamente mostrate (prima poteva restare un <hr> orfano).
+      const isNight = NIGHT_CODES.includes(l.code);
+      if (!separatorAdded && renderedLineCount > 0 && isNight !== isNightTime) {
+        html += '<hr class="legend-grid-separator">';
+        separatorAdded = true;
       }
 
       const safeKey = this.escapeHtmlAttribute(l.code);
@@ -3432,6 +3429,9 @@ class BusMagoApp {
       clearTimeout(this.state.uiTimers.refreshTimeout);
       this.state.uiTimers.refreshTimeout = null;
     }
+    // App in background: niente polling (il ciclo interrotto al passaggio in
+    // background lo riarmava dal suo finally). Riparte da visibilitychange.
+    if (document.hidden) return;
 
     const ms = typeof delayMs === 'number' ? delayMs : this.getRefreshIntervalMs();
     this.state.uiTimers.refreshTimeout = setTimeout(() => {
@@ -3492,7 +3492,9 @@ class BusMagoApp {
     this.updateTrackStyles();
     this.renderLegend({ skipInfoPanel: true });
 
-    // 6. Now do a fresh data fetch
+    // 6. Now do a fresh data fetch. Un ciclo già in corso viene scavalcato
+    // (refreshData lo aborta): altrimenti il refresh manuale non partirebbe.
+    this.state.refreshControl.inFlight = false;
     await this.refreshData();
 
     // 7. Done
@@ -3688,10 +3690,20 @@ class BusMagoApp {
         } else {
           ttlMs = Math.max(1000, this.getRefreshIntervalMs() - 500);
         }
+        const cycleStart = Date.now();
         const requests = stopsList.map(code => this.fetchStopRuns(code, controller.signal, ttlMs));
         const results = await Promise.all(requests);
 
         if (requestId !== this.state.refreshControl.requestSeq) return;
+
+        // fetchStopRuns non rifiuta mai (ripiega sulla cache): se NESSUNA fermata
+        // ha una risposta reale recente, il ciclo è fallito (rete giù o IP
+        // bloccato dal rate-limit) e va segnalato invece di dire "aggiornato".
+        // Finestra = TTL massimo possibile: una cache ancora valida conta come fresca.
+        const freshSince = cycleStart - CONFIG.REFRESH.MANY_LINES_MS;
+        if (stopsList.length && !stopsList.some(c => ((this.state.stopCache.entries[c] || {}).okAt || 0) >= freshSince)) {
+          throw new Error('Nessuna risposta dal server');
+        }
 
         // Map results
         const stopDataMap = {};
@@ -3760,6 +3772,9 @@ class BusMagoApp {
         // lungo il percorso invece di puntare a nord. Nei cicli successivi
         // l'array è vuoto → zero attesa. reorientStationaryBuses resta come
         // rete di sicurezza per i tracciati che sforano il tetto.
+        // Retry del pacchetto GTFS fallito (il primo caricamento resta differito
+        // all'idle in init); no-op finché non scade retryAt.
+        if (this.state.staticTransit.failed) this.ensureStaticTransitData();
         const pendingTracks = this.processTracks(stopDataMap);
         if (pendingTracks.length > 0) {
             await Promise.race([
@@ -3870,12 +3885,14 @@ class BusMagoApp {
         this.renderInfoPanel();
     } finally {
         clearTimeout(cycleDeadline);
-        if (requestId >= this.state.refreshControl.lastAppliedRequestSeq) {
-          this.state.refreshControl.lastAppliedRequestSeq = requestId;
+        // Solo il ciclo più recente chiude e riprogramma: un ciclo superato
+        // (reset dopo il resume, hard refresh) non deve azzerare l'inFlight
+        // di quello nuovo né armare un secondo timer.
+        if (requestId === this.state.refreshControl.requestSeq) {
+          this.state.refreshControl.inFlight = false;
+          this.compactStopCache();
+          this.scheduleNextRefresh(this.getRefreshIntervalMs());
         }
-        this.state.refreshControl.inFlight = false;
-        this.compactStopCache();
-        this.scheduleNextRefresh(this.getRefreshIntervalMs());
     }
   }
 
@@ -4175,9 +4192,6 @@ class BusMagoApp {
               });
               this.state.routeEndpointMarkers[trackKey] = [startMarker, endMarker];
           }
-      } else if (this.state.routeEndpointMarkers[trackKey]) {
-          this.state.routeEndpointMarkers[trackKey].forEach(m => this.state.map.removeLayer(m));
-          delete this.state.routeEndpointMarkers[trackKey];
       }
 
       this.updateTrackStyles();
@@ -4409,15 +4423,16 @@ class BusMagoApp {
 
         const isVisible = isVisibleByLine && isVisibleByData && isVisibleByDirection;
 
+        // Nascosto = fuori dalla mappa (non solo trasparente): i cerchi degli
+        // estremi con opacity 0 restavano cliccabili e ridisegnati sul canvas.
         if (!isVisible) {
-            layer.setStyle({ opacity: 0, weight: 0 });
-            if (endpoints) {
-                endpoints.forEach(e => {
-                    if (e.setStyle) e.setStyle({ opacity: 0, fillOpacity: 0 });
-                    else if (e.setOpacity) e.setOpacity(0);
-                });
-            }
+            layer.remove();
+            if (endpoints) endpoints.forEach(e => e.remove());
             return;
+        }
+        if (!this.state.map.hasLayer(layer)) {
+            layer.addTo(this.state.map);
+            if (endpoints) endpoints.forEach(e => e.addTo(this.state.map));
         }
 
         // Visible
@@ -4434,6 +4449,10 @@ class BusMagoApp {
             layer.bringToFront();
         }
 
+        // Stile invariato: niente setStyle (ognuno ridisegna il canvas).
+        const styleKey = `${paletteColor}|${opacity}`;
+        if (layer._styleKey === styleKey) return;
+        layer._styleKey = styleKey;
         layer.setStyle({ color: paletteColor, opacity: opacity, weight: 3 });
         if (endpoints) {
             endpoints.forEach(e => {
@@ -4606,10 +4625,27 @@ class BusMagoApp {
     const vehicleSelected = !!this.state.selectedVehicleKey && !this.state.selectedVehicleKey.startsWith('TRACK_');
     const selectedInfoLine = this.state.infoPanel.selectedInfoLine;
     const activeLineCodes = Object.keys(this.state.lineVisibility).filter(k => this.state.lineVisibility[k] === true);
+    const stopCode = this.state.stopPanel.code;
+
+    // Firma PRIMA di costruire l'HTML: il metodo è chiamato più volte per
+    // ciclo e la costruzione (partenze, prossime fermate proiettate sul
+    // tracciato) è la parte costosa. Skin nella firma: le chip ne dipendono.
+    const vehicleSig = this.getVehicleInfoSignature();
+    const fleetSig = (this.state.lastEnrichedBuses || []).filter(b => this.state.lineVisibility[b.lineCode] === true).length;
+    const depSig = selectedInfoLine ? `L:${selectedInfoLine}` : (vehicleSelected ? `V:${this.state.selectedVehicleKey}` : '');
+    // Firma della modalità fermata: senza, il guard qui sotto congelerebbe il
+    // pannello ad arrivi invariati (stesso bug già visto per arrivalRaw).
+    let stopSig = '';
+    if (stopCode) {
+      const stopItems = this.getStopArrivalItems(stopCode);
+      stopSig = `S:${stopCode}:${this.state.stopFavorites.set.has(stopCode) ? 1 : 0}:` + (stopItems === null ? 'wait' : stopItems.map(it => `${it.lineCode}|${it.destinationKey}|${it.times.join(',')}|${it.note}|${it.isStarted ? 1 : 0}`).join('~'));
+    }
+    const signature = `${vehicleSig}|${depSig}|${this.state.departures.collapsed ? 1 : 0}|${this.state.infoPanel.collapsed ? 1 : 0}|${activeLineCodes.join(',')}|${this.state.directions.lastKnownSignature || ''}|${this.state.selectedVehicleKey || ''}|${selectedInfoLine || ''}|${this.state.updateStatus.lastSuccessAt || 0}|${fleetSig}|${stopSig}|${this.state.skin.mode}`;
+    if (signature === this.state.lastInfoSignature) return;
+    this.state.lastInfoSignature = signature;
 
     // Build content based on mode
     let combined = '';
-    const stopCode = this.state.stopPanel.code;
 
     if (stopCode) {
       // MODE 4: fermata selezionata — arrivi in tempo reale (esclusiva con
@@ -4637,21 +4673,6 @@ class BusMagoApp {
     ${chipsHtml}
     ${departuresHtml ? '<div class="info-section-divider"></div>' + departuresHtml : ''}`;
     }
-
-    // Signature check to avoid unnecessary DOM writes
-    const vehicleSig = this.getVehicleInfoSignature();
-    const fleetSig = (this.state.lastEnrichedBuses || []).filter(b => this.state.lineVisibility[b.lineCode] === true).length;
-    const depSig = selectedInfoLine ? `L:${selectedInfoLine}` : (vehicleSelected ? `V:${this.state.selectedVehicleKey}` : '');
-    // Firma della modalità fermata: senza, il guard qui sotto congelerebbe il
-    // pannello ad arrivi invariati (stesso bug già visto per arrivalRaw).
-    let stopSig = '';
-    if (stopCode) {
-      const stopItems = this.getStopArrivalItems(stopCode);
-      stopSig = `S:${stopCode}:${this.state.stopFavorites.set.has(stopCode) ? 1 : 0}:` + (stopItems === null ? 'wait' : stopItems.map(it => `${it.lineCode}|${it.destinationKey}|${it.times.join(',')}|${it.note}|${it.isStarted ? 1 : 0}`).join('~'));
-    }
-    const signature = `${vehicleSig}|${depSig}|${this.state.departures.collapsed ? 1 : 0}|${this.state.infoPanel.collapsed ? 1 : 0}|${activeLineCodes.join(',')}|${this.state.directions.lastKnownSignature || ''}|${this.state.selectedVehicleKey || ''}|${selectedInfoLine || ''}|${this.state.updateStatus.lastSuccessAt || 0}|${fleetSig}|${stopSig}`;
-    if (signature === this.state.lastInfoSignature) return;
-    this.state.lastInfoSignature = signature;
 
     if (!combined) {
       this.infoDiv.style.display = 'none';
@@ -4860,20 +4881,6 @@ class BusMagoApp {
     const bus = (vehicleSelected && this.state.infoPanel) ? this.state.infoPanel.selectedBus : null;
     if (!bus) return '';
 
-    const now = Date.now();
-    const lastSuccessAt = this.state.updateStatus.lastSuccessAt || 0;
-    const lastErrorAt = this.state.updateStatus.lastErrorAt || 0;
-    const lastSelectedMoveAt = this.state.updateStatus.lastSelectedMoveAt || 0;
-    const isOffline = lastErrorAt > lastSuccessAt;
-    let timeStr = "--:--:--";
-    if (lastSuccessAt) {
-      const dt = new Date(lastSuccessAt);
-      timeStr = `${String(dt.getHours()).padStart(2, '0')}:${String(dt.getMinutes()).padStart(2, '0')}:${String(dt.getSeconds()).padStart(2, '0')}`;
-    }
-
-    const ageSec = isOffline ? null : Math.max(0, Math.floor((now - lastSuccessAt) / 1000));
-    const ageText = isOffline ? 'offline' : `${ageSec}s fa`;
-    const ageTitle = isOffline ? 'Aggiornamento non riuscito: dati non aggiornati' : `Aggiornato ${ageSec}s fa (${timeStr})`;
     const lineBadgeColor = bus.lineCode ? this.getLegendLineColor(bus.lineCode) : (bus.lineColor || '#666');
     const lineLabel = bus.lineLabel || (bus.lineCode || '-');
 
@@ -4913,7 +4920,7 @@ class BusMagoApp {
               <span class="origin-tag">Da</span>${this.escapeHtmlAttribute(bus.departure || '-')}
             </div>
           </div>
-          <span id="info-update-badge" class="info-age-badge ${isOffline ? 'info-age-badge--offline' : 'info-age-badge--online'}" title="${this.escapeHtmlAttribute(ageTitle)}">${ageText}</span>
+          ${this.buildAgeBadgeHtml()}
           ${this.buildShareButtonHtml()}
           <button id="vehicle-collapse-toggle" class="vehicle-deselect-btn vehicle-collapse-toggle" type="button" aria-label="${collapseLabel}" aria-expanded="${collapsed ? 'false' : 'true'}" title="${collapsed ? 'Espandi' : 'Comprimi'}">${collapseIcon}</button>
         </div>

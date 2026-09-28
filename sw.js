@@ -1,5 +1,5 @@
 // Incrementa questo valore ad ogni deploy per invalidare la cache degli utenti
-const CACHE_NAME = 'bus-mago-cache-v19';
+const CACHE_NAME = 'bus-mago-cache-v20';
 
 // Immagini: cache-first (cambiano raramente, utili offline)
 const STATIC_IMAGES = [
@@ -29,7 +29,9 @@ const APP_FILES = [
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll([...STATIC_IMAGES, ...APP_FILES]);
+      // cache:'reload' salta la cache HTTP del browser: subito dopo un deploy
+      // (GitHub Pages max-age=600) addAll potrebbe altrimenti salvare i file vecchi.
+      return cache.addAll([...STATIC_IMAGES, ...APP_FILES].map((u) => new Request(u, { cache: 'reload' })));
     })
   );
   // Attiva subito senza aspettare che le tab vecchie siano chiuse
@@ -47,13 +49,13 @@ self.addEventListener('activate', (event) => {
   );
 });
 
-// Salva in cache una risposta valida (clonata) senza bloccare il ritorno.
+// Salva in cache una risposta valida (clonata). Ritorna la promise della
+// scrittura, da passare a event.waitUntil: senza, il SW può essere terminato
+// prima che cache.put finisca.
 function cachePut(request, response) {
-  if (response && response.status === 200) {
-    const clone = response.clone();
-    caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
-  }
-  return response;
+  if (!response || response.status !== 200) return Promise.resolve();
+  const clone = response.clone();
+  return caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
 }
 
 self.addEventListener('fetch', (event) => {
@@ -75,7 +77,10 @@ self.addEventListener('fetch', (event) => {
   if (cacheFirst) {
     event.respondWith(
       caches.match(event.request).then((cached) =>
-        cached || fetch(event.request).then((response) => cachePut(event.request, response))
+        cached || fetch(event.request).then((response) => {
+          event.waitUntil(cachePut(event.request, response));
+          return response;
+        })
       )
     );
     return;
@@ -84,12 +89,14 @@ self.addEventListener('fetch', (event) => {
   // Stale-while-revalidate per HTML/JS/CSS/JSON: risposta immediata dalla cache,
   // copia nuova scaricata in background ed usata al riavvio successivo. Il bump
   // di CACHE_NAME a ogni deploy resta la garanzia "versione nuova per tutti".
+  const network = fetch(event.request).then((response) => {
+    event.waitUntil(cachePut(event.request, response));
+    return response;
+  });
+  // Il revalidate in background deve completarsi anche se la pagina ha già
+  // ricevuto la copia in cache.
+  event.waitUntil(network.catch(() => {}));
   event.respondWith(
-    caches.match(event.request).then((cached) => {
-      const network = fetch(event.request)
-        .then((response) => cachePut(event.request, response))
-        .catch(() => cached);
-      return cached || network;
-    })
+    caches.match(event.request).then((cached) => cached || network.catch(() => cached))
   );
 });

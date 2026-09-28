@@ -11,7 +11,7 @@
 <meta name="apple-mobile-web-app-title" content="Bus Mago"/>
 <link rel="apple-touch-icon" sizes="180x180" type="image/png" href="img/icona_bus_mago.png"/>
 <link rel="manifest" href="manifest.json"/>
-<link rel="preconnect" href="https://unpkg.com">
+<link rel="preconnect" href="https://unpkg.com" crossorigin>
 <link rel="preconnect" href="https://a.tile.openstreetmap.org">
 <link rel="preconnect" href="https://b.tile.openstreetmap.org">
 <link rel="preconnect" href="https://c.tile.openstreetmap.org">
@@ -20,10 +20,11 @@
      state.theme.mode/state.skin.mode in script.js), altrimenti chi usa il tema
      chiaro vede un lampo scuro a ogni avvio. -->
 <script>try{var d=document.documentElement,s=localStorage;d.dataset.theme=s.getItem('busmago:theme:v1')||'dark';d.dataset.skin=s.getItem('busmago:skin:v1')||'classic';}catch(e){}</script>
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<!-- crossorigin: senza, la risposta è opaca (status 0) e il SW non la mette in cache (niente offline) -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="anonymous"/>
 <link rel="stylesheet" href="style.css"/>
 <link rel="stylesheet" href="style-classic.css"/>
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" defer></script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin="anonymous" defer></script>
 <script src="lines.js" defer></script>
 <script src="stops.js" defer></script>
 <script src="tracks.js" defer></script>
