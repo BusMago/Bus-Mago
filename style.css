@@ -665,21 +665,29 @@ body:has(#legend[style*="block"]) .map-search-menu-btn { background-color: var(-
 .vehicle-info--collapsed .info-header { margin-bottom: 0; }
 
 /* Dati vettura: colonne del tabellone, etichetta sopra e valore inciso sotto */
+/* Dati vettura su UNA riga, come una riga del tabellone: le colonne si
+   stringono al contenuto; se manca spazio si accorciano le etichette, mai
+   il ritardo (la paletta non si restringe). */
 .info-stats {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(92px, 1fr));
-  gap: 10px 12px;
+  display: flex;
+  flex-wrap: nowrap;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 10px;
   padding: 12px 0 2px;
   border-top: 1px solid var(--border);
 }
 .info-stat {
   display: flex; flex-direction: column; gap: 3px;
+  flex: 0 1 auto;
   min-width: 0;
 }
+.info-stat:has(.info-stat-pill) { flex-shrink: 0; }
 .info-stat-label {
   font-family: var(--font-flap);
   font-size: 12px; font-weight: 600; letter-spacing: 0.08em;
   text-transform: uppercase; color: var(--text-muted); line-height: 1.1;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
 .info-stat-value {
   font-family: var(--font-flap);
@@ -696,6 +704,7 @@ body:has(#legend[style*="block"]) .map-search-menu-btn { background-color: var(-
   font-weight: 700; font-size: 15px; line-height: 1.1;
   letter-spacing: 0.03em; text-transform: uppercase;
   width: fit-content;
+  white-space: nowrap;
 }
 .delay-pill--early { color: var(--early); }
 .delay-pill--ok    { color: #4ee07e; }
@@ -1679,4 +1688,7 @@ button.departures-line:hover { background: var(--surface-hover); }
 
   .legend-lines--grid { grid-template-columns: repeat(4, 1fr); gap: 7px; }
   .info-destination { font-size: 19px; }
+  .info-stat-value { font-size: 17px; }
+  .info-stat-pill  { font-size: 14px; padding: 3px 6px; }
+  .info-stats { gap: 8px; }
 }
