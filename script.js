@@ -121,6 +121,24 @@ const directionsList = (d) => {
   return [];
 };
 
+// Icone dei tasti del tabellone: un solo sistema SVG in currentColor, tratto
+// squadrato (niente glifi Unicode ★ × ▴ › come icone).
+const svgIcon = (d, size = 16, fill = false) => `<svg viewBox="0 0 24 24" width="${size}" height="${size}" ${fill ? 'fill="currentColor"' : 'fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="square" stroke-linejoin="miter"'} aria-hidden="true"><path d="${d}"/></svg>`;
+const STAR_D = 'M12 2.8l2.8 5.9 6.4.8-4.7 4.4 1.2 6.4L12 17.1l-5.7 3.2 1.2-6.4-4.7-4.4 6.4-.8z';
+const UI_ICONS = {
+  starOn:  svgIcon(STAR_D, 16, true),
+  starOff: svgIcon(STAR_D, 16),
+  close:   svgIcon('M6 6l12 12M18 6L6 18'),
+  up:      svgIcon('M6 15l6-6 6 6'),
+  down:    svgIcon('M6 9l6 6 6-6'),
+  right:   svgIcon('M9 6l6 6-6 6', 18),
+  back:    svgIcon('M20 12H5M11 6l-6 6 6 6'),
+  check:   svgIcon('M5 12.5l4.5 4.5L19 7.5'),
+  hint:    svgIcon('M9 18h6M10 21h4M12 3a6 6 0 0 0-3.5 10.9V16h7v-2.1A6 6 0 0 0 12 3z'),
+  warn:    svgIcon('M12 3l10 18H2zM12 10v5M12 18v.01'),
+  external:svgIcon('M14 4h6v6M20 4l-9 9M18 14v6H4V6h6', 13)
+};
+
 const BUS_PALETTE = [
   "#b80000",
   "#0086b3",
@@ -732,7 +750,7 @@ class BusMagoApp {
     window.addEventListener('appinstalled', () => {
       deferredPrompt = null;
       installBtn.style.display = 'none';
-      this.showToast('App installata! 🎉', 'success');
+      this.showToast('App installata!', 'success', UI_ICONS.check);
     });
 
     // iOS Safari non espone beforeinstallprompt (Apple non consente
@@ -791,7 +809,7 @@ class BusMagoApp {
     // ottenuto via CSS; Glossy mantiene una resa leggermente più morbida.
     const className = isDark
       ? (this.state.skin.mode === 'modern' ? 'dark-mode-tiles modern-dark-mode-tiles' : 'dark-mode-tiles')
-      : (this.state.skin.mode === 'modern' ? 'modern-light-mode-tiles' : '');
+      : 'modern-light-mode-tiles'; // chiaro: base desaturata in entrambe le skin
     if (this.tileLayer) {
       this.state.map.removeLayer(this.tileLayer);
       this.tileLayer = null;
@@ -851,7 +869,7 @@ class BusMagoApp {
     }
 
     const btn = document.getElementById('theme-toggle-btn');
-    if (btn) btn.textContent = mode === 'dark' ? '🌙' : '☀️';
+    if (btn) btn.innerHTML = this.getThemeIconSvg(mode);
 
     this.applyTileLayer();
     this.syncThemeColorMeta();
@@ -860,6 +878,13 @@ class BusMagoApp {
 
     this.renderLegend();
     this.updateBusMarkers(this.state.lastEnrichedBuses);
+  }
+
+  // Icona del tasto tema (luna = scuro attivo, sole = chiaro), in currentColor.
+  getThemeIconSvg(mode) {
+    return mode === 'dark'
+      ? '<svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true"><path d="M20.5 14.6A8.5 8.5 0 0 1 9.4 3.5a8.5 8.5 0 1 0 11.1 11.1z"/></svg>'
+      : '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="square" aria-hidden="true"><circle cx="12" cy="12" r="4.2"/><path d="M12 2v2.5M12 19.5V22M2 12h2.5M19.5 12H22M4.9 4.9l1.8 1.8M17.3 17.3l1.8 1.8M4.9 19.1l1.8-1.8M17.3 6.7l1.8-1.8"/></svg>';
   }
 
   loadSkin() {
@@ -889,6 +914,19 @@ class BusMagoApp {
     this.updateBusMarkers(this.state.lastEnrichedBuses);
   }
 
+  // Centro mappa per seguire un bus: su mobile il pannello info sta in alto e
+  // copre la parte superiore, quindi il bus va centrato nell'area libera sotto
+  // di esso (spostamento verso il basso di metà altezza del pannello).
+  followCenter(latlng) {
+    const map = this.state.map;
+    const info = this.infoDiv;
+    if (!map || !info || window.innerWidth > 600 || info.style.display === 'none') return latlng;
+    const d = Math.round(info.getBoundingClientRect().bottom / 2);
+    if (!(d > 0)) return latlng;
+    const z = map.getZoom();
+    return map.unproject(map.project(latlng, z).subtract([0, d]), z);
+  }
+
   // Valore CORRENTE di una variabile CSS del tema: serve dove i colori non
   // passano dal CSS (layer canvas di Leaflet: cerchio accuratezza, marker
   // fermate). Va riletto a ogni cambio tema/skin.
@@ -900,12 +938,12 @@ class BusMagoApp {
     }
   }
 
-  // Riapplica il colore brand agli elementi disegnati su canvas (non
+  // Riapplica il colore GPS (--locate) agli elementi disegnati su canvas (non
   // ristilizzabili via CSS) dopo un cambio tema/skin.
   restyleUserLocation() {
     const circle = this.state.userAccuracyCircle;
     if (!circle) return;
-    const brand = this.getCssVar('--brand') || '#0077ff';
+    const brand = this.getCssVar('--locate') || '#3d8bff';
     circle.setStyle({ color: brand, fillColor: brand });
   }
 
@@ -1566,7 +1604,7 @@ class BusMagoApp {
       if (localStorage.getItem(KEY)) return;
       localStorage.setItem(KEY, '1');
     } catch {}
-    this.showToast('💡 Tocca una fermata per vedere gli arrivi');
+    this.showToast('Tocca una fermata per vedere gli arrivi', 'info', UI_ICONS.hint);
   }
 
   getStopMarkerStyle(isSelected) {
@@ -1752,7 +1790,7 @@ class BusMagoApp {
     return `
       <div class="stop-panel">
         <div class="info-header">
-          <div class="stop-panel-icon" aria-hidden="true">🚏</div>
+          <div class="stop-panel-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="square" aria-hidden="true"><rect x="6" y="2.5" width="12" height="9" rx="1"/><path d="M12 11.5V22M8.5 22h7M9.5 7h5"/></svg></div>
           <div class="info-heading">
             <div class="info-destination">${this.escapeHtmlAttribute(name || code)}</div>
             <div class="info-subtitle">Fermata ${this.escapeHtmlAttribute(code)}</div>
@@ -1761,13 +1799,13 @@ class BusMagoApp {
           ${(() => {
             const isFav = this.state.stopFavorites.set.has(code);
             const label = isFav ? 'Rimuovi dai preferiti' : 'Aggiungi ai preferiti';
-            return `<button id="stop-fav-btn" class="vehicle-deselect-btn vehicle-collapse-toggle stop-fav-btn ${isFav ? 'is-active' : ''}" type="button" aria-pressed="${isFav ? 'true' : 'false'}" aria-label="${label}" title="${label}">${isFav ? '★' : '☆'}</button>`;
+            return `<button id="stop-fav-btn" class="vehicle-deselect-btn vehicle-collapse-toggle stop-fav-btn ${isFav ? 'is-active' : ''}" type="button" aria-pressed="${isFav ? 'true' : 'false'}" aria-label="${label}" title="${label}">${isFav ? UI_ICONS.starOn : UI_ICONS.starOff}</button>`;
           })()}
           ${this.buildShareButtonHtml()}
-          <button id="stop-deselect-btn" class="vehicle-deselect-btn vehicle-collapse-toggle" type="button" aria-label="Chiudi pannello fermata" title="Chiudi">×</button>
+          <button id="stop-deselect-btn" class="vehicle-deselect-btn vehicle-collapse-toggle" type="button" aria-label="Chiudi pannello fermata" title="Chiudi">${UI_ICONS.close}</button>
         </div>
         <div class="departures-body">${rows}</div>
-        <a class="stop-panel-tpl-link" href="${tplUrl}" target="_blank">Orari ufficiali TPL FVG ↗</a>
+        <a class="stop-panel-tpl-link" href="${tplUrl}" target="_blank">Orari ufficiali TPL FVG ${UI_ICONS.external}</a>
       </div>`;
   }
 
@@ -1854,7 +1892,11 @@ class BusMagoApp {
     const isFav = this.state.stopFavorites.set.has(s.code);
     const distStr = distMeters !== null ? this.formatDistance(distMeters) : '';
     const distHtml = distStr ? `<span class="stop-result-dist">${this.escapeHtmlAttribute(distStr)}</span>` : '';
-    const icon = distMeters !== null ? '📍' : (isFav ? '★' : '🚏');
+    const icon = distMeters !== null
+      ? '<svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5a2.5 2.5 0 1 1 0-5 2.5 2.5 0 0 1 0 5z"/></svg>'
+      : (isFav
+        ? '<svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true"><path d="M12 2.5l2.9 6.1 6.6.8-4.9 4.5 1.3 6.6L12 17.2l-5.9 3.3 1.3-6.6-4.9-4.5 6.6-.8z"/></svg>'
+        : '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="square" aria-hidden="true"><rect x="6" y="2.5" width="12" height="9" rx="1"/><path d="M12 11.5V22M8.5 22h7M9.5 7h5"/></svg>');
     const iconCls = distMeters !== null ? 'stop-result-icon--nearby' : (isFav ? 'stop-result-icon--fav' : '');
     return `<button type="button" class="stop-result" data-stop-code="${this.escapeHtmlAttribute(s.code)}" data-lat="${s.lat}" data-lng="${s.lng}">
         <span class="stop-result-icon ${iconCls}" aria-hidden="true">${icon}</span>
@@ -1953,7 +1995,8 @@ class BusMagoApp {
     this.connectionBannerDiv = document.createElement('div');
     this.connectionBannerDiv.className = 'connection-banner';
     this.connectionBannerDiv.setAttribute('role', 'status');
-    this.connectionBannerDiv.textContent = '⚠ Dati non aggiornati — problemi di connessione';
+    // Icona SVG statica + testo fisso: nessun contenuto esterno nell'HTML.
+    this.connectionBannerDiv.innerHTML = `${UI_ICONS.warn}<span>Dati non aggiornati — problemi di connessione</span>`;
     document.body.appendChild(this.connectionBannerDiv);
   }
 
@@ -2045,7 +2088,7 @@ class BusMagoApp {
   // selezionata dal pannello fermata (_returnToStopCode).
   buildBackToStopButtonHtml() {
     if (!this._returnToStopCode) return '';
-    return `<button id="vehicle-back-btn" class="vehicle-deselect-btn vehicle-collapse-toggle" type="button" aria-label="Torna alla fermata" title="Torna alla fermata">←</button>`;
+    return `<button id="vehicle-back-btn" class="vehicle-deselect-btn vehicle-collapse-toggle" type="button" aria-label="Torna alla fermata" title="Torna alla fermata">${UI_ICONS.back}</button>`;
   }
 
   // Bottone condividi (header pannello vettura e fermata; SVG in
@@ -2074,9 +2117,11 @@ class BusMagoApp {
     }
   }
 
-  showToast(message, type = 'info') {
+  // icon: SVG statico da UI_ICONS (mai input esterno); il messaggio resta testo.
+  showToast(message, type = 'info', icon = '') {
     if (!this.toastDiv) return;
     this.toastDiv.textContent = message;
+    if (icon) this.toastDiv.insertAdjacentHTML('afterbegin', icon);
     this.toastDiv.className = `toast-notification show ${type}`;
     // Hide after timeout (il timer del toast precedente non deve chiudere questo)
     clearTimeout(this._toastTimer);
@@ -2106,7 +2151,7 @@ class BusMagoApp {
 
     const themeBtn = document.getElementById('theme-toggle-btn');
     if (themeBtn) {
-      themeBtn.textContent = this.state.theme.mode === 'dark' ? '🌙' : '☀️';
+      themeBtn.innerHTML = this.getThemeIconSvg(this.state.theme.mode);
       themeBtn.addEventListener('click', (e) => {
         e.preventDefault();
         e.stopPropagation();
@@ -2681,7 +2726,7 @@ class BusMagoApp {
     }
     if (cur && cur.coords) {
       this.state.lastFollowCoords = [cur.coords[0], cur.coords[1]];
-      this.state.map.panTo(cur.coords, { animate: true });
+      this.state.map.panTo(this.followCenter(L.latLng(cur.coords)), { animate: true });
     }
     this.updateInfoFromBus(cur);
     this.updateUrlHash();
@@ -2751,7 +2796,7 @@ class BusMagoApp {
 
           // Il cerchio è disegnato su canvas: il colore va letto dal tema e
           // riapplicato a ogni cambio skin/tema (restyleUserLocation).
-          const brand = this.getCssVar('--brand') || '#0077ff';
+          const brand = this.getCssVar('--locate') || '#3d8bff';
           userAccuracyCircle = L.circle([lat, lon], {
             color: brand,
             fillColor: brand,
@@ -3030,7 +3075,7 @@ class BusMagoApp {
 
       const safeKey = this.escapeHtmlAttribute(l.code);
       const activeClass = this.state.lineVisibility[l.code] ? 'active-line' : '';
-      const favSymbol = isFavorite ? '★' : '☆';
+      const favSymbol = isFavorite ? UI_ICONS.starOn : UI_ICONS.starOff;
       const favClass = isFavorite ? 'is-favorite' : '';
       const title = this.escapeHtmlAttribute(l.label || l.code);
       const pressed = this.state.lineVisibility[l.code] ? 'true' : 'false';
@@ -3699,11 +3744,12 @@ class BusMagoApp {
         // fetchStopRuns non rifiuta mai (ripiega sulla cache): se NESSUNA fermata
         // ha una risposta reale recente, il ciclo è fallito (rete giù o IP
         // bloccato dal rate-limit) e va segnalato invece di dire "aggiornato".
+        // Il ciclo prosegue comunque (tracciati statici e ultima cache restano
+        // disegnati) e l'errore viene sollevato solo prima di dichiararlo buono.
         // Finestra = TTL massimo possibile: una cache ancora valida conta come fresca.
         const freshSince = cycleStart - CONFIG.REFRESH.MANY_LINES_MS;
-        if (stopsList.length && !stopsList.some(c => ((this.state.stopCache.entries[c] || {}).okAt || 0) >= freshSince)) {
-          throw new Error('Nessuna risposta dal server');
-        }
+        const noFreshData = stopsList.length > 0
+          && !stopsList.some(c => ((this.state.stopCache.entries[c] || {}).okAt || 0) >= freshSince);
 
         // Map results
         const stopDataMap = {};
@@ -3834,6 +3880,7 @@ class BusMagoApp {
 
         this.updateBusMarkers(enriched);
         this.syncBusAnimator();
+        if (noFreshData) throw new Error('Nessuna risposta dal server');
 
         // Update selected info
         if (this.state.selectedVehicleKey) {
@@ -4227,11 +4274,9 @@ class BusMagoApp {
 
         const paletteColor = this.getLegendLineColor(b.lineCode);
         const isClassicSkin = this.state.skin.mode === 'classic';
-        const isLightDay = this.state.theme.mode === 'light';
-        // TEST palette — Glossy + giorno: goccia pastello + numero scuro unico
-        // (un solo colore-testo per tutte le linee, alto contrasto sui pastelli).
-        const glossyDay = !isClassicSkin && isLightDay;
-        const labelTextColor = glossyDay ? '#262a36' : (isLightDay ? '#111' : '#fff');
+        // Numero sempre bianco: la goccia è una paletta a colore pieno in
+        // entrambi i temi (i colori della palette reggono il bianco).
+        const labelTextColor = '#fff';
 
         let isSelected = false;
         if (this.state.selectedVehicleKey) {
@@ -4252,19 +4297,14 @@ class BusMagoApp {
         }
         const heading = typeof b.heading === 'number' ? b.heading : 0;
         const hasHeading = typeof b.heading === 'number';
-        const selectionBorderColor = this.state.theme.mode === 'light' ? '#111' : '#FFF';
+        // Selezione: bordo giallo segnale (lo stesso dello stato attivo in UI).
+        const selectionBorderColor = '#ffcc00';
         const borderStyle = isSelected ? `border: 3px solid ${selectionBorderColor};` : '';
         const labelText = showLabel ? b.lineLabel : '';
-        // Classic: tinta piena. Glossy notte: gradiente lucido saturo.
-        // Glossy giorno (TEST): goccia pastello (colore linea molto schiarito).
-        let dropBg;
-        if (isClassicSkin) {
-          dropBg = paletteColor;
-        } else if (glossyDay) {
-          dropBg = `radial-gradient(120% 120% at 32% 22%, rgba(255,255,255,0.7) 0%, rgba(255,255,255,0) 52%), linear-gradient(150deg, color-mix(in srgb, ${paletteColor} 34%, #fff) 0%, color-mix(in srgb, ${paletteColor} 50%, #fff) 55%, color-mix(in srgb, ${paletteColor} 64%, #fff) 100%)`;
-        } else {
-          dropBg = `radial-gradient(120% 120% at 32% 22%, rgba(255,255,255,0.4) 0%, rgba(255,255,255,0) 46%), linear-gradient(150deg, color-mix(in srgb, ${paletteColor} 76%, #fff) 0%, ${paletteColor} 54%, color-mix(in srgb, ${paletteColor} 86%, #000) 100%)`;
-        }
+        // Classico: tinta piena. Glossy: paletta laccata (chiaro→scuro in diagonale).
+        const dropBg = isClassicSkin
+          ? paletteColor
+          : `linear-gradient(150deg, color-mix(in srgb, ${paletteColor} 86%, #fff) 0%, ${paletteColor} 55%, color-mix(in srgb, ${paletteColor} 80%, #000) 100%)`;
         // Teardrop: border-radius 50% 50% 50% 0 has a sharp corner at bottom-left
         // (pointing SW = 225°). Rotating by heading+135° aims that point toward the
         // travel direction. With no heading we keep a plain circle (no false point).
@@ -4370,7 +4410,7 @@ class BusMagoApp {
                 Math.abs(last[1] - b.coords[1]) > 1e-5;
             if (moved) {
                 this.state.lastFollowCoords = [b.coords[0], b.coords[1]];
-                map.panTo(b.coords, { animate: true, duration: 0.8, easeLinearity: 0.25 });
+                map.panTo(this.followCenter(L.latLng(b.coords)), { animate: true, duration: 0.8, easeLinearity: 0.25 });
             }
         }
       });
@@ -4578,15 +4618,13 @@ class BusMagoApp {
     });
     const entries = Object.entries(byLine);
     if (!entries.length) return '';
-    const isClassicSkin = this.state.skin.mode === 'classic';
+    // Il colore linea passa come variabile: la resa della paletta (piatta o
+    // meccanica) la decide il CSS della skin.
     const chips = entries.map(([lc, { count, color, label }]) => {
       const isSelected = lc === selectedInfoLine;
-      const bg = isClassicSkin
-        ? color
-        : `radial-gradient(120% 120% at 30% 20%, rgba(255,255,255,0.35) 0%, rgba(255,255,255,0) 48%), linear-gradient(150deg, color-mix(in srgb, ${color} 78%, #fff) 0%, ${color} 58%, color-mix(in srgb, ${color} 88%, #000) 100%)`;
       const selectedClass = isSelected ? ' info-chip--selected' : '';
       const busIcon = `<svg class="info-chip-bus-icon" viewBox="0 0 24 24" width="11" height="11" fill="currentColor" aria-hidden="true"><path d="M4 16c0 .88.39 1.67 1 2.22V20a1 1 0 0 0 1 1h1a1 1 0 0 0 1-1v-1h8v1a1 1 0 0 0 1 1h1a1 1 0 0 0 1-1v-1.78c.61-.55 1-1.34 1-2.22V6c0-3.5-3.58-4-8-4S4 2.5 4 6v10zm3.5 1a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3zm9 0a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3zM18 11H6V6h12v5z"/></svg>`;
-      return `<button type="button" class="info-line-chip${selectedClass}" data-info-line="${this.escapeHtmlAttribute(lc)}" style="background:${bg}" aria-pressed="${isSelected}">
+      return `<button type="button" class="info-line-chip${selectedClass}" data-info-line="${this.escapeHtmlAttribute(lc)}" style="--line-color:${color}" aria-pressed="${isSelected}">
       <span class="info-line-chip-code">${this.escapeHtmlAttribute(label)}</span>
       <span class="info-line-chip-count">${busIcon}${count}</span>
       ${this.getLineDelayDotHtml(lc)}
@@ -4599,7 +4637,7 @@ class BusMagoApp {
     const lc = String(lineCode);
     const collapsed = !!(this.state.departures && this.state.departures.collapsed);
     const btnLabel = collapsed ? 'Apri' : 'Chiudi';
-    const icon = collapsed ? '▾' : '▴';
+    const icon = collapsed ? UI_ICONS.down : UI_ICONS.up;
     const bodyStyle = collapsed ? 'display:none;' : '';
     const items = this.getDeparturesItems([lc], null);
     if (!items.length) {
@@ -4680,7 +4718,19 @@ class BusMagoApp {
       return;
     }
 
+    // Palette che cambiano valore (minuti, ritardo) girano come sul tabellone:
+    // confronto per chiave data-flap fra il vecchio e il nuovo contenuto.
+    const prevFlaps = new Map();
+    if (!this._reducedMotion) {
+      this.infoDiv.querySelectorAll('[data-flap]').forEach(el => prevFlaps.set(el.dataset.flap, el.textContent));
+    }
     this.infoDiv.innerHTML = `<div class="info-sheet-handle" id="info-sheet-handle" aria-hidden="true"></div>` + combined;
+    if (prevFlaps.size) {
+      this.infoDiv.querySelectorAll('[data-flap]').forEach(el => {
+        const before = prevFlaps.get(el.dataset.flap);
+        if (before !== undefined && before !== el.textContent) el.classList.add('flap-flip');
+      });
+    }
     this.infoDiv.style.display = 'block';
   }
 
@@ -4747,7 +4797,7 @@ class BusMagoApp {
     if (timetable && timetable.status === 'loading') {
       return `
         <div class="vehicle-stops-section" style="${collapseBodyStyle}">
-          <div class="vehicle-stops-header"><span class="vehicle-stops-title">🚏 Prossime fermate</span></div>
+          <div class="vehicle-stops-header"><span class="vehicle-stops-title">Prossime fermate</span></div>
           <div class="vehicle-stops-loading">Caricamento percorso della corsa…</div>
         </div>`;
     }
@@ -4837,7 +4887,7 @@ class BusMagoApp {
     return `
       <div class="vehicle-stops-section" style="${collapseBodyStyle}">
         <div class="vehicle-stops-header">
-          <span class="vehicle-stops-title">🚏 Prossime fermate</span>
+          <span class="vehicle-stops-title">Prossime fermate</span>
         </div>
         <div class="vehicle-stops-list">
           <div class="vehicle-stops-line-track"></div>
@@ -4886,7 +4936,7 @@ class BusMagoApp {
 
     const collapsed = !!(this.state.infoPanel && this.state.infoPanel.collapsed);
     const collapseBodyStyle = collapsed ? 'display:none;' : '';
-    const collapseIcon = collapsed ? '▾' : '▴';
+    const collapseIcon = collapsed ? UI_ICONS.down : UI_ICONS.up;
     const collapseLabel = collapsed ? 'Espandi info vettura' : 'Comprimi info vettura';
     const delayBadge = this.getDelayBadge(bus);
     const speedText = this.getVehicleSpeedText(bus.key);
@@ -4905,7 +4955,7 @@ class BusMagoApp {
       delayBadge ? `
           <div class="info-stat">
             <span class="info-stat-label">Ritardo</span>
-            <span class="info-stat-pill delay-pill--${delayBadge.cls}">${this.escapeHtmlAttribute(delayBadge.text)}</span>
+            <span class="info-stat-pill delay-pill--${delayBadge.cls}" data-flap="delay">${this.escapeHtmlAttribute(delayBadge.text)}</span>
           </div>` : ''
     ].join('');
 
@@ -4948,7 +4998,7 @@ class BusMagoApp {
       const rest = it.times.slice(1);
       const isTransit = normalizeSearchText(first).includes('transito');
       const primaryCls = isTransit ? 'departure-time-primary departure-time-primary--transit' : 'departure-time-primary';
-      const primaryHtml = `<span class="${primaryCls}">${this.escapeHtmlAttribute(first)}</span>`;
+      const primaryHtml = `<span class="${primaryCls}" data-flap="${this.escapeHtmlAttribute(`${it.lineCode}|${it.destinationKey}`)}">${this.escapeHtmlAttribute(first)}</span>`;
       const secondaryHtml = rest.length ? `<span class="departure-times-secondary">${rest.map(t => this.escapeHtmlAttribute(t)).join(' · ')}</span>` : '';
       right = `<div class="departures-times">${runningDot}${primaryHtml}${secondaryHtml}</div>`;
     } else {
@@ -4977,7 +5027,7 @@ class BusMagoApp {
           ${it.note ? `<div class="departures-note"><span class="note-tag">Nota</span>${this.escapeHtmlAttribute(it.note)}</div>` : ''}
           ${right}
         </div>
-        ${followable ? '<span class="departures-follow-chevron" aria-hidden="true">›</span>' : ''}
+        ${followable ? '<span class="departures-follow-chevron" aria-hidden="true">' + UI_ICONS.right + '</span>' : ''}
       </${rowTag}>
     `;
   }
@@ -4991,7 +5041,7 @@ class BusMagoApp {
 
     const collapsed = !!(this.state.departures && this.state.departures.collapsed);
     const btnLabel = collapsed ? 'Apri' : 'Chiudi';
-    const icon = collapsed ? '▾' : '▴';
+    const icon = collapsed ? UI_ICONS.down : UI_ICONS.up;
     const bodyStyle = collapsed ? 'display:none;' : '';
 
     const items = this.getDeparturesItems(activeLineCodes, forcedDestinationKeyByLine);
@@ -5468,7 +5518,7 @@ class BusMagoApp {
 
       if (isFollowedNow) {
         this.state.lastFollowCoords = [pt.lat, pt.lng];
-        map.panTo([pt.lat, pt.lng], {
+        map.panTo(this.followCenter(L.latLng(pt.lat, pt.lng)), {
           animate: true, noMoveStart: true,
           duration: 0.16, easeLinearity: 1
         });

@@ -1,14 +1,19 @@
 // Incrementa questo valore ad ogni deploy per invalidare la cache degli utenti
-const CACHE_NAME = 'bus-mago-cache-v20';
+const CACHE_NAME = 'bus-mago-cache-v21';
 
-// Immagini: cache-first (cambiano raramente, utili offline)
+// Immagini e font: cache-first (cambiano raramente, utili offline)
 const STATIC_IMAGES = [
   './img/icona_bus_mago.webp',
   './img/icona_bus_mago.png',
   './img/units.webp',
   './img/icona_fs.webp',
   './img/icona_uni.webp',
-  './img/barcola.webp'
+  './img/barcola.webp',
+  './fonts/barlow-400.woff2',
+  './fonts/barlow-500.woff2',
+  './fonts/barlow-600.woff2',
+  './fonts/barlow-condensed-600.woff2',
+  './fonts/barlow-condensed-700.woff2'
 ];
 
 // File app: stale-while-revalidate (serviti subito dalla cache, aggiornati in
@@ -71,7 +76,7 @@ self.addEventListener('fetch', (event) => {
 
   // Cache-first: immagini + Leaflet da unpkg (versione pinnata nell'URL =
   // immutabile). Così l'app è davvero offline e non fa round-trip a ogni avvio.
-  const cacheFirst = /\.(webp|png|jpg|jpeg|gif|svg|ico)(\?.*)?$/i.test(url)
+  const cacheFirst = /\.(webp|png|jpg|jpeg|gif|svg|ico|woff2)(\?.*)?$/i.test(url)
     || url.includes('unpkg.com');
 
   if (cacheFirst) {
